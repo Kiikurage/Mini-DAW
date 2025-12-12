@@ -1,0 +1,11 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"formatter": {
+		"includes": ["./src/**/*.{js,jsx,ts,tsx,json,css,md}"],
+		"formatWithErrors": true
+	},
+	"linter": {
+		"includes": ["./src/**/*.{js,jsx,ts,tsx,json,css,md}"],
+		"rules": {}
+	}
+}

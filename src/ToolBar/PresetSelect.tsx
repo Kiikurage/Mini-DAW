@@ -1,0 +1,39 @@
+import { useState } from "react";
+import { Select } from "../react/Select/Select.tsx";
+import type { SoundFont } from "../SoundFont/SoundFont.ts";
+
+export function PresetSelect({
+	value: controlledValue,
+	defaultValue,
+	soundFont,
+	onChange,
+}: {
+	value?: number;
+	defaultValue?: number;
+	soundFont: SoundFont;
+	onChange?: (presetNumber: number) => void;
+}) {
+	const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? 0);
+	const value = controlledValue ?? uncontrolledValue;
+
+	const presetNames = soundFont.getPresetNames();
+
+	return (
+		<Select
+			value={value}
+			onChange={(value) => {
+				setUncontrolledValue(value as number);
+				onChange?.(value as number);
+			}}
+			renderValue={() =>
+				presetNames.find((preset) => preset.number === value)?.name || "#N/A"
+			}
+		>
+			{presetNames.map((preset) => (
+				<Select.Option key={preset.number} value={preset.number}>
+					{preset.number}: {preset.name}
+				</Select.Option>
+			))}
+		</Select>
+	);
+}

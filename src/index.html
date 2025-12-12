@@ -1,0 +1,144 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=600px, initial-scale=1.0" />
+<style>
+    :root {
+        --color-primary-100: #001c4e;
+        --color-primary-200: #003087;
+        --color-primary-300: #0046b3;
+        --color-primary-400: #0059d1;
+        --color-primary-500: #006eff;
+        --color-primary-600: #3385ff;
+        --color-primary-700: #66a1ff;
+        --color-primary-800: #99bdff;
+        --color-primary-900: #cce0ff;
+        --color-primary-1000: #e6ecff;
+        --color-primary-1100: #f2f5ff;
+        --color-primary-1200: #fafbff;
+
+        --color-error-100: #2c0e10;
+        --color-error-200: #4a1215;
+        --color-error-300: #680517;
+        --color-error-400: #7f0818;
+        --color-error-500: #a10018;
+        --color-error-600: #b70a1a;
+        --color-error-700: #d20f1c;
+        --color-error-800: #e6141d;
+        --color-error-900: #ff1a1f;
+        --color-error-1000: #ff6666;
+        --color-error-1100: #ff9999;
+        --color-error-1200: #ffcccc;
+
+        --color-gray-100: #18191b;
+        --color-gray-200: #212224;
+        --color-gray-300: #2b2d30;
+        --color-gray-400: #313438;
+        --color-gray-500: #3b3d40;
+        --color-gray-600: #454749;
+        --color-gray-700: #4f5154;
+        --color-gray-800: #595b5e;
+        --color-gray-900: #65656e;
+        --color-gray-1000: #909096;
+        --color-gray-1100: #ABADB4;
+        --color-gray-1200: #CCCDCF;
+
+        --color-background: var(--color-gray-300);
+        --color-background-weak: var(--color-gray-200);
+        --color-background-weaker: var(--color-gray-100);
+        --color-background-hover: var(--color-gray-500);
+        --color-background-hover-weak: var(--color-gray-400);
+        --color-background-active: var(--color-gray-700);
+        --color-background-focus: var(--color-gray-600);
+        --color-border: var(--color-gray-100);
+        --color-border-weak: var(--color-gray-200);
+        --color-foreground: var(--color-gray-1200);
+        --color-foreground-weak: var(--color-gray-1000);
+
+        --color-primary-background: var(--color-primary-300);
+        --color-primary-background-weak: var(--color-primary-200);
+        --color-primary-background-weaker: var(--color-primary-100);
+        --color-primary-background-hover: var(--color-primary-500);
+        --color-primary-background-active: var(--color-primary-700);
+        --color-primary-background-focus: var(--color-primary-600);
+        --color-primary-border: var(--color-primary-100);
+        --color-primary-border-weak: var(--color-primary-200);
+        --color-primary-foreground: var(--color-primary-1200);
+        --color-primary-foreground-weak: var(--color-primary-1000);
+
+        --color-error-background: var(--color-error-300);
+        --color-error-background-weak: var(--color-error-200);
+        --color-error-background-weaker: var(--color-error-100);
+        --color-error-background-hover: var(--color-error-500);
+        --color-error-background-active: var(--color-error-700);
+        --color-error-background-focus: var(--color-error-600);
+        --color-error-border: var(--color-error-100);
+        --color-error-border-weak: var(--color-error-200);
+        --color-error-foreground: var(--color-error-1200);
+        --color-error-foreground-weak: var(--color-error-1000);
+
+        --color-key-background: var(--color-background-weak);
+        --color-key-background-black: var(--color-background-weaker);
+        --color-key-border: var(--color-key-background-black);
+        --color-key-border-octave: var(--color-gray-400);
+        --color-tick-border: var(--color-gray-400);
+        --color-tick-border-measure: var(--color-key-border-octave);
+
+        --color-timeline-background: var(--color-key-background);
+        --color-timeline-border: var(--color-tick-border-measure);
+        --color-timeline-foreground: var(--color-gray-900);
+
+        --color-sidebar-background: var(--color-key-background);
+        --color-sidebar-border: var(--color-key-border-octave);
+        --color-sidebar-foreground: var(--color-gray-900);
+
+        --color-toolbar-background: var(--color-background);
+        --color-toolbar-border: var(--color-border);
+        --color-toolbar-foreground: var(--color-foreground);
+
+        --color-channelList-background: var(--color-background);
+        --color-channelList-background-hover: var(--color-background-hover);
+        --color-channelList-background-active: var(--color-background-active);
+        --color-channelList-border: var(--color-border-weak);
+        --color-channelList-foreground: var(--color-foreground);
+
+        --color-toolbarButton-background: var(--color-background);
+        --color-toolbarButton-background-hover: var(--color-background-hover);
+        --color-toolbarButton-background-active: var(--color-background-active);
+        --color-toolbarButton-border: var(--color-border);
+        --color-toolbarButton-foreground: var(--color-foreground);
+
+        --color-corner-background: var(--color-sidebar-background);
+        --color-corner-border: var(--color-sidebar-border);
+
+        --color-sidepanel-background: var(--color-background);
+        --color-sidepanel-border: var(--color-border);
+        --color-sidepanel-foreground: var(--color-foreground);
+
+        --color-StatusBar-border: var(--color-border);
+        --color-StatusBar-background: var(--color-background);
+        --color-StatusBar-foreground: var(--color-foreground-weak);
+
+        --color-keyboard-white-fill: #fff;
+        --color-keyboard-white-fill-hover: var(--color-primary-1000);
+        --color-keyboard-white-fill-active: var(--color-primary-800);
+        --color-keyboard-white-stroke: #000;
+        --color-keyboard-black-fill: #000;
+        --color-keyboard-black-fill-hover: var(--color-primary-200);
+        --color-keyboard-black-fill-active: var(--color-primary-400);
+        --color-keyboard-black-stroke: #000;
+        --color-keyboard-foreground: var(--color-gray-800);
+    }
+
+    :root {
+        background: var(--color-background);
+        color: var(--color-foreground);
+        margin: 0;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+
+        [popover] {
+            color: unset;
+        }
+    }
+</style>
+<script type="module" src="index.tsx"></script>
