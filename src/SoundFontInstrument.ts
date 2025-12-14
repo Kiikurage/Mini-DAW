@@ -4,7 +4,8 @@ import type { Hash } from "./Hashable.ts";
 import { assertNotNullish } from "./lib.ts";
 import type { Instrument } from "./models/Instrument.ts";
 import type { InstrumentKey } from "./models/InstrumentKey.ts";
-import type { InstrumentZone, Preset } from "./SoundFont/SoundFont.ts";
+import type { InstrumentZone } from "./SoundFont/InstrumentZone.ts";
+import type { Preset } from "./SoundFont/Preset.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
 
 export class SoundFontInstrumentKey implements InstrumentKey {

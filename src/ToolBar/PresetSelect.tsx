@@ -25,9 +25,14 @@ export function PresetSelect({
 				setUncontrolledValue(value as number);
 				onChange?.(value as number);
 			}}
-			renderValue={() =>
-				presetNames.find((preset) => preset.number === value)?.name || "#N/A"
-			}
+			renderValue={() => {
+				const presetName = presetNames.find(
+					(preset) => preset.number === value,
+				);
+				if (presetName === undefined) return "#N/A";
+
+				return `${presetName.number}: ${presetName.name}`;
+			}}
 		>
 			{presetNames.map((preset) => (
 				<Select.Option key={preset.number} value={preset.number}>

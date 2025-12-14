@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Select } from "../react/Select/Select.tsx";
-import type { Preset, SoundFont } from "../SoundFont/SoundFont.ts";
+import type { IndexedPresetHeader, SoundFont } from "../SoundFont/SoundFont.ts";
 
 export function BankSelect({
 	presetNumber,
@@ -20,10 +20,10 @@ export function BankSelect({
 
 	const bankMap =
 		soundFont.getPresetNames().find((preset) => preset.number === presetNumber)
-			?.bankMap ?? new Map<number, Preset>();
+			?.bankMap ?? new Map<number, IndexedPresetHeader>();
 
 	const presets = [...bankMap.values()].sort(
-		(a, b) => a.bankNumber - b.bankNumber,
+		(a, b) => a.phdr.bank - b.phdr.bank,
 	);
 
 	return (
@@ -37,12 +37,12 @@ export function BankSelect({
 				const preset = bankMap.get(value as number);
 				if (preset === undefined) return "#N/A";
 
-				return `${preset.bankNumber}: ${preset.name}`;
+				return `${preset.phdr.bank}: ${preset.phdr.name}`;
 			}}
 		>
 			{presets.map((preset) => (
-				<Select.Option key={preset.bankNumber} value={preset.bankNumber}>
-					{preset.bankNumber}: {preset.name}
+				<Select.Option key={preset.phdr.bank} value={preset.phdr.bank}>
+					{preset.phdr.bank}: {preset.phdr.name}
 				</Select.Option>
 			))}
 		</Select>
