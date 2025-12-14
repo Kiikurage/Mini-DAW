@@ -371,9 +371,9 @@ export abstract class ZoneImpl implements Zone {
 	fineTune: number = 0.0;
 
 	/**
-	 * キーごとのピッチの変化量 [倍率]
+	 * キーごとのピッチの変化量 [cents]
 	 */
-	scaleTuning: number = 2 ** (1 / 12);
+	scaleTuning: number = 100;
 
 	/**
 	 * コーラスエフェクトへ送る音量(dB)の割合 [倍率]
@@ -396,13 +396,6 @@ export abstract class ZoneImpl implements Zone {
 	 * ノートのオン時に適用される減衰量を表す。値が大きいほど音量が小さくなる。
 	 */
 	initialAttenuation: number = 0;
-
-	/**
-	 * ピッチのオフセット [倍率]
-	 */
-	get tune(): number {
-		return 2 ** ((this.coarseTune * 100 + this.fineTune) / 1200);
-	}
 
 	applyGenerator(gen: IGEN | PGEN, ..._unused: never[]) {
 		switch (gen.generator) {
@@ -577,8 +570,7 @@ export abstract class ZoneImpl implements Zone {
 			// endregion
 
 			case SFGenerator.COARSE_TUNE: {
-				const rawValue = minmax(-120, 120, gen.amount.getInt16(0, true));
-				this.coarseTune = rawValue / 12;
+				this.coarseTune = minmax(-120, 120, gen.amount.getInt16(0, true));
 				break;
 			}
 			case SFGenerator.FINE_TUNE: {
@@ -586,8 +578,7 @@ export abstract class ZoneImpl implements Zone {
 				break;
 			}
 			case SFGenerator.SCALE_TUNING: {
-				const rawValue = minmax(0, 1200, gen.amount.getInt16(0, true));
-				this.scaleTuning = 2 ** (rawValue / 1200);
+				this.scaleTuning = minmax(0, 1200, gen.amount.getInt16(0, true));
 				break;
 			}
 

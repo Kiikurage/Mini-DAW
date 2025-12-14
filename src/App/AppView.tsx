@@ -6,10 +6,10 @@ import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { EditorView } from "../Editor/EditorView.tsx";
 import { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
+import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
 import { InstrumentStore } from "../InstrumentStore.ts";
 import { KeyboardHandler } from "../KeyboardHandler.ts";
 import { Player } from "../Player/Player.ts";
-import { GlobalMenuBar } from "../react/GlobalMenuBar.tsx";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
 import { SongStore } from "../SongStore.ts";
 import { SoundFontStore } from "../SoundFontStore.ts";
@@ -43,9 +43,9 @@ export function AppView() {
 			}
 		};
 
-		window.addEventListener("keydown", handleKeyDown);
+		window.addEventListener("keydown", handleKeyDown, { capture: true });
 		return () => {
-			window.removeEventListener("keydown", handleKeyDown);
+			window.removeEventListener("keydown", handleKeyDown, { capture: true });
 		};
 	}, [keyboard]);
 
@@ -125,6 +125,7 @@ export function AppView() {
 					overlayPortal={useComponent(OverlayPortal.Key)}
 					soundFontStore={useComponent(SoundFontStore.Key)}
 					editor={useComponent(Editor.Key)}
+					player={useComponent(Player.Key)}
 				/>
 			</div>
 

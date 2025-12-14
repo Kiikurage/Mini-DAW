@@ -101,6 +101,8 @@ export function configureDeps() {
 					deps.get(ClipboardManager.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
+					deps.get(SaveFileKey),
+					deps.get(LoadFileKey),
 				);
 			})
 

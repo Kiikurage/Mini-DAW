@@ -192,11 +192,16 @@ export class SoundFont {
 		const header = this.presetHeaders.get(presetNumber)?.get(bankNumber);
 		if (header === undefined) return null;
 
-		let globalZone: PresetZoneImpl | null = null;
+		const globalZonePgen: PGEN[] = [];
 		const zones: PresetZone[] = [];
 		for (const pbag of header.pbags) {
-			const zone: PresetZoneImpl = globalZone?.copy() ?? new PresetZoneImpl();
+			const zone = new PresetZoneImpl();
 
+			for (const pgen of globalZonePgen) {
+				zone.applyGenerator(pgen, (instrumentNumber) =>
+					this.loadInstrument(instrumentNumber),
+				);
+			}
 			for (const pgen of pbag.generators) {
 				zone.applyGenerator(pgen, (instrumentNumber) =>
 					this.loadInstrument(instrumentNumber),
@@ -204,7 +209,9 @@ export class SoundFont {
 			}
 
 			if (zone.instrument === null) {
-				globalZone = zone;
+				if (globalZonePgen.length === 0) {
+					globalZonePgen.push(...pbag.generators);
+				}
 			} else {
 				zones.push(zone);
 			}
@@ -226,12 +233,16 @@ export class SoundFont {
 		const header = this.instrumentHeaders[instrumentNumber];
 		if (header === undefined) return null;
 
-		let globalZone: InstrumentZoneImpl | null = null;
+		const globalZoneIgen: IGEN[] = [];
 		const zones: InstrumentZone[] = [];
 		for (const ibag of header.ibags) {
-			const zone: InstrumentZoneImpl =
-				globalZone?.copy() ?? new InstrumentZoneImpl();
+			const zone = new InstrumentZoneImpl();
 
+			for (const igen of globalZoneIgen) {
+				zone.applyGenerator(igen, (sampleNumber) =>
+					this.loadSample(sampleNumber),
+				);
+			}
 			for (const igen of ibag.generators) {
 				zone.applyGenerator(igen, (sampleNumber) =>
 					this.loadSample(sampleNumber),
@@ -239,7 +250,9 @@ export class SoundFont {
 			}
 
 			if (zone.sample === null) {
-				globalZone = zone;
+				if (globalZoneIgen.length === 0) {
+					globalZoneIgen.push(...ibag.generators);
+				}
 			} else {
 				zones.push(zone);
 			}

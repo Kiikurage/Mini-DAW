@@ -8,6 +8,7 @@ import type { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
 import { SoundFontDialog } from "../InstrumentDialog/SoundFontDialog.tsx";
 import type { InstrumentStore } from "../InstrumentStore.ts";
 import { Channel } from "../models/Channel.ts";
+import type { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
@@ -31,6 +32,7 @@ export function ChannelListView({
 	overlayPortal,
 	soundFontStore,
 	editor,
+	player,
 }: {
 	songStore: SongStore;
 	pianoRoll: PianoRoll;
@@ -42,6 +44,7 @@ export function ChannelListView({
 	overlayPortal: OverlayPortal;
 	soundFontStore: SoundFontStore;
 	editor: Editor;
+	player: Player;
 }) {
 	const channels = useStateful(songStore, (state) => state.channels);
 	const activeChannelId = useStateful(editor, (state) => state.activeChannelId);
@@ -134,6 +137,7 @@ export function ChannelListView({
 						overlayPortal={overlayPortal}
 						soundFontStore={soundFontStore}
 						editor={editor}
+						player={player}
 					/>
 				))}
 			</ul>
@@ -152,6 +156,7 @@ function ChannelListItem({
 	overlayPortal,
 	soundFontStore,
 	editor,
+	player,
 }: {
 	channel: Channel;
 	active?: boolean;
@@ -163,11 +168,9 @@ function ChannelListItem({
 	overlayPortal: OverlayPortal;
 	soundFontStore: SoundFontStore;
 	editor: Editor;
+	player: Player;
 }) {
-	const mutedChannelIds = useStateful(
-		pianoRoll,
-		(state) => state.mutedChannelIds,
-	);
+	const mutedChannelIds = useStateful(player, (state) => state.mutedChannelIds);
 	const previewChannelIds = useStateful(
 		pianoRoll,
 		(state) => state.previewChannelIds,
@@ -250,6 +253,7 @@ function ChannelListItem({
 				font: "inherit",
 				color: "var(--color-channelList-foreground)",
 				cursor: "pointer",
+				userSelect: "none",
 				"&:hover": {
 					backgroundColor: "var(--color-channelList-background-hover)",
 				},
@@ -322,7 +326,7 @@ function ChannelListItem({
 					onClick={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();
-						pianoRoll.toggleMuteChannel(channel.id);
+						player.toggleMuteChannel(channel.id);
 					}}
 					aria-pressed={mutedChannelIds.has(channel.id)}
 					variant="errorInline"

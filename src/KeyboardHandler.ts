@@ -4,6 +4,8 @@ import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import type { Editor } from "./Editor/Editor.ts";
 import type { PianoRoll } from "./Editor/PianoRoll/PianoRoll.ts";
 import type { Player } from "./Player/Player.ts";
+import type { LoadFile } from "./usecases/LoadFile.ts";
+import type { SaveFile } from "./usecases/SaveFile.ts";
 
 export class KeyboardHandler {
 	static readonly Key = ComponentKey.of(KeyboardHandler);
@@ -14,6 +16,8 @@ export class KeyboardHandler {
 		private readonly clipboard: ClipboardManager,
 		private readonly player: Player,
 		private readonly editor: Editor,
+		private readonly saveFile: SaveFile,
+		private readonly loadFile: LoadFile,
 	) {}
 
 	handleKeyDown(ev: KeyboardEvent) {
@@ -99,15 +103,29 @@ export class KeyboardHandler {
 				}
 				break;
 			}
-			case "+": {
-				if (ev.shiftKey) {
+			case "s": {
+				if (ev.ctrlKey || ev.metaKey) {
+					this.saveFile();
+					return true;
+				}
+				break;
+			}
+			case "o": {
+				if (ev.ctrlKey || ev.metaKey) {
+					this.loadFile();
+					return true;
+				}
+				break;
+			}
+			case "=": {
+				if (ev.ctrlKey || ev.metaKey) {
 					this.editor.zoomIn();
 					return true;
 				}
 				break;
 			}
-			case "_": {
-				if (ev.shiftKey) {
+			case "-": {
+				if (ev.ctrlKey || ev.metaKey) {
 					this.editor.zoomOut();
 					return true;
 				}

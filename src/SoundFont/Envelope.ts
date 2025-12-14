@@ -73,14 +73,25 @@ export class Envelope {
 		node.gain.setValueAtTime(0, t);
 
 		t += this.attack;
-		node.gain.setValueAtTime(1, t);
+		node.gain.setTargetAtTime(1, t, this.attack / 5);
 
 		t += this.hold;
-		node.gain.setValueAtTime(1, t);
+		node.gain.setTargetAtTime(1, t, this.hold / 5);
 
 		t += this.decay;
-		node.gain.setValueAtTime(this.sustain, t);
+		node.gain.setTargetAtTime(this.sustain, t, this.decay / 5);
 
 		return node;
+	}
+
+	copy(): Envelope {
+		const env = new Envelope();
+		env.delay = this.delay;
+		env.attack = this.attack;
+		env.hold = this.hold;
+		env.decay = this.decay;
+		env.sustain = this.sustain;
+		env.release = this.release;
+		return env;
 	}
 }

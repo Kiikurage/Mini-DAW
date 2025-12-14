@@ -36,7 +36,7 @@ export class SoundFontInstrumentKey implements InstrumentKey {
 			type: "sf",
 			url: this.url,
 			presetNumber: this.presetNumber,
-			bunkNumber: this.bankNumber,
+			bankNumber: this.bankNumber,
 		};
 	}
 
@@ -46,7 +46,7 @@ export class SoundFontInstrumentKey implements InstrumentKey {
 		return new SoundFontInstrumentKey(
 			data.url,
 			data.presetNumber,
-			data.bunkNumber,
+			data.bankNumber,
 		);
 	}
 }
@@ -55,7 +55,7 @@ export interface SerializedSoundFontInstrumentKey {
 	type: "sf";
 	url: string;
 	presetNumber: number;
-	bunkNumber: number;
+	bankNumber: number;
 }
 
 interface PlayingZone {
@@ -83,6 +83,8 @@ export class SoundFontInstrument implements Instrument {
 
 	private readonly playingNotes = new Set<PlayingNote>();
 
+	private readonly masterVolumeNode: GainNode;
+
 	constructor(
 		public readonly key: SoundFontInstrumentKey,
 		private readonly context: AudioContext,
@@ -90,6 +92,10 @@ export class SoundFontInstrument implements Instrument {
 	) {
 		this.name = preset.name;
 		this.noLoopKeys = preset.getNoLoopKeys();
+
+		this.masterVolumeNode = this.context.createGain();
+		this.masterVolumeNode.gain.value = 4.0;
+		this.masterVolumeNode.connect(this.context.destination);
 	}
 
 	noteOn({
@@ -115,10 +121,10 @@ export class SoundFontInstrument implements Instrument {
 		for (const zone of this.preset.getInstrumentZones(key, velocity)) {
 			const bufferSource = zone.createAudioBufferSourceNode(this.context);
 			if (bufferSource === null) continue;
-			bufferSource.playbackRate.value = zone.getTuneForKey(key);
+			bufferSource.detune.value = zone.getTuneForKey(key);
 
 			const velocityNode = this.context.createGain();
-			velocityNode.gain.value = (velocity / 100) ** 2;
+			velocityNode.gain.value = (velocity / 100) ** 2 * 0.1;
 
 			const amplifierNode = zone.volumeEnvelope.createGainNode(
 				this.context,
@@ -134,7 +140,7 @@ export class SoundFontInstrument implements Instrument {
 			bufferSource.connect(velocityNode);
 			velocityNode.connect(filterNode);
 			filterNode.connect(amplifierNode);
-			amplifierNode.connect(this.context.destination);
+			amplifierNode.connect(this.masterVolumeNode);
 
 			const playingZone: PlayingZone = {
 				zone,
@@ -182,9 +188,10 @@ export class SoundFontInstrument implements Instrument {
 
 				amplifierNode.gain.cancelScheduledValues(time);
 				amplifierNode.gain.setValueAtTime(currentGain, time);
-				amplifierNode.gain.linearRampToValueAtTime(
-					0,
-					time + zone.volumeEnvelope.release,
+				amplifierNode.gain.setTargetAtTime(
+					0.0001,
+					time,
+					zone.volumeEnvelope.release / 5,
 				);
 
 				bufferSource.stop(time + zone.volumeEnvelope.release + 0.05);

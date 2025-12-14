@@ -50,6 +50,9 @@ export class Player extends Stateful<PlayerState> {
 				instrumentStore.getOrLoad(channel.instrumentKey);
 			}
 		});
+		bus.on("channel.delete.before", (channelId: number) => {
+			this.cancelMuteChannel(channelId);
+		});
 	}
 
 	setCurrentTick(currentTick: number) {
@@ -77,6 +80,26 @@ export class Player extends Stateful<PlayerState> {
 		} else {
 			this.play();
 		}
+	}
+
+	toggleMuteChannel(channelId: number) {
+		this.updateState((state) => {
+			const mutedChannelIds = new Set(state.mutedChannelIds);
+			if (mutedChannelIds.has(channelId)) {
+				mutedChannelIds.delete(channelId);
+			} else {
+				mutedChannelIds.add(channelId);
+			}
+			return { ...state, mutedChannelIds };
+		});
+	}
+
+	cancelMuteChannel(channelId: number) {
+		this.updateState((state) => {
+			const mutedChannelIds = new Set(state.mutedChannelIds);
+			mutedChannelIds.delete(channelId);
+			return { ...state, mutedChannelIds };
+		});
 	}
 
 	pause() {

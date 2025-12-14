@@ -438,7 +438,7 @@ export function renderCanvas({
 		const y = timelineHeight + (NUM_KEYS - key) * heightPerKey - scrollTop;
 		addLinePath({ ctx, x0, y0: y, x1, y1: y });
 	}
-	ctx.strokeStyle = COLOR_SIDEBAR_BORDER;
+	ctx.strokeStyle = COLOR_KEY_BORDER_OCTAVE;
 	ctx.stroke();
 	// endregion
 

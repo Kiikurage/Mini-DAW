@@ -21,11 +21,6 @@ export class PianoRollState {
 	readonly previewChannelIds: ReadonlySet<number>;
 
 	/**
-	 * ミュートされているチャンネルID一覧
-	 */
-	readonly mutedChannelIds: ReadonlySet<number>;
-
-	/**
 	 * クオンタイズ単位 [tick]
 	 */
 	readonly quantizeUnitInTick: number;
@@ -89,7 +84,6 @@ export class PianoRollState {
 	constructor(
 		props: {
 			previewChannelIds: ReadonlySet<number>;
-			mutedChannelIds: ReadonlySet<number>;
 			quantizeUnitInTick: number;
 			newNoteDurationInTick: number;
 			hoveredNoteIds: ReadonlySet<number>;
@@ -100,7 +94,6 @@ export class PianoRollState {
 			marqueeAreaTo: null | { key: number; tick: number };
 		} = {
 			previewChannelIds: new Set(),
-			mutedChannelIds: new Set(),
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
 			hoveredNoteIds: new Set(),
@@ -112,7 +105,6 @@ export class PianoRollState {
 		},
 	) {
 		this.previewChannelIds = props.previewChannelIds;
-		this.mutedChannelIds = props.mutedChannelIds;
 		this.quantizeUnitInTick = props.quantizeUnitInTick;
 		this.newNoteDurationInTick = props.newNoteDurationInTick;
 		this.hoveredNoteIds = props.hoveredNoteIds;
@@ -153,24 +145,6 @@ export class PianoRollState {
 			...this,
 			mutedChannelIds: new Set(mutedChannelIds),
 		});
-	}
-
-	toggleMuteChannel(channelId: number): PianoRollState {
-		const mutedChannelIds = new Set(this.mutedChannelIds);
-		if (mutedChannelIds.has(channelId)) {
-			mutedChannelIds.delete(channelId);
-		} else {
-			mutedChannelIds.add(channelId);
-		}
-		return this.setMutedChannels(mutedChannelIds);
-	}
-
-	cancelMuteChannel(channelId: number): PianoRollState {
-		const mutedChannelIds = new Set(this.mutedChannelIds);
-		if (!mutedChannelIds.has(channelId)) return this;
-
-		mutedChannelIds.delete(channelId);
-		return this.setMutedChannels(mutedChannelIds);
 	}
 
 	setQuantizeUnit(quantizeUnitInTick: number): PianoRollState {

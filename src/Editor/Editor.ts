@@ -54,6 +54,15 @@ export class Editor extends Stateful<EditorState> {
 		});
 
 		bus
+			.on("song.set.before", () => {
+				this.setActiveChannel(null);
+			})
+			.on("song.set.after", (song) => {
+				const firstChannel = song.channels[0];
+				if (firstChannel !== undefined) {
+					this.setActiveChannel(firstChannel.id);
+				}
+			})
 			.on("channel.delete.before", (channelId: number) => {
 				if (this.state.activeChannelId === channelId) {
 					this.setActiveChannel(null);

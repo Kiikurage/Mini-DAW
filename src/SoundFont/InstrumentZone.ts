@@ -91,6 +91,10 @@ export interface InstrumentZone extends Zone {
 	 */
 	readonly rootKey: number;
 
+	/**
+	 * サンプルを指定されたキーで再生する際に必要なピッチ調整値 [cents] を取得する
+	 * @param key
+	 */
 	getTuneForKey(key: number): number;
 
 	createAudioBufferSourceNode(
@@ -99,78 +103,17 @@ export interface InstrumentZone extends Zone {
 }
 
 export class InstrumentZoneImpl extends ZoneImpl implements InstrumentZone {
-	/**
-	 * サンプルの開始位置オフセット。サンプルに本来設定されている開始位置に対して加算される。
-	 */
 	startAddressFineOffset = 0;
-
-	/**
-	 * サンプルの終了位置オフセット。サンプルに本来設定されている終了位置に対して加算される。
-	 */
 	endAddressFineOffset = 0;
-
-	/**
-	 * サンプルのループ開始位置オフセット。サンプルに本来設定されているループ開始位置に対して加算される。
-	 */
 	startLoopAddressFineOffset = 0;
-
-	/**
-	 * サンプルのループ終了位置オフセット。サンプルに本来設定されているループ終了位置に対して加算される。
-	 * ループ範囲は半開区間であり、ループ終了地点のサンプル点は再生されないことに注意。
-	 * 例えば、ループ開始が1000、ループ終了が2000の場合、1000から1999までのサンプル点がループ再生される。
-	 * 2000番のサンプル点はループ再生には含まれない。
-	 */
 	endLoopAddressFineOffset = 0;
-
-	/**
-	 * サンプルの開始位置の粗調整オフセット。サンプルに本来設定されている開始位置に対して加算される。
-	 * 単位はサンプルフレーム数で、32768サンプル単位で調整される。
-	 * 例えば、startAddressCoarseOffsetが1の場合、32768サンプル分開始位置が後ろにずれる。
-	 */
 	startAddressCoarseOffset = 0;
-
-	/**
-	 * サンプルの終了位置の粗調整オフセット。サンプルに本来設定されている終了位置に対して加算される。
-	 * 単位はサンプルフレーム数で、32768サンプル単位で調整される。
-	 * 例えば、endAddressCoarseOffsetが1の場合、32768サンプル分終了位置が後ろにずれる。
-	 */
 	endAddressCoarseOffset = 0;
-
-	/**
-	 * サンプルのループ開始位置の粗調整オフセット。サンプルに本来設定されているループ開始位置に対して加算される。
-	 * 単位はサンプルフレーム数で、32768サンプル単位で調整される。
-	 * 例えば、startLoopAddressCoarseOffsetが1の場合、32768サンプル分ループ開始位置が後ろにずれる。
-	 */
 	startLoopAddressCoarseOffset = 0;
-
-	/**
-	 * サンプルのループ終了位置の粗調整オフセット。サンプルに本来設定されているループ終了位置に対して加算される。
-	 * 単位はサンプルフレーム数で、32768サンプル単位で調整される。
-	 * 例えば、endLoopAddressCoarseOffsetが1の場合、32768サンプル分ループ終了位置が後ろにずれる。
-	 */
 	endLoopAddressCoarseOffset = 0;
-
-	/**
-	 * このゾーンが属する排他グループのクラス番号
-	 * 同じ番号を持つゾーンは同時に複数再生できず、新しいゾーンが再生されると既存のゾーンの再生が停止される
-	 * 0の場合は排他グループに属さない
-	 */
 	exclusiveClass = 0;
-
-	/**
-	 * このゾーンが参照するサンプル
-	 */
 	sample: Sample | null = null;
-
-	/**
-	 * サンプルの再生モード
-	 */
 	sampleMode: "no_loop" | "loop" | "loop_until_key_off" = "no_loop";
-
-	/**
-	 * ルートキーの上書き [0-127]
-	 * nullの場合、{@link Sample#key}が使用される
-	 */
 	overridingRootKey: number | null = null;
 
 	get startAddressOffset() {
@@ -204,15 +147,23 @@ export class InstrumentZoneImpl extends ZoneImpl implements InstrumentZone {
 	}
 
 	/**
-	 * 指定されたMIDIキーに対するピッチ調整倍率を取得する
+	 * 指定されたMIDIキーに対するピッチ調整倍率 [cents]
 	 */
 	getTuneForKey(key: number): number {
-		return this.tune * this.scaleTuning ** (key - this.rootKey);
+		return (
+			this.coarseTune * 100 +
+			this.fineTune +
+			this.scaleTuning * (key - this.rootKey)
+		);
 	}
 
 	copy(): InstrumentZoneImpl {
 		const zone = new InstrumentZoneImpl();
 		Object.assign(zone, this);
+		zone.keyRange = zone.keyRange.copy();
+		zone.velocityRange = zone.velocityRange.copy();
+		zone.modulationEnvelope = zone.modulationEnvelope.copy();
+		zone.volumeEnvelope = zone.volumeEnvelope.copy();
 		return zone;
 	}
 

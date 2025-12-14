@@ -68,7 +68,6 @@ export class PianoRoll
 
 		bus.on("channel.delete.before", (channelId: number) => {
 			this.cancelPreviewChannel(channelId);
-			this.cancelMuteChannel(channelId);
 		});
 	}
 
@@ -88,14 +87,6 @@ export class PianoRoll
 
 	cancelPreviewChannel(channelId: number) {
 		return this.updateState((state) => state.cancelPreviewChannel(channelId));
-	}
-
-	toggleMuteChannel(channelId: number) {
-		return this.updateState((state) => state.toggleMuteChannel(channelId));
-	}
-
-	cancelMuteChannel(channelId: number) {
-		return this.updateState((state) => state.cancelMuteChannel(channelId));
 	}
 
 	setScrollTop(scrollTop: number) {

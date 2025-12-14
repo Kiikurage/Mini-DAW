@@ -7,8 +7,6 @@ import type { PlayerState } from "../../Player/Player.ts";
 import type { EditorState } from "../Editor.ts";
 import type { ParameterEditorState } from "./ParameterEditorState.ts";
 
-export const HEIGHT_PER_KEY = 16;
-
 export function widthPerMeasure(zoom: number) {
 	return 180 * zoom;
 }
@@ -217,6 +215,19 @@ export function renderCanvas({
 	ctx.fill();
 	// endregion
 
+	// region サイドバー右罫線
+	ctx.beginPath();
+	addLinePath({
+		ctx,
+		x0: sideBarWidth,
+		y0: 0,
+		x1: sideBarWidth,
+		y1: totalHeight,
+	});
+	ctx.strokeStyle = COLOR_SIDEBAR_BORDER;
+	ctx.stroke();
+	// endregion
+
 	// region 再生ヘッド
 	if (tickFrom <= playerState.currentTick && playerState.currentTick < tickTo) {
 		ctx.beginPath();
@@ -227,12 +238,6 @@ export function renderCanvas({
 		ctx.strokeStyle = COLOR_PLAYHEAD;
 		ctx.stroke();
 	}
-	// endregion
-
-	// region 上罫線
-	addLinePath({ ctx, x0: 0, y0: 1, x1: totalWidth, y1: 1 });
-	ctx.strokeStyle = COLOR_KEY_BACKGROUND_BLACK;
-	ctx.stroke();
 	// endregion
 }
 
@@ -343,7 +348,6 @@ function addLinePath({
 	ctx.lineTo(x1 - 0.5, y1 - 0.5);
 }
 
-export const TIMELINE_HEIGHT = 0;
 export const SIDEBAR_WIDTH = 32;
 
 const style = getComputedStyle(document.body);
@@ -353,12 +357,9 @@ const COLOR_TICK_BORDER_MEASURE = style.getPropertyValue(
 );
 
 const COLOR_KEY_BACKGROUND = style.getPropertyValue("--color-key-background");
-const COLOR_KEY_BACKGROUND_BLACK = style.getPropertyValue(
-	"--color-key-background-black",
-);
 
 const COLOR_SIDEBAR_BACKGROUND = style.getPropertyValue("--color-background");
-
+const COLOR_SIDEBAR_BORDER = style.getPropertyValue("--color-border");
 const COLOR_PLAYHEAD = "#f00";
 
 const BAR_WIDTH_IN_PIXEL = 8;
