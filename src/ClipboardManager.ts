@@ -1,6 +1,5 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { Editor } from "./Editor/Editor.ts";
-import type { PianoRoll } from "./Editor/PianoRoll/PianoRoll.ts";
 import { getSelectedNotes } from "./getSelectedNotes.ts";
 import { Note, type SerializedNote } from "./models/Note.ts";
 import type { Player } from "./Player/Player.ts";
@@ -12,7 +11,6 @@ export class ClipboardManager {
 	static readonly Key = ComponentKey.of(ClipboardManager);
 
 	constructor(
-		private readonly pianoRoll: PianoRoll,
 		private readonly songStore: SongStore,
 		private readonly player: Player,
 		private readonly editor: Editor,

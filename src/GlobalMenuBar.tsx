@@ -1,20 +1,25 @@
 import { FaGithub } from "react-icons/fa";
+import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { Button } from "./react/Button.ts";
 import { IconButton } from "./react/IconButton.ts";
 import { Link } from "./react/Link.ts";
-import type { LoadFile } from "./usecases/LoadFile.ts";
-import type { NewFile } from "./usecases/NewFile.ts";
-import type { SaveFile } from "./usecases/SaveFile.ts";
+import { type LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
+import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
+import { type SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
 
 export function GlobalMenuBar({
 	newFile,
 	saveFile,
 	loadFile,
 }: {
-	newFile: NewFile;
-	saveFile: SaveFile;
-	loadFile: LoadFile;
+	newFile?: NewFile;
+	saveFile?: SaveFile;
+	loadFile?: LoadFile;
 }) {
+	newFile = useComponent(NewFileKey, newFile);
+	saveFile = useComponent(SaveFileKey, saveFile);
+	loadFile = useComponent(LoadFileKey, loadFile);
+
 	return (
 		<div
 			css={{

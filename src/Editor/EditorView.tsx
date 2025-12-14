@@ -1,15 +1,12 @@
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
-import { InstrumentStore } from "../InstrumentStore.ts";
-import { Player } from "../Player/Player.ts";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
-import { SongStore } from "../SongStore.ts";
 import { Editor } from "./Editor.ts";
-import { ParameterEditor } from "./ParameterEditor/ParameterEditor.ts";
 import { ParameterEditorView } from "./ParameterEditor/ParameterEditorView.tsx";
-import { PianoRoll } from "./PianoRoll/PianoRoll.ts";
 import { PianoRollView } from "./PianoRoll/PianoRollView.tsx";
 
-export function EditorView({ editor }: { editor: Editor }) {
+export function EditorView({ editor }: { editor?: Editor }) {
+	editor = useComponent(Editor.Key, editor);
+
 	const resizeObserverRef = useResizeObserver((entry) => {
 		editor.setWidth(entry.contentRect.width);
 	});
@@ -32,13 +29,7 @@ export function EditorView({ editor }: { editor: Editor }) {
 					flex: "1 1 0",
 				}}
 			>
-				<PianoRollView
-					pianoRoll={useComponent(PianoRoll.Key)}
-					instrumentStore={useComponent(InstrumentStore.Key)}
-					songStore={useComponent(SongStore.Key)}
-					player={useComponent(Player.Key)}
-					editor={useComponent(Editor.Key)}
-				/>
+				<PianoRollView />
 			</div>
 			<div
 				css={{
@@ -55,12 +46,7 @@ export function EditorView({ editor }: { editor: Editor }) {
 					flex: "0 0 200px",
 				}}
 			>
-				<ParameterEditorView
-					parameterEditor={useComponent(ParameterEditor.Key)}
-					player={useComponent(Player.Key)}
-					songStore={useComponent(SongStore.Key)}
-					editor={useComponent(Editor.Key)}
-				/>
+				<ParameterEditorView />
 			</div>
 		</div>
 	);

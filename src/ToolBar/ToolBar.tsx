@@ -1,19 +1,26 @@
 import { MdMoreVert, MdPause, MdPlayArrow } from "react-icons/md";
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
-import type { Editor } from "../Editor/Editor.ts";
+import { useComponent } from "../Dependency/DIContainerProvider.tsx";
+import { Editor } from "../Editor/Editor.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
 import { SoundFontDialog } from "../InstrumentDialog/SoundFontDialog.tsx";
-import type { InstrumentStore } from "../InstrumentStore.ts";
-import type { Player } from "../Player/Player.ts";
+import { InstrumentStore } from "../InstrumentStore.ts";
+import { Player } from "../Player/Player.ts";
 import { Form } from "../react/Form.tsx";
 import { IconButton } from "../react/IconButton.ts";
-import type { OverlayPortal } from "../react/OverlayPortal.ts";
-import type { SongStore } from "../SongStore.ts";
-import { PreInstalledSoundFontInstrumentKey, type SoundFontInstrumentKey, } from "../SoundFontInstrument.ts";
-import type { SoundFontStore } from "../SoundFontStore.ts";
+import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { SongStore } from "../SongStore.ts";
+import {
+	PreInstalledSoundFontInstrumentKey,
+	type SoundFontInstrumentKey,
+} from "../SoundFontInstrument.ts";
+import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
-import type { UpdateChannel } from "../usecases/UpdateChannel.ts";
-import type { UpdateSong } from "../usecases/UpdateSong.ts";
+import {
+	type UpdateChannel,
+	UpdateChannelKey,
+} from "../usecases/UpdateChannel.ts";
+import { type UpdateSong, UpdateSongKey } from "../usecases/UpdateSong.ts";
 import { BankSelect } from "./BankSelect.tsx";
 import { PresetSelect } from "./PresetSelect.tsx";
 
@@ -27,15 +34,24 @@ export function ToolBar({
 	updateChannel,
 	overlayPortal,
 }: {
-	player: Player;
-	songStore: SongStore;
-	updateSong: UpdateSong;
-	instrumentStore: InstrumentStore;
-	soundFontStore: SoundFontStore;
-	editor: Editor;
-	updateChannel: UpdateChannel;
-	overlayPortal: OverlayPortal;
+	player?: Player;
+	songStore?: SongStore;
+	updateSong?: UpdateSong;
+	instrumentStore?: InstrumentStore;
+	soundFontStore?: SoundFontStore;
+	editor?: Editor;
+	updateChannel?: UpdateChannel;
+	overlayPortal?: OverlayPortal;
 }) {
+	player = useComponent(Player.Key, player);
+	songStore = useComponent(SongStore.Key, songStore);
+	updateSong = useComponent(UpdateSongKey, updateSong);
+	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
+	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
+	editor = useComponent(Editor.Key, editor);
+	updateChannel = useComponent(UpdateChannelKey, updateChannel);
+	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
+
 	const playHeadTick = useStateful(player, (state) => state.currentTick);
 	const isPlaying = useStateful(player, (state) => state.isPlaying);
 	const songTitle = useStateful(songStore, (state) => state.title);

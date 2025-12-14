@@ -1,5 +1,3 @@
-import { widthPerTick } from "../Editor/PianoRoll/PianoRollViewRenderer.ts";
-
 export class Note {
 	readonly id: number;
 	readonly key: number;
@@ -27,14 +25,6 @@ export class Note {
 
 	get step() {
 		return this.tickTo - this.tickFrom;
-	}
-
-	getXFrom(zoom: number) {
-		return this.tickFrom * widthPerTick(zoom);
-	}
-
-	getXTo(zoom: number) {
-		return this.tickTo * widthPerTick(zoom);
 	}
 
 	serialize(): SerializedNote {

@@ -2,22 +2,24 @@ import type { ClipboardManager } from "./ClipboardManager.ts";
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import type { Editor } from "./Editor/Editor.ts";
-import type { PianoRoll } from "./Editor/PianoRoll/PianoRoll.ts";
 import type { Player } from "./Player/Player.ts";
+import type { DeleteNotes } from "./usecases/DeleteNotes.ts";
 import type { LoadFile } from "./usecases/LoadFile.ts";
+import type { MoveNotes } from "./usecases/MoveNotes.ts";
 import type { SaveFile } from "./usecases/SaveFile.ts";
 
 export class KeyboardHandler {
 	static readonly Key = ComponentKey.of(KeyboardHandler);
 
 	constructor(
-		private readonly pianoRoll: PianoRoll,
 		private readonly history: EditHistoryManager,
 		private readonly clipboard: ClipboardManager,
 		private readonly player: Player,
 		private readonly editor: Editor,
 		private readonly saveFile: SaveFile,
 		private readonly loadFile: LoadFile,
+		private readonly moveNotes: MoveNotes,
+		private readonly deleteNotes: DeleteNotes,
 	) {}
 
 	handleKeyDown(ev: KeyboardEvent) {
@@ -26,32 +28,63 @@ export class KeyboardHandler {
 		switch (ev.key) {
 			case "Delete":
 			case "Backspace": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
-				this.pianoRoll.deleteNotes(this.editor.state.selectedNoteIds);
+				const activeChannelId = this.editor.state.activeChannelId;
+				if (activeChannelId === null) return;
+
+				const selectedNoteIds = this.editor.state.selectedNoteIds;
+				if (selectedNoteIds.size === 0) return false;
+
+				this.deleteNotes(activeChannelId, selectedNoteIds);
 				return true;
 			}
 			case "ArrowLeft": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
+				const activeChannelId = this.editor.state.activeChannelId;
+				if (activeChannelId === null) return false;
 
-				this.pianoRoll.moveNotes(this.editor.state.selectedNoteIds, 0, -240);
+				const selectedNoteIds = this.editor.state.selectedNoteIds;
+				if (selectedNoteIds.size === 0) return false;
+
+				this.moveNotes(
+					activeChannelId,
+					selectedNoteIds,
+					0,
+					-this.editor.state.quantizeUnitInTick,
+				);
 				return true;
 			}
 			case "ArrowUp": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
+				const activeChannelId = this.editor.state.activeChannelId;
+				if (activeChannelId === null) return false;
 
-				this.pianoRoll.moveNotes(this.editor.state.selectedNoteIds, 1, 0);
+				const selectedNoteIds = this.editor.state.selectedNoteIds;
+				if (selectedNoteIds.size === 0) return false;
+
+				this.moveNotes(activeChannelId, selectedNoteIds, 1, 0);
 				return true;
 			}
 			case "ArrowRight": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
+				const activeChannelId = this.editor.state.activeChannelId;
+				if (activeChannelId === null) return false;
 
-				this.pianoRoll.moveNotes(this.editor.state.selectedNoteIds, 0, 240);
+				const selectedNoteIds = this.editor.state.selectedNoteIds;
+				if (selectedNoteIds.size === 0) return false;
+
+				this.moveNotes(
+					activeChannelId,
+					selectedNoteIds,
+					0,
+					this.editor.state.quantizeUnitInTick,
+				);
 				return true;
 			}
 			case "ArrowDown": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
+				const activeChannelId = this.editor.state.activeChannelId;
+				if (activeChannelId === null) return false;
 
-				this.pianoRoll.moveNotes(this.editor.state.selectedNoteIds, -1, 0);
+				const selectedNoteIds = this.editor.state.selectedNoteIds;
+				if (selectedNoteIds.size === 0) return false;
+
+				this.moveNotes(activeChannelId, selectedNoteIds, -1, 0);
 				return true;
 			}
 			case "Escape": {
@@ -65,7 +98,7 @@ export class KeyboardHandler {
 			}
 			case "a": {
 				if (ev.ctrlKey || ev.metaKey) {
-					this.pianoRoll.selectAllNotes();
+					this.editor.selectAllNotes();
 					return true;
 				}
 				break;

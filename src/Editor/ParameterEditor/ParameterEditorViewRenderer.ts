@@ -1,11 +1,12 @@
 import { TICK_PER_MEASURE } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
+import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
 import type { EditorState } from "../Editor.ts";
-import type { ParameterEditorState } from "./ParameterEditorState.ts";
+import type { ParameterEditorState } from "./ParameterEditor.ts";
 
 export function widthPerMeasure(zoom: number) {
 	return 180 * zoom;
@@ -158,7 +159,10 @@ export function renderCanvas({
 	// endregion
 
 	// region 範囲選択マーキー
-	const marqueeArea = parameterEditorState.marqueeArea;
+	const marqueeArea = getMarqueeArea(
+		editorState.marqueeAreaFrom,
+		editorState.marqueeAreaTo,
+	);
 	if (marqueeArea !== null) {
 		ctx.beginPath();
 

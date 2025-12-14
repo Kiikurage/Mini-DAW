@@ -46,7 +46,9 @@ export class PointerEventManager {
 		state.sessions.set(nativeEvent.button, session);
 
 		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
-		this.delegate.findHandle(position)?.handlePointerDown?.(ev);
+		const handle = this.delegate.findHandle(position);
+
+		handle?.handlePointerDown?.(ev);
 	};
 
 	readonly handlePointerMove = (nativeEvent: PointerEvent) => {
@@ -59,7 +61,7 @@ export class PointerEventManager {
 		}
 		state.position = position;
 
-		this.delegate.onPointerMove?.();
+		this.delegate.onPointerMove?.(this);
 
 		const handle = this.delegate.findHandle(position);
 		this.delegate.setCursor(handle?.cursor ?? "default");
@@ -107,7 +109,6 @@ export class PointerEventManager {
 			for (const listener of session.pointerUpListeners) {
 				listener(ev);
 			}
-			this.delegate.findHandle(position)?.handlePointerUp?.(ev);
 
 			const distance = Math.hypot(
 				session.startPosition.x - position.x,
@@ -146,7 +147,6 @@ export class PointerEventManager {
 		for (const listener of session.dragStartListeners) {
 			listener(ev);
 		}
-		this.delegate.findHandle(position)?.handleDragStart?.(ev);
 	}
 
 	private handleDragMove(
@@ -160,7 +160,6 @@ export class PointerEventManager {
 		for (const listener of session.dragMoveListeners) {
 			listener(ev);
 		}
-		this.delegate.findHandle(position)?.handleDragMove?.(ev);
 	}
 
 	private handleDragEnd(
@@ -178,7 +177,6 @@ export class PointerEventManager {
 		for (const listener of session.dragEndListeners) {
 			listener(ev);
 		}
-		this.delegate.findHandle(position)?.handleDragEnd?.(ev);
 	}
 
 	private handleTap(
@@ -190,7 +188,6 @@ export class PointerEventManager {
 		for (const listener of session.tapListeners) {
 			listener(ev);
 		}
-		this.delegate.findHandle(position)?.handleTap?.(ev);
 	}
 
 	/**
@@ -250,7 +247,7 @@ export interface PointerEventManagerDelegate {
 	 * ポインタが移動したときに呼び出され、追加の処理を実装可能。
 	 * @protected
 	 */
-	onPointerMove?(): void;
+	onPointerMove?(manager: PointerEventManager): void;
 }
 
 interface PointerState {

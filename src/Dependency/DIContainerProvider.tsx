@@ -14,6 +14,7 @@ export function DIContainerProvider(props: {
 	);
 }
 
-export function useComponent<T>(key: ComponentKey<T>): T {
-	return useContext(context).get(key);
+export function useComponent<T>(key: ComponentKey<T>, defaultValue?: T): T {
+	const deps = useContext(context);
+	return defaultValue ?? deps.get(key);
 }

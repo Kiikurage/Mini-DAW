@@ -1,34 +1,32 @@
 import { useEffect } from "react";
 import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
-import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { EditorView } from "../Editor/EditorView.tsx";
-import { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
 import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
-import { InstrumentStore } from "../InstrumentStore.ts";
 import { KeyboardHandler } from "../KeyboardHandler.ts";
-import { Player } from "../Player/Player.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
-import { SongStore } from "../SongStore.ts";
-import { SoundFontStore } from "../SoundFontStore.ts";
 import { StatusBar } from "../StatusBar/StatusBar.tsx";
 import { StatusBarView } from "../StatusBar/StatusBarView.tsx";
 import { ToolBar } from "../ToolBar/ToolBar.tsx";
-import { AddChannelKey } from "../usecases/AddChannel.ts";
-import { DeleteChannelKey } from "../usecases/DeleteChannel.ts";
-import { InitializeAppKey } from "../usecases/initializeApp.ts";
-import { LoadFileKey } from "../usecases/LoadFile.ts";
-import { NewFileKey } from "../usecases/NewFile.ts";
-import { SaveFileKey } from "../usecases/SaveFile.ts";
-import { UpdateChannelKey } from "../usecases/UpdateChannel.ts";
-import { UpdateSongKey } from "../usecases/UpdateSong.ts";
+import {
+	type InitializeApp,
+	InitializeAppKey,
+} from "../usecases/initializeApp.ts";
 
-export function AppView() {
-	const keyboard = useComponent(KeyboardHandler.Key);
-	const overlayPortal = useComponent(OverlayPortal.Key);
+export function AppView({
+	keyboard,
+	overlayPortal,
+	initializeApp,
+}: {
+	keyboard?: KeyboardHandler;
+	overlayPortal?: OverlayPortal;
+	initializeApp?: InitializeApp;
+}) {
+	keyboard = useComponent(KeyboardHandler.Key, keyboard);
+	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
+	initializeApp = useComponent(InitializeAppKey, initializeApp);
 
-	const initializeApp = useComponent(InitializeAppKey);
 	useEffect(() => {
 		initializeApp();
 	}, [initializeApp]);
@@ -68,24 +66,11 @@ export function AppView() {
 					position: "relative",
 				}}
 			>
-				<GlobalMenuBar
-					newFile={useComponent(NewFileKey)}
-					saveFile={useComponent(SaveFileKey)}
-					loadFile={useComponent(LoadFileKey)}
-				/>
+				<GlobalMenuBar />
 			</div>
 
 			<div css={{ gridArea: "ToolBar" }}>
-				<ToolBar
-					player={useComponent(Player.Key)}
-					songStore={useComponent(SongStore.Key)}
-					updateSong={useComponent(UpdateSongKey)}
-					instrumentStore={useComponent(InstrumentStore.Key)}
-					editor={useComponent(Editor.Key)}
-					soundFontStore={useComponent(SoundFontStore.Key)}
-					updateChannel={useComponent(UpdateChannelKey)}
-					overlayPortal={useComponent(OverlayPortal.Key)}
-				/>
+				<ToolBar />
 			</div>
 
 			<div
@@ -98,7 +83,7 @@ export function AppView() {
 					justifyContent: "stretch",
 				}}
 			>
-				<EditorView editor={useComponent(Editor.Key)} />
+				<EditorView />
 			</div>
 
 			<div
@@ -112,19 +97,7 @@ export function AppView() {
 					position: "relative",
 				}}
 			>
-				<ChannelListView
-					songStore={useComponent(SongStore.Key)}
-					pianoRoll={useComponent(PianoRoll.Key)}
-					addChannel={useComponent(AddChannelKey)}
-					updateChannel={useComponent(UpdateChannelKey)}
-					deleteChannel={useComponent(DeleteChannelKey)}
-					instrumentStore={useComponent(InstrumentStore.Key)}
-					contextMenu={useComponent(ContextMenuManager.Key)}
-					overlayPortal={useComponent(OverlayPortal.Key)}
-					soundFontStore={useComponent(SoundFontStore.Key)}
-					editor={useComponent(Editor.Key)}
-					player={useComponent(Player.Key)}
-				/>
+				<ChannelListView />
 			</div>
 
 			<footer
@@ -132,14 +105,7 @@ export function AppView() {
 					gridArea: "StatusBar",
 				}}
 			>
-				<StatusBarView
-					pianoRoll={useComponent(PianoRoll.Key)}
-					songStore={useComponent(SongStore.Key)}
-					statusBar={useComponent(StatusBar.Key)}
-					updateSong={useComponent(UpdateSongKey)}
-					player={useComponent(Player.Key)}
-					editor={useComponent(Editor.Key)}
-				/>
+				<StatusBarView />
 			</footer>
 
 			<overlayPortal.Portal />

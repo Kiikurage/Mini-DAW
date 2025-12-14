@@ -2,28 +2,33 @@ import { useState } from "react";
 import { IoMdEye } from "react-icons/io";
 import { IoVolumeMute } from "react-icons/io5";
 import { MdAdd, MdDelete } from "react-icons/md";
-import type { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
-import type { Editor } from "../Editor/Editor.ts";
-import type { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
+import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
+import { useComponent } from "../Dependency/DIContainerProvider.tsx";
+import { Editor } from "../Editor/Editor.ts";
 import { SoundFontDialog } from "../InstrumentDialog/SoundFontDialog.tsx";
-import type { InstrumentStore } from "../InstrumentStore.ts";
+import { InstrumentStore } from "../InstrumentStore.ts";
 import { Channel } from "../models/Channel.ts";
-import type { Player } from "../Player/Player.ts";
+import { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
-import type { OverlayPortal } from "../react/OverlayPortal.ts";
-import type { SongStore } from "../SongStore.ts";
+import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { SongStore } from "../SongStore.ts";
 import { PreInstalledSoundFontInstrumentKey } from "../SoundFontInstrument.ts";
-import type { SoundFontStore } from "../SoundFontStore.ts";
+import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
-import type { AddChannel } from "../usecases/AddChannel.ts";
-import type { DeleteChannel } from "../usecases/DeleteChannel.ts";
-import type { UpdateChannel } from "../usecases/UpdateChannel.ts";
+import { type AddChannel, AddChannelKey } from "../usecases/AddChannel.ts";
+import {
+	type DeleteChannel,
+	DeleteChannelKey,
+} from "../usecases/DeleteChannel.ts";
+import {
+	type UpdateChannel,
+	UpdateChannelKey,
+} from "../usecases/UpdateChannel.ts";
 
 export function ChannelListView({
 	songStore,
-	pianoRoll,
 	addChannel,
 	deleteChannel,
 	updateChannel,
@@ -34,18 +39,28 @@ export function ChannelListView({
 	editor,
 	player,
 }: {
-	songStore: SongStore;
-	pianoRoll: PianoRoll;
-	addChannel: AddChannel;
-	updateChannel: UpdateChannel;
-	deleteChannel: DeleteChannel;
-	instrumentStore: InstrumentStore;
-	contextMenu: ContextMenuManager;
-	overlayPortal: OverlayPortal;
-	soundFontStore: SoundFontStore;
-	editor: Editor;
-	player: Player;
+	songStore?: SongStore;
+	addChannel?: AddChannel;
+	updateChannel?: UpdateChannel;
+	deleteChannel?: DeleteChannel;
+	instrumentStore?: InstrumentStore;
+	contextMenu?: ContextMenuManager;
+	overlayPortal?: OverlayPortal;
+	soundFontStore?: SoundFontStore;
+	editor?: Editor;
+	player?: Player;
 }) {
+	songStore = useComponent(SongStore.Key, songStore);
+	addChannel = useComponent(AddChannelKey, addChannel);
+	updateChannel = useComponent(UpdateChannelKey, updateChannel);
+	deleteChannel = useComponent(DeleteChannelKey, deleteChannel);
+	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
+	contextMenu = useComponent(ContextMenuManager.Key, contextMenu);
+	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
+	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
+	editor = useComponent(Editor.Key, editor);
+	player = useComponent(Player.Key, player);
+
 	const channels = useStateful(songStore, (state) => state.channels);
 	const activeChannelId = useStateful(editor, (state) => state.activeChannelId);
 
@@ -128,7 +143,6 @@ export function ChannelListView({
 					<ChannelListItem
 						key={channel.id}
 						channel={channel}
-						pianoRoll={pianoRoll}
 						active={channel.id === activeChannelId}
 						updateChannel={updateChannel}
 						deleteChannel={deleteChannel}
@@ -148,7 +162,6 @@ export function ChannelListView({
 function ChannelListItem({
 	channel,
 	active,
-	pianoRoll,
 	instrumentStore,
 	contextMenu,
 	deleteChannel,
@@ -160,7 +173,6 @@ function ChannelListItem({
 }: {
 	channel: Channel;
 	active?: boolean;
-	pianoRoll: PianoRoll;
 	instrumentStore: InstrumentStore;
 	contextMenu: ContextMenuManager;
 	deleteChannel: DeleteChannel;
@@ -172,7 +184,7 @@ function ChannelListItem({
 }) {
 	const mutedChannelIds = useStateful(player, (state) => state.mutedChannelIds);
 	const previewChannelIds = useStateful(
-		pianoRoll,
+		editor,
 		(state) => state.previewChannelIds,
 	);
 
@@ -339,7 +351,7 @@ function ChannelListItem({
 					onClick={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();
-						pianoRoll.togglePreviewChannel(channel.id);
+						editor.togglePreviewChannel(channel.id);
 					}}
 					aria-pressed={previewChannelIds.has(channel.id)}
 					variant="primaryInline"

@@ -1,23 +1,17 @@
+import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { KEY_PER_OCTAVE, NUM_KEYS, TICK_PER_MEASURE } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
+import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import type { InstrumentStoreState } from "../../InstrumentStore.ts";
 import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
 import type { EditorState } from "../Editor.ts";
-import { computeSelectionArea } from "./PianoRoll.ts";
-import type { PianoRollState } from "./PianoRollState.ts";
+import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
+import type { PianoRollState } from "./PianoRoll.ts";
 
 export const HEIGHT_PER_KEY = 16;
-
-export function widthPerMeasure(zoom: number) {
-	return 180 * zoom;
-}
-
-export function widthPerTick(zoom: number) {
-	return widthPerMeasure(zoom) / TICK_PER_MEASURE;
-}
 
 export function renderCanvas({
 	canvas,
@@ -165,7 +159,7 @@ export function renderCanvas({
 	// endregion
 
 	// region プレビューチャンネルのノート
-	for (const channelId of pianoRollState.previewChannelIds) {
+	for (const channelId of editorState.previewChannelIds) {
 		const channel = song.getChannel(channelId);
 		if (channel === null) {
 			console.warn("Dangling channel ID in previewChannelIds:", channelId);
@@ -296,7 +290,10 @@ export function renderCanvas({
 	}
 
 	// region 範囲選択マーキー
-	const marqueeArea = pianoRollState.marqueeArea;
+	const marqueeArea = getMarqueeArea(
+		editorState.marqueeAreaFrom,
+		editorState.marqueeAreaTo,
+	);
 	if (marqueeArea !== null) {
 		ctx.beginPath();
 

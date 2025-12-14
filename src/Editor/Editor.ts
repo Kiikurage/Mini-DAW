@@ -1,15 +1,29 @@
 import { TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
+import { getActiveChannel } from "../getActiveChannel.ts";
+import { getMarqueeArea } from "../getMarqueeArea.ts";
 import { minmax } from "../lib.ts";
+import type { Note } from "../models/Note.ts";
+import type { SongStore } from "../SongStore.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
-import { widthPerTick } from "./PianoRoll/PianoRollViewRenderer.ts";
+import { widthPerTick } from "./ParameterEditor/ParameterEditorViewRenderer.ts";
 
 /**
  * PianoRollとParameterEditorとで共有される状態。
  * 各サブコンポーネント固有の状態はここではなく、個別にサブコンポーネントのStateで管理する。
  */
 export interface EditorState {
+	/**
+	 * 新規に挿入されるノートのデフォルトの長さ
+	 */
+	readonly newNoteDurationInTick: number;
+
+	/**
+	 * 参照用に表示するチャンネルID一覧
+	 */
+	readonly previewChannelIds: ReadonlySet<number>;
+
 	/**
 	 * 編集中のチャンネルID
 	 */
@@ -39,19 +53,48 @@ export interface EditorState {
 	 * 時間方向の最小グリッド単位 [tick]
 	 */
 	readonly timelineGridUnitInTick: number;
+
+	/**
+	 * クオンタイズ単位 [tick]
+	 */
+	readonly quantizeUnitInTick: number;
+
+	/**
+	 * 範囲選択の開始位置(指定されたキーを含む)
+	 *
+	 * PianoRollState.marqueeArea.fromが返す座標は、選択範囲の裏返りなどを正規化しているため、
+	 * この値とは異なる可能性がある。
+	 */
+	readonly marqueeAreaFrom: null | { key: number; tick: number };
+
+	/**
+	 * 範囲選択の終了位置(指定されたキーを含む)
+	 *
+	 * PianoRollState.marqueeArea.toが返す座標は、選択範囲の裏返りなどを正規化しているため、
+	 * この値とは異なる可能性がある。
+	 */
+	readonly marqueeAreaTo: null | { key: number; tick: number };
 }
 
 export class Editor extends Stateful<EditorState> {
 	static readonly Key = ComponentKey.of(Editor);
 
-	constructor(bus: EventBus) {
+	constructor(
+		private readonly songStore: SongStore,
+		bus: EventBus,
+	) {
 		super({
+			newNoteDurationInTick: TICK_PER_MEASURE / 4,
+			previewChannelIds: new Set<number>(),
 			activeChannelId: null,
 			zoom: 1,
 			width: 0,
 			scrollLeft: 0,
 			selectedNoteIds: new Set<number>(),
 			timelineGridUnitInTick: TICK_PER_MEASURE / 4,
+			quantizeUnitInTick: TICK_PER_MEASURE / 16,
+			marqueeAreaFrom: null,
+			marqueeAreaTo: null,
 		});
 
 		bus
@@ -68,6 +111,7 @@ export class Editor extends Stateful<EditorState> {
 				if (this.state.activeChannelId === channelId) {
 					this.setActiveChannel(null);
 				}
+				this.cancelPreviewChannel(channelId);
 			})
 			.on("notes.delete.before", (channelId, noteIds) => {
 				if (this.state.activeChannelId === channelId) {
@@ -80,6 +124,72 @@ export class Editor extends Stateful<EditorState> {
 		this.updateState((state) => {
 			if (state.activeChannelId === activeChannelId) return state;
 			return { ...state, activeChannelId };
+		});
+	}
+
+	togglePreviewChannel(channelId: number) {
+		this.updateState((state) => {
+			const previewChannelIds = new Set(state.previewChannelIds);
+			if (previewChannelIds.has(channelId)) {
+				previewChannelIds.delete(channelId);
+			} else {
+				previewChannelIds.add(channelId);
+			}
+			return { ...state, previewChannelIds };
+		});
+	}
+
+	cancelPreviewChannel(channelId: number) {
+		this.updateState((state) => {
+			if (!state.previewChannelIds.has(channelId)) return state;
+			const previewChannelIds = new Set(state.previewChannelIds);
+			previewChannelIds.delete(channelId);
+			return { ...state, previewChannelIds };
+		});
+	}
+
+	startMarqueeSelection(position: { key: number; tick: number }) {
+		this.updateState((state) => {
+			if (
+				state.marqueeAreaFrom === position &&
+				state.marqueeAreaTo === position
+			)
+				return state;
+			return { ...state, marqueeAreaFrom: position, marqueeAreaTo: position };
+		});
+	}
+
+	setMarqueeAreaTo(position: null | { key: number; tick: number }) {
+		this.updateState((state) => {
+			if (state.marqueeAreaTo === position) return state;
+			return { ...state, marqueeAreaTo: position };
+		});
+	}
+
+	*findNotesInMarqueeArea(): Generator<Note> {
+		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		if (activeChannel === null) return;
+
+		const area = getMarqueeArea(
+			this.state.marqueeAreaFrom,
+			this.state.marqueeAreaTo,
+		);
+		if (area === null) return;
+
+		for (const note of activeChannel.notes.values()) {
+			if (note.key < area.keyFrom) continue;
+			if (area.keyTo <= note.key) continue;
+			if (area.tickTo <= note.tickFrom) continue;
+			if (note.tickTo <= area.tickFrom) continue;
+			yield note;
+		}
+	}
+
+	stopMarqueeSelection() {
+		this.updateState((state) => {
+			if (state.marqueeAreaFrom === null && state.marqueeAreaTo === null)
+				return state;
+			return { ...state, marqueeAreaFrom: null, marqueeAreaTo: null };
 		});
 	}
 
@@ -102,11 +212,15 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
+	selectAllNotes() {
+		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		if (activeChannel === null) return;
+
+		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));
+	}
+
 	unselectAllNotes() {
-		this.updateState((state) => {
-			if (state.selectedNoteIds.size === 0) return state;
-			return { ...state, selectedNoteIds: new Set() };
-		});
+		this.setSelectedNotes([]);
 	}
 
 	setSelectedNotes(selectedNoteIds: Iterable<number>) {
@@ -158,10 +272,25 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
+	setNewNoteDuration(newNoteDurationInTick: number) {
+		this.updateState((state) => {
+			if (state.newNoteDurationInTick === newNoteDurationInTick) return state;
+
+			return { ...state, newNoteDurationInTick };
+		});
+	}
+
 	setTimelineGridUnit(timelineGridUnitInTick: number) {
 		this.updateState((state) => {
 			if (state.timelineGridUnitInTick === timelineGridUnitInTick) return state;
 			return { ...state, timelineGridUnitInTick };
+		});
+	}
+
+	setQuantizeUnit(quantizeUnitInTick: number) {
+		this.updateState((state) => {
+			if (state.quantizeUnitInTick === quantizeUnitInTick) return state;
+			return { ...state, quantizeUnitInTick };
 		});
 	}
 }

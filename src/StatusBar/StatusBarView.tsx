@@ -1,15 +1,15 @@
 import styled from "@emotion/styled";
 import { MdSearch } from "react-icons/md";
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
-import type { Editor } from "../Editor/Editor.ts";
-import type { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
+import { useComponent } from "../Dependency/DIContainerProvider.tsx";
+import { Editor } from "../Editor/Editor.ts";
 import { formatDuration } from "../lib.ts";
-import type { Player } from "../Player/Player.ts";
+import { Player } from "../Player/Player.ts";
 import { Button } from "../react/Button.ts";
-import type { SongStore } from "../SongStore.ts";
+import { SongStore } from "../SongStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
-import type { UpdateSong } from "../usecases/UpdateSong.ts";
-import type { StatusBar } from "./StatusBar.tsx";
+import { type UpdateSong, UpdateSongKey } from "../usecases/UpdateSong.ts";
+import { StatusBar } from "./StatusBar.tsx";
 
 const StatusBarButton = styled(Button)({
 	borderRadius: 0,
@@ -23,29 +23,30 @@ const StatusBarButton = styled(Button)({
 export function StatusBarView({
 	statusBar,
 	songStore,
-	pianoRoll,
 	updateSong,
 	player,
 	editor,
 }: {
-	statusBar: StatusBar;
-	songStore: SongStore;
-	pianoRoll: PianoRoll;
-	updateSong: UpdateSong;
-	player: Player;
-	editor: Editor;
+	statusBar?: StatusBar;
+	songStore?: SongStore;
+	updateSong?: UpdateSong;
+	player?: Player;
+	editor?: Editor;
 }) {
+	statusBar = useComponent(StatusBar.Key, statusBar);
+	songStore = useComponent(SongStore.Key, songStore);
+	updateSong = useComponent(UpdateSongKey, updateSong);
+	player = useComponent(Player.Key, player);
+	editor = useComponent(Editor.Key, editor);
+
 	const statusMessage = useStateful(statusBar, (state) => state.message);
 	const zoom = useStateful(editor, (state) => state.zoom);
 	const bpm = useStateful(songStore, (state) => state.bpm);
 	const newNoteDuration = useStateful(
-		pianoRoll,
+		editor,
 		(state) => state.newNoteDurationInTick,
 	);
-	const quantizeUnit = useStateful(
-		pianoRoll,
-		(state) => state.quantizeUnitInTick,
-	);
+	const quantizeUnit = useStateful(editor, (state) => state.quantizeUnitInTick);
 	const isAutoScrollEnabled = useStateful(
 		player,
 		(state) => state.isAutoScrollEnabled,
@@ -116,7 +117,7 @@ export function StatusBarView({
 							quantizeUnit <= TICK_PER_MEASURE / 64
 								? TICK_PER_BEAT
 								: quantizeUnit / 2;
-						pianoRoll.setQuantizeUnit(newQuantizeUnit);
+						editor.setQuantizeUnit(newQuantizeUnit);
 					}}
 					tabIndex={-1}
 				>

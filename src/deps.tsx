@@ -4,8 +4,6 @@ import { ContextMenuManager } from "./ContextMenu/ContextMenuManager.tsx";
 import { DIContainer } from "./Dependency/DIContainer.ts";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Editor } from "./Editor/Editor.ts";
-import { ParameterEditor } from "./Editor/ParameterEditor/ParameterEditor.ts";
-import { PianoRoll } from "./Editor/PianoRoll/PianoRoll.ts";
 import { EventBus } from "./EventBus.ts";
 import { InstrumentStore } from "./InstrumentStore.ts";
 import { KeyboardHandler } from "./KeyboardHandler.ts";
@@ -22,7 +20,10 @@ import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
-import { SetNoteParameter, SetNoteParameterKey, } from "./usecases/SetNoteParameter.ts";
+import {
+	SetNoteParameter,
+	SetNoteParameterKey,
+} from "./usecases/SetNoteParameter.ts";
 import { SetNotes, SetNotesKey } from "./usecases/SetNotes.ts";
 import { SetSong, SetSongKey } from "./usecases/SetSong.ts";
 import { UpdateChannel, UpdateChannelKey } from "./usecases/UpdateChannel.ts";
@@ -35,7 +36,7 @@ export function configureDeps() {
 				return new AudioContext();
 			})
 			.set(Editor.Key, (deps) => {
-				return new Editor(deps.get(EventBus.Key));
+				return new Editor(deps.get(SongStore.Key), deps.get(EventBus.Key));
 			})
 			.set(EventBus.Key, () => {
 				return new EventBus();
@@ -63,27 +64,11 @@ export function configureDeps() {
 					deps.get(EventBus.Key),
 				);
 			})
-			.set(PianoRoll.Key, (deps) => {
-				return new PianoRoll(
-					deps.get(InstrumentStore.Key),
-					deps.get(SongStore.Key),
-					deps.get(SetNotesKey),
-					deps.get(MoveNotesKey),
-					deps.get(DeleteNotesKey),
-					deps.get(Player.Key),
-					deps.get(Editor.Key),
-					deps.get(EventBus.Key),
-				);
-			})
 			.set(OverlayPortal.Key, () => {
 				return new OverlayPortal();
 			})
-			.set(ParameterEditor.Key, (deps) => {
-				return new ParameterEditor(deps.get(SetNoteParameterKey));
-			})
 			.set(ClipboardManager.Key, (deps) => {
 				return new ClipboardManager(
-					deps.get(PianoRoll.Key),
 					deps.get(SongStore.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
@@ -96,13 +81,14 @@ export function configureDeps() {
 			})
 			.set(KeyboardHandler.Key, (deps) => {
 				return new KeyboardHandler(
-					deps.get(PianoRoll.Key),
 					deps.get(EditHistoryManager.Key),
 					deps.get(ClipboardManager.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
 					deps.get(SaveFileKey),
 					deps.get(LoadFileKey),
+					deps.get(MoveNotesKey),
+					deps.get(DeleteNotesKey),
 				);
 			})
 
