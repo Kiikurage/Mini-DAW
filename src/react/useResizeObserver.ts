@@ -26,7 +26,13 @@ export class ResizeObserverWrapper {
 		});
 	}
 
-	observe(target: Element, callback: Callback) {
+	/**
+	 * Elementのサイズ変更を監視する
+	 * @param target
+	 * @param callback
+	 * @return 監視解除関数
+	 */
+	observe(target: Element, callback: Callback): () => void {
 		let callbacks = this.callbacks.get(target);
 		if (!callbacks) {
 			this.resizeObserver.observe(target);
@@ -34,8 +40,17 @@ export class ResizeObserverWrapper {
 			this.callbacks.set(target, callbacks);
 		}
 		callbacks.add(callback);
+
+		return () => {
+			this.unobserve(target, callback);
+		};
 	}
 
+	/**
+	 * Elementのサイズ変更の監視を解除する
+	 * @param target
+	 * @param callback
+	 */
 	unobserve(target: Element, callback: Callback) {
 		const callbacks = this.callbacks.get(target);
 		if (!callbacks) return;

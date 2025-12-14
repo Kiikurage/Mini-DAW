@@ -79,11 +79,7 @@ export function configureDeps() {
 				return new OverlayPortal();
 			})
 			.set(ParameterEditor.Key, (deps) => {
-				return new ParameterEditor(
-					deps.get(SongStore.Key),
-					deps.get(SetNoteParameterKey),
-					deps.get(Editor.Key),
-				);
+				return new ParameterEditor(deps.get(SetNoteParameterKey));
 			})
 			.set(ClipboardManager.Key, (deps) => {
 				return new ClipboardManager(

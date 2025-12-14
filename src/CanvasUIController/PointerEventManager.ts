@@ -1,14 +1,14 @@
 import { MouseEventButton, MouseEventButtonMask } from "../constants.ts";
 import { assertNotNullish } from "../lib.ts";
-import type { CanvasUIDoubleClickEvent } from "./CanvasUIDoubleClickEvent.ts";
-import type { CanvasUIPointerEvent } from "./CanvasUIPointerEvent.ts";
-import type { CanvasUIPointerInteractionHandle } from "./CanvasUIPointerInteractionHandle.ts";
-import type { CanvasUIPosition } from "./CanvasUIPosition.ts";
+import type { PointerEventManagerDoubleClickEvent } from "./PointerEventManagerDoubleClickEvent.ts";
+import type { PointerEventManagerEvent } from "./PointerEventManagerEvent.ts";
+import type { PointerEventManagerInteractionHandle } from "./PointerEventManagerInteractionHandle.ts";
+import type { PositionSnapshot } from "./PositionSnapshot.ts";
 
 /**
  * Canvasに独自に描画するUIの基底クラス
  */
-export class CanvasUIController {
+export class PointerEventManager {
 	/**
 	 * タップと見なす最大の継続時間（ミリ秒単位）。これより長い時間のホールドではtapイベントは発生しない。
 	 */
@@ -21,9 +21,9 @@ export class CanvasUIController {
 
 	readonly pointers = new Map<number, PointerState>();
 
-	constructor(private readonly delegate: CanvasUIControllerDelegate) {}
+	constructor(private readonly delegate: PointerEventManagerDelegate) {}
 
-	handlePointerDown(nativeEvent: PointerEvent) {
+	readonly handlePointerDown = (nativeEvent: PointerEvent) => {
 		const position = this.resolvePosition(nativeEvent);
 
 		let state = this.pointers.get(nativeEvent.pointerId);
@@ -45,11 +45,11 @@ export class CanvasUIController {
 		};
 		state.sessions.set(nativeEvent.button, session);
 
-		const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
 		this.delegate.findHandle(position)?.handlePointerDown?.(ev);
-	}
+	};
 
-	handlePointerMove(nativeEvent: PointerEvent) {
+	readonly handlePointerMove = (nativeEvent: PointerEvent) => {
 		const position = this.resolvePosition(nativeEvent);
 
 		let state = this.pointers.get(nativeEvent.pointerId);
@@ -80,9 +80,9 @@ export class CanvasUIController {
 				this.handleDragStart(position, nativeEvent, session);
 			}
 		}
-	}
+	};
 
-	handlePointerUp(nativeEvent: PointerEvent) {
+	readonly handlePointerUp = (nativeEvent: PointerEvent) => {
 		const position = this.resolvePosition(nativeEvent);
 
 		const state = this.pointers.get(nativeEvent.pointerId);
@@ -98,7 +98,11 @@ export class CanvasUIController {
 		if (session !== undefined) {
 			state.sessions.delete(nativeEvent.button);
 
-			const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+			const ev = new PointerEventManagerEventImpl(
+				position,
+				nativeEvent,
+				session,
+			);
 
 			for (const listener of session.pointerUpListeners) {
 				listener(ev);
@@ -111,50 +115,34 @@ export class CanvasUIController {
 			);
 			const duration = nativeEvent.timeStamp - session.readyAt;
 			if (
-				duration < CanvasUIController.MAX_DURATION_FOR_TAP_IN_MS &&
-				distance < CanvasUIController.MAX_DISTANCE_FOR_TAP_IN_PIXEL
+				duration < PointerEventManager.MAX_DURATION_FOR_TAP_IN_MS &&
+				distance < PointerEventManager.MAX_DISTANCE_FOR_TAP_IN_PIXEL
 			) {
 				this.handleTap(position, nativeEvent, session);
 			}
 		}
-	}
+	};
 
-	handleDoubleClick(nativeEvent: MouseEvent) {
+	readonly handleDoubleClick = (nativeEvent: MouseEvent) => {
 		const position = this.resolvePosition(nativeEvent);
-		const ev: CanvasUIDoubleClickEvent = {
+		const ev: PointerEventManagerDoubleClickEvent = {
 			position,
 			button: nativeEvent.button,
 			metaKey: nativeEvent.metaKey,
 		};
 
 		this.delegate.findHandle(position)?.handleDoubleClick?.(ev);
-	}
-
-	handleScroll(ev: UIEvent) {
-		if (ev.currentTarget === null) return;
-		const target = ev.currentTarget as Element;
-
-		// DOM APIはスクロール位置として常に整数を返すため、小数点以下の比較を省かないと、更新が無限に発生する
-		const { scrollLeft, scrollTop } = this.delegate.getScrollPosition();
-		if (
-			Math.round(scrollTop) === Math.round(target.scrollTop) &&
-			Math.round(scrollLeft) === Math.round(target.scrollLeft)
-		) {
-			return;
-		}
-
-		this.delegate.setScrollPosition(target.scrollLeft, target.scrollTop);
-	}
+	};
 
 	private handleDragStart(
-		position: CanvasUIPosition,
+		position: PositionSnapshot,
 		nativeEvent: PointerEvent,
 		session: PointerSession,
 	) {
 		if (session.dragging !== "ready") return;
 		session.dragging = "dragging";
 
-		const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
 		for (const listener of session.dragStartListeners) {
 			listener(ev);
 		}
@@ -162,13 +150,13 @@ export class CanvasUIController {
 	}
 
 	private handleDragMove(
-		position: CanvasUIPosition,
+		position: PositionSnapshot,
 		nativeEvent: PointerEvent,
 		session: PointerSession,
 	) {
 		if (session.dragging !== "dragging") return;
 
-		const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
 		for (const listener of session.dragMoveListeners) {
 			listener(ev);
 		}
@@ -176,7 +164,7 @@ export class CanvasUIController {
 	}
 
 	private handleDragEnd(
-		position: CanvasUIPosition,
+		position: PositionSnapshot,
 		nativeEvent: PointerEvent,
 		state: PointerState,
 	) {
@@ -186,7 +174,7 @@ export class CanvasUIController {
 		}
 		session.dragging = "ended";
 
-		const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
 		for (const listener of session.dragEndListeners) {
 			listener(ev);
 		}
@@ -194,11 +182,11 @@ export class CanvasUIController {
 	}
 
 	private handleTap(
-		position: CanvasUIPosition,
+		position: PositionSnapshot,
 		nativeEvent: PointerEvent,
 		session: PointerSession,
 	) {
-		const ev = new CanvasUIPointerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
 		for (const listener of session.tapListeners) {
 			listener(ev);
 		}
@@ -210,27 +198,30 @@ export class CanvasUIController {
 	 * @param ev
 	 * @private
 	 */
-	private resolvePosition(ev: MouseEvent): CanvasUIPosition {
+	private resolvePosition(ev: MouseEvent): PositionSnapshot {
 		const { scrollLeft, scrollTop } = this.delegate.getScrollPosition();
+		const { width, height } = this.delegate.getSize();
 
 		return {
 			x: ev.offsetX,
 			y: ev.offsetY,
 			scrollLeft,
 			scrollTop,
+			width,
+			height,
 			zoom: this.delegate.getZoomLevel(),
 		};
 	}
 }
 
-export interface CanvasUIControllerDelegate {
+export interface PointerEventManagerDelegate {
 	/**
 	 * 座標から、ドラッグハンドルを探す。ハンドルが複数重なっている場合には優先すべきハンドルを解決して返す。
 	 * @private
 	 */
 	findHandle(
-		position: CanvasUIPosition,
-	): CanvasUIPointerInteractionHandle | null;
+		position: PositionSnapshot,
+	): PointerEventManagerInteractionHandle | null;
 
 	/**
 	 * カーソルを設定する。
@@ -240,12 +231,9 @@ export interface CanvasUIControllerDelegate {
 	setCursor(cursor: string): void;
 
 	/**
-	 * スクロール位置を設定する。
-	 * @param scrollLeft
-	 * @param scrollTop
-	 * @protected
+	 * Canvasのサイズを取得する。
 	 */
-	setScrollPosition(scrollLeft: number, scrollTop: number): void;
+	getSize(): { width: number; height: number };
 
 	/**
 	 * スクロール位置を取得する。
@@ -266,25 +254,25 @@ export interface CanvasUIControllerDelegate {
 }
 
 interface PointerState {
-	position: CanvasUIPosition;
+	position: PositionSnapshot;
 	readonly sessions: Map<number, PointerSession>;
 }
 
 interface PointerSession {
 	button: number;
 	dragging: "ready" | "dragging" | "ended";
-	startPosition: CanvasUIPosition;
+	startPosition: PositionSnapshot;
 	readyAt: number;
-	dragStartListeners: Set<(ev: CanvasUIPointerEvent) => void>;
-	dragMoveListeners: Set<(ev: CanvasUIPointerEvent) => void>;
-	dragEndListeners: Set<(ev: CanvasUIPointerEvent) => void>;
-	pointerUpListeners: Set<(ev: CanvasUIPointerEvent) => void>;
-	tapListeners: Set<(ev: CanvasUIPointerEvent) => void>;
+	dragStartListeners: Set<(ev: PointerEventManagerEvent) => void>;
+	dragMoveListeners: Set<(ev: PointerEventManagerEvent) => void>;
+	dragEndListeners: Set<(ev: PointerEventManagerEvent) => void>;
+	pointerUpListeners: Set<(ev: PointerEventManagerEvent) => void>;
+	tapListeners: Set<(ev: PointerEventManagerEvent) => void>;
 }
 
-class CanvasUIPointerEventImpl implements CanvasUIPointerEvent {
+class PointerEventManagerEventImpl implements PointerEventManagerEvent {
 	constructor(
-		public readonly position: CanvasUIPosition,
+		public readonly position: PositionSnapshot,
 		private readonly nativeEvent: MouseEvent,
 		private readonly dragSession: PointerSession,
 	) {}
@@ -301,40 +289,40 @@ class CanvasUIPointerEventImpl implements CanvasUIPointerEvent {
 		return this.dragSession.dragging;
 	}
 
-	get startPosition(): CanvasUIPosition {
+	get startPosition(): PositionSnapshot {
 		return this.dragSession.startPosition;
 	}
 
 	addDragStartSessionListener(
-		listener: (ev: CanvasUIPointerEvent) => void,
+		listener: (ev: PointerEventManagerEvent) => void,
 	): () => void {
 		this.dragSession.dragStartListeners.add(listener);
 		return () => this.dragSession.dragStartListeners.delete(listener);
 	}
 
 	addDragMoveSessionListener(
-		listener: (ev: CanvasUIPointerEvent) => void,
+		listener: (ev: PointerEventManagerEvent) => void,
 	): () => void {
 		this.dragSession.dragMoveListeners.add(listener);
 		return () => this.dragSession.dragMoveListeners.delete(listener);
 	}
 
 	addDragEndSessionListener(
-		listener: (ev: CanvasUIPointerEvent) => void,
+		listener: (ev: PointerEventManagerEvent) => void,
 	): () => void {
 		this.dragSession.dragEndListeners.add(listener);
 		return () => this.dragSession.dragEndListeners.delete(listener);
 	}
 
 	addPointerUpSessionListener(
-		listener: (ev: CanvasUIPointerEvent) => void,
+		listener: (ev: PointerEventManagerEvent) => void,
 	): () => void {
 		this.dragSession.pointerUpListeners.add(listener);
 		return () => this.dragSession.pointerUpListeners.delete(listener);
 	}
 
 	addTapSessionListener(
-		listener: (ev: CanvasUIPointerEvent) => void,
+		listener: (ev: PointerEventManagerEvent) => void,
 	): () => void {
 		this.dragSession.tapListeners.add(listener);
 		return () => this.dragSession.tapListeners.delete(listener);

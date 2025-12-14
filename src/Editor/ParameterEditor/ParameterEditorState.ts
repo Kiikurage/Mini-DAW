@@ -1,11 +1,6 @@
 export class ParameterEditorState {
 	/**
-	 * 表示領域の幅 [px]
-	 */
-	readonly width: number;
-
-	/**
-	 * 表示領域の高さ [px]
+	 * 高さ [px]
 	 */
 	readonly height: number;
 
@@ -26,20 +21,17 @@ export class ParameterEditorState {
 
 	constructor(
 		props: {
-			width: number;
 			height: number;
 			cursor: string;
 			marqueeAreaFrom: number | null;
 			marqueeAreaTo: number | null;
 		} = {
-			width: 0,
 			height: 0,
 			cursor: "default",
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
 		},
 	) {
-		this.width = props.width;
 		this.height = props.height;
 		this.cursor = props.cursor;
 		this.marqueeAreaFrom = props.marqueeAreaFrom;
@@ -55,6 +47,11 @@ export class ParameterEditorState {
 			tickFrom: Math.min(this.marqueeAreaFrom, this.marqueeAreaTo),
 			tickTo: Math.max(this.marqueeAreaFrom, this.marqueeAreaTo),
 		};
+	}
+
+	setHeight(height: number) {
+		if (this.height === height) return this;
+		return new ParameterEditorState({ ...this, height });
 	}
 
 	setMarqueeAreaFrom(marqueeAreaFrom: number) {
@@ -77,16 +74,6 @@ export class ParameterEditorState {
 			...this,
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
-		});
-	}
-
-	setSize(width: number, height: number) {
-		if (this.width === width && this.height === height) return this;
-
-		return new ParameterEditorState({
-			...this,
-			width,
-			height,
 		});
 	}
 

@@ -4,10 +4,8 @@ import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
-import { ParameterEditor } from "../Editor/ParameterEditor/ParameterEditor.ts";
-import { ParameterEditorView } from "../Editor/ParameterEditor/ParameterEditorView.tsx";
+import { EditorView } from "../Editor/EditorView.tsx";
 import { PianoRoll } from "../Editor/PianoRoll/PianoRoll.ts";
-import { PianoRollView } from "../Editor/PianoRoll/PianoRollView.tsx";
 import { InstrumentStore } from "../InstrumentStore.ts";
 import { KeyboardHandler } from "../KeyboardHandler.ts";
 import { Player } from "../Player/Player.ts";
@@ -60,7 +58,7 @@ export function AppView() {
 				gridTemplate: `
 				"GlobalMenuBar GlobalMenuBar" min-content
 				"ToolBar ToolBar" min-content
-				"SidePane PianoRoll " 1fr
+				"SidePane Editor " 1fr
 				"StatusBar StatusBar" min-content / min-content 1fr min-content;
 			`.trim(),
 			}}
@@ -94,7 +92,7 @@ export function AppView() {
 
 			<div
 				css={{
-					gridArea: "PianoRoll",
+					gridArea: "Editor",
 					position: "relative",
 					display: "flex",
 					flexDirection: "column",
@@ -102,42 +100,7 @@ export function AppView() {
 					justifyContent: "stretch",
 				}}
 			>
-				<div
-					css={{
-						position: "relative",
-						flex: "1 1 0",
-					}}
-				>
-					<PianoRollView
-						pianoRoll={useComponent(PianoRoll.Key)}
-						instrumentStore={useComponent(InstrumentStore.Key)}
-						songStore={useComponent(SongStore.Key)}
-						player={useComponent(Player.Key)}
-						editor={useComponent(Editor.Key)}
-					/>
-				</div>
-				<div
-					css={{
-						position: "relative",
-						background: "var(--color-background)",
-						flex: "0 0 12px",
-						borderTop: "1px solid var(--color-border)",
-						borderBottom: "1px solid var(--color-border)",
-					}}
-				/>
-				<div
-					css={{
-						position: "relative",
-						flex: "0 0 200px",
-					}}
-				>
-					<ParameterEditorView
-						parameterEditor={useComponent(ParameterEditor.Key)}
-						player={useComponent(Player.Key)}
-						songStore={useComponent(SongStore.Key)}
-						editor={useComponent(Editor.Key)}
-					/>
-				</div>
+				<EditorView editor={useComponent(Editor.Key)} />
 			</div>
 
 			<div

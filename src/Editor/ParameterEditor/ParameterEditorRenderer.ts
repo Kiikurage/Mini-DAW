@@ -33,7 +33,7 @@ export function renderCanvas({
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
 
-	const totalWidth = parameterEditorState.width * devicePixelRatio;
+	const totalWidth = editorState.width * devicePixelRatio;
 	if (canvas.width !== totalWidth) {
 		canvas.width = totalWidth;
 	}

@@ -1,13 +1,12 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { NUM_KEYS, TICK_PER_BEAT } from "../../constants.ts";
+import { useEffect, useRef } from "react";
+import { NUM_KEYS } from "../../constants.ts";
 import type { InstrumentStore } from "../../InstrumentStore.ts";
 import type { Player } from "../../Player/Player.ts";
-import { useResizeObserver } from "../../react/useResizeObserver.ts";
+import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import type { SongStore } from "../../SongStore.ts";
-import { useStateful } from "../../Stateful/useStateful.tsx";
 import type { Editor } from "../Editor.ts";
 import type { PianoRoll } from "./PianoRoll.ts";
-import { HEIGHT_PER_KEY, renderCanvas, TIMELINE_HEIGHT, widthPerTick, } from "./PianoRollViewRenderer.ts";
+import { HEIGHT_PER_KEY, renderCanvas } from "./PianoRollViewRenderer.ts";
 
 export function PianoRollView({
 	pianoRoll,
@@ -22,126 +21,143 @@ export function PianoRollView({
 	player: Player;
 	editor: Editor;
 }) {
-	const width = useStateful(pianoRoll, (state) => state.width);
-	const height = useStateful(pianoRoll, (state) => state.height);
-	const cursor = useStateful(pianoRoll, (state) => state.cursor);
-	const zoom = useStateful(editor, (state) => state.zoom);
-	const scrollTop = useStateful(editor, (state) => state.scrollTop);
-	const scrollLeft = useStateful(editor, (state) => state.scrollLeft);
-
-	const viewportRef = useRef<HTMLDivElement>(null);
-
-	const containerResizeObserver = useResizeObserver((entry) => {
-		pianoRoll.setSize(entry.contentRect.width, entry.contentRect.height);
-	});
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
 	useEffect(() => {
-		// C4が見える位置にスクロールしておく
-		const viewport = viewportRef.current;
-		if (viewport !== null) {
-			viewport.scrollTop =
-				(NUM_KEYS - 60) * HEIGHT_PER_KEY - viewport.clientHeight / 2;
-		}
-	}, []);
+		const canvas = canvasRef.current;
+		if (canvas === null) return;
 
-	const canvasRef = useRef<HTMLCanvasElement>(null);
-
-	useEffect(() => {
-		function render() {
-			const canvas = canvasRef.current;
-			if (canvas === null) return;
-
-			renderCanvas({
-				canvas,
-				pianoRollState: pianoRoll.state,
-				instrumentStoreState: instrumentStore.state,
-				song: songStore.state,
-				playerState: player.state,
-				editorState: editor.state,
-			});
-		}
-
-		render();
-
-		const unsubscribeCallbacks = [
-			pianoRoll.addChangeListener(render),
-			instrumentStore.addChangeListener(render),
-			songStore.addChangeListener(render),
-			player.addChangeListener(render),
-			editor.addChangeListener(render),
-		];
+		const controller = new PianoRollViewController(
+			pianoRoll,
+			instrumentStore,
+			songStore,
+			player,
+			editor,
+		);
+		controller.setCanvas(canvas);
 
 		return () => {
-			for (const unsubscribe of unsubscribeCallbacks) {
-				unsubscribe();
-			}
+			controller.cleanUp();
 		};
-	}, [pianoRoll, instrumentStore, songStore, player, editor]);
-
-	useLayoutEffect(() => {
-		const viewport = viewportRef.current;
-		if (viewport === null) return;
-
-		if (viewport.scrollTop !== scrollTop) {
-			viewport.scrollTop = scrollTop;
-		}
-		if (viewport.scrollLeft !== scrollLeft) {
-			viewport.scrollLeft = scrollLeft;
-		}
-	}, [scrollTop, scrollLeft]);
+	}, [editor, instrumentStore, pianoRoll, player, songStore]);
 
 	return (
-		<div
-			ref={(e) => {
-				viewportRef.current = e;
-				containerResizeObserver(e);
-			}}
-			onScroll={(ev) => {
-				pianoRoll.handleScroll(ev.nativeEvent);
-			}}
+		<canvas
+			ref={canvasRef}
 			css={{
-				overflow: "scroll",
 				position: "absolute",
 				inset: 0,
+				width: "100%",
+				height: "100%",
 				background: "var(--color-key-background)",
 			}}
-		>
-			<div
-				css={{
-					width: widthPerTick(zoom) * TICK_PER_BEAT * 100,
-					height: NUM_KEYS * HEIGHT_PER_KEY + TIMELINE_HEIGHT,
-				}}
-			>
-				<canvas
-					ref={canvasRef}
-					onPointerDown={(ev) => {
-						ev.currentTarget.setPointerCapture(ev.pointerId);
-						pianoRoll.handlePointerDown(ev.nativeEvent);
-					}}
-					onPointerMove={(ev) => {
-						pianoRoll.handlePointerMove(ev.nativeEvent);
-					}}
-					onPointerUp={(ev) => {
-						ev.currentTarget.releasePointerCapture(ev.pointerId);
-						pianoRoll.handlePointerUp(ev.nativeEvent);
-					}}
-					onDoubleClick={(ev) => {
-						pianoRoll.handleDoubleClick(ev.nativeEvent);
-					}}
-					style={{
-						width,
-						height,
-						cursor,
-					}}
-					css={{
-						position: "sticky",
-						top: 0,
-						left: 0,
-						bottom: 0,
-						right: 0,
-					}}
-				/>
-			</div>
-		</div>
+		/>
 	);
+}
+
+class PianoRollViewController {
+	private canvas: HTMLCanvasElement | null = null;
+	private readonly unregisterCallbacks: (() => void)[] = [];
+
+	constructor(
+		private readonly pianoRoll: PianoRoll,
+		private readonly instrumentStore: InstrumentStore,
+		private readonly songStore: SongStore,
+		private readonly player: Player,
+		private readonly editor: Editor,
+	) {
+		this.unregisterCallbacks.push(
+			pianoRoll.addChangeListener((state) => {
+				if (this.canvas === null) return;
+				this.canvas.style.cursor = state.cursor;
+			}),
+			pianoRoll.addChangeListener(this.render),
+			instrumentStore.addChangeListener(this.render),
+			songStore.addChangeListener(this.render),
+			player.addChangeListener(this.render),
+			editor.addChangeListener(this.render),
+		);
+	}
+
+	setCanvas(canvas: HTMLCanvasElement | null) {
+		this.cleanUpCanvas();
+		if (canvas === null) return;
+
+		// C4 を中央に表示する
+		this.pianoRoll.setScrollTop(
+			(NUM_KEYS - 60) * HEIGHT_PER_KEY - canvas.clientHeight / 2,
+		);
+
+		this.canvas = canvas;
+		ResizeObserverWrapper.getInstance().observe(canvas, this.handleResize);
+		this.canvas.addEventListener("wheel", this.handleWheel);
+		this.canvas.addEventListener("pointerdown", this.handlePointerDown);
+		this.canvas.addEventListener("pointermove", this.handlePointerMove);
+		this.canvas.addEventListener("pointerup", this.handlePointerUp);
+		this.canvas.addEventListener("dblclick", this.handleDoubleClick);
+
+		this.render();
+	}
+
+	cleanUp() {
+		this.setCanvas(null);
+		for (const unregister of this.unregisterCallbacks) {
+			unregister();
+		}
+	}
+
+	private cleanUpCanvas() {
+		if (this.canvas === null) return;
+
+		ResizeObserverWrapper.getInstance().unobserve(
+			this.canvas,
+			this.handleResize,
+		);
+		this.canvas.removeEventListener("pointerdown", this.handlePointerDown);
+		this.canvas.removeEventListener("pointermove", this.handlePointerMove);
+		this.canvas.removeEventListener("pointerup", this.handlePointerUp);
+		this.canvas.removeEventListener("dblclick", this.handleDoubleClick);
+		this.canvas.removeEventListener("wheel", this.handleWheel);
+		this.canvas = null;
+	}
+
+	private readonly render = () => {
+		if (this.canvas === null) return;
+
+		renderCanvas({
+			canvas: this.canvas,
+			pianoRollState: this.pianoRoll.state,
+			instrumentStoreState: this.instrumentStore.state,
+			song: this.songStore.state,
+			playerState: this.player.state,
+			editorState: this.editor.state,
+		});
+	};
+
+	private readonly handleResize = (entry: ResizeObserverEntry) => {
+		this.pianoRoll.setHeight(entry.contentRect.height);
+	};
+
+	private readonly handleWheel = (ev: WheelEvent) => {
+		this.editor.setScrollLeft(this.editor.state.scrollLeft + ev.deltaX);
+		this.pianoRoll.setScrollTop(this.pianoRoll.state.scrollTop + ev.deltaY);
+	};
+
+	private readonly handlePointerDown = (ev: PointerEvent) => {
+		(ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+		this.pianoRoll.handlePointerDown(ev);
+	};
+
+	private readonly handlePointerMove = (ev: PointerEvent) => {
+		this.pianoRoll.handlePointerMove(ev);
+	};
+
+	private readonly handlePointerUp = (ev: PointerEvent) => {
+		(ev.target as HTMLElement).releasePointerCapture(ev.pointerId);
+		this.pianoRoll.handlePointerUp(ev);
+	};
+
+	private readonly handleDoubleClick = (ev: MouseEvent) => {
+		this.pianoRoll.handleDoubleClick(ev);
+	};
 }

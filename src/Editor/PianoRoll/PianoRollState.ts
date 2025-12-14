@@ -1,4 +1,6 @@
-import { TICK_PER_MEASURE } from "../../constants.ts";
+import { NUM_KEYS, TICK_PER_MEASURE } from "../../constants.ts";
+import { minmax } from "../../lib.ts";
+import { HEIGHT_PER_KEY, TIMELINE_HEIGHT } from "./PianoRollViewRenderer.ts";
 
 export interface PianoRollArea {
 	keyFrom: number;
@@ -34,14 +36,14 @@ export class PianoRollState {
 	readonly newNoteDurationInTick: number;
 
 	/**
-	 * 表示領域の幅 [px]
-	 */
-	readonly width: number;
-
-	/**
-	 * 表示領域の高さ [px]
+	 * 高さ [px]
 	 */
 	readonly height: number;
+
+	/**
+	 * スクロール位置(垂直) [px]
+	 */
+	readonly scrollTop: number;
 
 	/**
 	 * 現在のカーソル状態
@@ -90,10 +92,10 @@ export class PianoRollState {
 			mutedChannelIds: ReadonlySet<number>;
 			quantizeUnitInTick: number;
 			newNoteDurationInTick: number;
-			width: number;
-			height: number;
 			hoveredNoteIds: ReadonlySet<number>;
 			cursor: string;
+			height: number;
+			scrollTop: number;
 			marqueeAreaFrom: null | { key: number; tick: number };
 			marqueeAreaTo: null | { key: number; tick: number };
 		} = {
@@ -101,10 +103,10 @@ export class PianoRollState {
 			mutedChannelIds: new Set(),
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
-			width: 0,
-			height: 0,
 			hoveredNoteIds: new Set(),
 			cursor: "default",
+			height: 0,
+			scrollTop: 0,
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
 		},
@@ -113,10 +115,10 @@ export class PianoRollState {
 		this.mutedChannelIds = props.mutedChannelIds;
 		this.quantizeUnitInTick = props.quantizeUnitInTick;
 		this.newNoteDurationInTick = props.newNoteDurationInTick;
-		this.width = props.width;
-		this.height = props.height;
 		this.hoveredNoteIds = props.hoveredNoteIds;
 		this.cursor = props.cursor;
+		this.height = props.height;
+		this.scrollTop = props.scrollTop;
 		this.marqueeAreaFrom = props.marqueeAreaFrom;
 		this.marqueeAreaTo = props.marqueeAreaTo;
 	}
@@ -177,19 +179,30 @@ export class PianoRollState {
 		return new PianoRollState({ ...this, quantizeUnitInTick });
 	}
 
-	setSize(width: number, height: number) {
-		if (this.width === width && this.height === height) return this;
-
-		return new PianoRollState({
-			...this,
-			width,
-			height,
-		});
-	}
-
 	setCursor(cursor: string) {
 		if (this.cursor === cursor) return this;
 		return new PianoRollState({ ...this, cursor });
+	}
+
+	setHeight(height: number) {
+		if (this.height === height) return this;
+		return new PianoRollState({ ...this, height });
+	}
+
+	setScrollTop(scrollTop: number) {
+		// DOM APIはスクロール位置として常に整数を返すため、小数点以下の比較を省かないと、更新が無限に発生する
+		const oldValue = Math.round(this.scrollTop);
+		const newValue = Math.round(
+			minmax(
+				0,
+				NUM_KEYS * HEIGHT_PER_KEY - (this.height - TIMELINE_HEIGHT),
+				scrollTop,
+			),
+		);
+
+		if (oldValue === newValue) return this;
+
+		return new PianoRollState({ ...this, scrollTop: newValue });
 	}
 
 	setHoveredNoteIds(noteIds: ReadonlySet<number>) {
@@ -206,6 +219,7 @@ export class PianoRollState {
 		if (this.marqueeAreaTo === position) return this;
 		return new PianoRollState({ ...this, marqueeAreaTo: position });
 	}
+
 	setNewNoteDurationTick(newNoteDurationInTick: number) {
 		if (this.newNoteDurationInTick === newNoteDurationInTick) return this;
 

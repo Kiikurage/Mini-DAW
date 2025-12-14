@@ -1,7 +1,7 @@
-import { CanvasUIController, type CanvasUIControllerDelegate, } from "../../CanvasUIController/CanvasUIController.ts";
-import type { CanvasUIPointerEvent } from "../../CanvasUIController/CanvasUIPointerEvent.ts";
-import type { CanvasUIPointerInteractionHandle } from "../../CanvasUIController/CanvasUIPointerInteractionHandle.ts";
-import type { CanvasUIPosition } from "../../CanvasUIController/CanvasUIPosition.ts";
+import { PointerEventManager, type PointerEventManagerDelegate, } from "../../CanvasUIController/PointerEventManager.ts";
+import type { PointerEventManagerEvent } from "../../CanvasUIController/PointerEventManagerEvent.ts";
+import type { PointerEventManagerInteractionHandle } from "../../CanvasUIController/PointerEventManagerInteractionHandle.ts";
+import type { PositionSnapshot } from "../../CanvasUIController/PositionSnapshot.ts";
 import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
 import { ComponentKey } from "../../Dependency/DIContainer.ts";
 import type { EventBus } from "../../EventBus.ts";
@@ -22,7 +22,7 @@ import { HEIGHT_PER_KEY, SIDEBAR_WIDTH, TIMELINE_HEIGHT, widthPerTick, } from ".
 
 export class PianoRoll
 	extends Stateful<PianoRollState>
-	implements CanvasUIControllerDelegate
+	implements PointerEventManagerDelegate
 {
 	static readonly Key = ComponentKey.of(PianoRoll);
 
@@ -39,7 +39,7 @@ export class PianoRoll
 
 	private static readonly NOTE_PREVIEW_DURATION_IN_MS = 200;
 
-	private readonly canvasUIController = new CanvasUIController(this);
+	private readonly canvasUIController = new PointerEventManager(this);
 
 	constructor(
 		private readonly instrumentStore: Stateful<InstrumentStoreState>,
@@ -58,12 +58,12 @@ export class PianoRoll
 
 			const playHeadX = state.currentTick * widthPerTick(editor.state.zoom);
 			const scrollLeft = minmax(
-				playHeadX - this.state.width / 2,
+				playHeadX - this.editor.state.width / 2,
 				playHeadX,
 				editor.state.scrollLeft,
 			);
 
-			this.setScrollPosition(scrollLeft, editor.state.scrollTop);
+			this.editor.setScrollLeft(scrollLeft);
 		});
 
 		bus.on("channel.delete.before", (channelId: number) => {
@@ -73,6 +73,10 @@ export class PianoRoll
 	}
 
 	// region Setter and Getter
+
+	setHeight(height: number) {
+		this.updateState((state) => state.setHeight(height));
+	}
 
 	setQuantizeUnit(quantizeUnit: number) {
 		this.updateState((state) => state.setQuantizeUnit(quantizeUnit));
@@ -94,8 +98,8 @@ export class PianoRoll
 		return this.updateState((state) => state.cancelMuteChannel(channelId));
 	}
 
-	setSize(width: number, height: number) {
-		this.updateState((state) => state.setSize(width, height));
+	setScrollTop(scrollTop: number) {
+		this.updateState((state) => state.setScrollTop(scrollTop));
 	}
 
 	selectAllNotes() {
@@ -161,16 +165,13 @@ export class PianoRoll
 	readonly handleDoubleClick = (ev: MouseEvent) =>
 		this.canvasUIController.handleDoubleClick(ev);
 
-	readonly handleScroll = (ev: UIEvent) =>
-		this.canvasUIController.handleScroll(ev);
-
 	// endregion
 
 	// region CanvasUIControllerDelegate implementation
 
 	findHandle(
-		canvasPosition: CanvasUIPosition,
-	): CanvasUIPointerInteractionHandle | null {
+		canvasPosition: PositionSnapshot,
+	): PointerEventManagerInteractionHandle | null {
 		const area = detectArea(canvasPosition);
 
 		// 1. タイムライン・サイドバー・コーナー
@@ -212,7 +213,7 @@ export class PianoRoll
 	private findPointerEventsHandleForNote(
 		position: PianoRollPosition,
 		note: Note,
-	): CanvasUIPointerInteractionHandle | null {
+	): PointerEventManagerInteractionHandle | null {
 		if (this.noLoopKeys.has(note.key)) {
 			return this.findPointerEventsHandleForNoLoopNote(position, note);
 		} else {
@@ -223,7 +224,7 @@ export class PianoRoll
 	private findPointerEventsHandleForLoopNote(
 		position: PianoRollPosition,
 		note: Note,
-	): CanvasUIPointerInteractionHandle | null {
+	): PointerEventManagerInteractionHandle | null {
 		if (note.key !== position.key) return null;
 
 		if (
@@ -256,7 +257,7 @@ export class PianoRoll
 	private findPointerEventsHandleForNoLoopNote(
 		position: PianoRollPosition,
 		note: Note,
-	): CanvasUIPointerInteractionHandle | null {
+	): PointerEventManagerInteractionHandle | null {
 		if (note.key !== position.key) return null;
 
 		const minX =
@@ -277,7 +278,7 @@ export class PianoRoll
 
 	private findPointerEventsHandleForSelectionArea(
 		position: PianoRollPosition,
-	): CanvasUIPointerInteractionHandle | null {
+	): PointerEventManagerInteractionHandle | null {
 		const selectionArea = computeSelectionArea(
 			this.noLoopKeys,
 			this.songStore.state,
@@ -318,15 +319,17 @@ export class PianoRoll
 		this.updateState((state) => state.setCursor(cursor));
 	}
 
-	setScrollPosition(scrollLeft: number, scrollTop: number) {
-		this.editor.setScrollLeft(scrollLeft);
-		this.editor.setScrollTop(scrollTop);
+	getSize(): { width: number; height: number } {
+		return {
+			width: this.editor.state.width,
+			height: this.state.height,
+		};
 	}
 
 	getScrollPosition(): { scrollLeft: number; scrollTop: number } {
 		return {
 			scrollLeft: this.editor.state.scrollLeft,
-			scrollTop: this.editor.state.scrollTop,
+			scrollTop: this.state.scrollTop,
 		};
 	}
 
@@ -400,9 +403,9 @@ export class PianoRoll
 
 	// region Pointer Interaction Handles
 
-	private readonly backgroundHandle: CanvasUIPointerInteractionHandle = {
+	private readonly backgroundHandle: PointerEventManagerInteractionHandle = {
 		cursor: "default",
-		handlePointerDown: (ev: CanvasUIPointerEvent) => {
+		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			const flagMultipleNotesSelectedAtStart =
 				this.editor.state.selectedNoteIds.size >= 2;
 
@@ -465,9 +468,9 @@ export class PianoRoll
 		},
 	};
 
-	private readonly timelineHandle: CanvasUIPointerInteractionHandle = {
+	private readonly timelineHandle: PointerEventManagerInteractionHandle = {
 		cursor: "default",
-		handlePointerDown: (ev: CanvasUIPointerEvent) => {
+		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			const tick = quantize(
 				PianoRollPosition.create(ev.position).tick,
 				this.state.quantizeUnitInTick,
@@ -480,10 +483,10 @@ export class PianoRoll
 		},
 	};
 
-	private createSelectionAreaStartHandle(): CanvasUIPointerInteractionHandle {
+	private createSelectionAreaStartHandle(): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "ew-resize",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -528,10 +531,10 @@ export class PianoRoll
 		};
 	}
 
-	private createSelectionAreaBodyHandle(): CanvasUIPointerInteractionHandle {
+	private createSelectionAreaBodyHandle(): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "move",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -580,10 +583,10 @@ export class PianoRoll
 		};
 	}
 
-	private createSelectionAreaEndHandle(): CanvasUIPointerInteractionHandle {
+	private createSelectionAreaEndHandle(): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "ew-resize",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -627,10 +630,10 @@ export class PianoRoll
 
 	private createNoteStartHandle(
 		targetNote: Note,
-	): CanvasUIPointerInteractionHandle {
+	): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "ew-resize",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -689,10 +692,10 @@ export class PianoRoll
 
 	private createNoteBodyHandle(
 		targetNote: Note,
-	): CanvasUIPointerInteractionHandle {
+	): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "move",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -752,10 +755,10 @@ export class PianoRoll
 
 	private createNoteEndHandle(
 		targetNote: Note,
-	): CanvasUIPointerInteractionHandle {
+	): PointerEventManagerInteractionHandle {
 		return {
 			cursor: "ew-resize",
-			handlePointerDown: (ev: CanvasUIPointerEvent) => {
+			handlePointerDown: (ev: PointerEventManagerEvent) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -815,7 +818,7 @@ export class PianoRoll
 		yield* getSelectedNotes(this.songStore.state, this.editor.state);
 	}
 
-	private findNoteByPosition(canvasPosition: CanvasUIPosition): Note | null {
+	private findNoteByPosition(canvasPosition: PositionSnapshot): Note | null {
 		const position = PianoRollPosition.create(canvasPosition);
 		const activeChannel = getActiveChannel(
 			this.songStore.state,
@@ -928,7 +931,7 @@ export class PianoRoll
 }
 
 function detectArea(
-	position: CanvasUIPosition,
+	position: PositionSnapshot,
 ): "timeline" | "sidebar" | "main" {
 	if (position.x < SIDEBAR_WIDTH) return "sidebar";
 	if (position.y < TIMELINE_HEIGHT) return "timeline";
@@ -953,7 +956,7 @@ interface PianoRollPosition {
 	readonly y: number;
 }
 const PianoRollPosition = {
-	create(position: CanvasUIPosition): PianoRollPosition {
+	create(position: PositionSnapshot): PianoRollPosition {
 		const x = position.x + position.scrollLeft - SIDEBAR_WIDTH;
 		const y = position.y + position.scrollTop - TIMELINE_HEIGHT;
 		const key = NUM_KEYS - 1 - Math.floor(y / HEIGHT_PER_KEY);

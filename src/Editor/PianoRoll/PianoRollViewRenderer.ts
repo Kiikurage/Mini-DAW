@@ -37,7 +37,7 @@ export function renderCanvas({
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
 
-	const totalWidth = pianoRollState.width * devicePixelRatio;
+	const totalWidth = editorState.width * devicePixelRatio;
 	if (canvas.width !== totalWidth) {
 		canvas.width = totalWidth;
 	}
@@ -53,7 +53,7 @@ export function renderCanvas({
 	const heightPerKey = HEIGHT_PER_KEY * devicePixelRatio;
 	const mainHeight = totalHeight - timelineHeight;
 
-	const scrollTop = editorState.scrollTop * devicePixelRatio;
+	const scrollTop = pianoRollState.scrollTop * devicePixelRatio;
 	const scrollLeft = editorState.scrollLeft * devicePixelRatio;
 
 	const keyFrom = NUM_KEYS - Math.ceil((scrollTop + mainHeight) / heightPerKey);

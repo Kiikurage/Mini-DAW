@@ -46,7 +46,6 @@ export class Player extends Stateful<PlayerState> {
 		});
 
 		bus.on("song.set.after", (song) => {
-			console.log(song);
 			for (const channel of song.channels) {
 				instrumentStore.getOrLoad(channel.instrumentKey);
 			}

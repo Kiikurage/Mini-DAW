@@ -1,6 +1,7 @@
 import { TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
+import { minmax } from "../lib.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 
 /**
@@ -19,9 +20,9 @@ export interface EditorState {
 	readonly zoom: number;
 
 	/**
-	 * スクロール位置(垂直) [px]
+	 * エディタの表示幅 [px]
 	 */
-	readonly scrollTop: number;
+	readonly width: number;
 
 	/**
 	 * スクロール位置(水平) [px]
@@ -46,8 +47,8 @@ export class Editor extends Stateful<EditorState> {
 		super({
 			activeChannelId: null,
 			zoom: 1,
+			width: 0,
 			scrollLeft: 0,
-			scrollTop: 0,
 			selectedNoteIds: new Set<number>(),
 			timelineGridUnitInTick: TICK_PER_MEASURE / 4,
 		});
@@ -72,19 +73,22 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
-	setScrollLeft(scrollLeft: number) {
+	setWidth(width: number) {
 		this.updateState((state) => {
-			// DOM APIはスクロール位置として常に整数を返すため、小数点以下の比較を省かないと、更新が無限に発生する
-			if (Math.round(state.scrollLeft) === Math.round(scrollLeft)) return state;
-			return { ...state, scrollLeft };
+			if (state.width === width) return state;
+			return { ...state, width };
 		});
 	}
 
-	setScrollTop(scrollTop: number) {
+	setScrollLeft(scrollLeft: number) {
 		this.updateState((state) => {
 			// DOM APIはスクロール位置として常に整数を返すため、小数点以下の比較を省かないと、更新が無限に発生する
-			if (Math.round(state.scrollTop) === Math.round(scrollTop)) return state;
-			return { ...state, scrollTop };
+			const oldValue = Math.round(state.scrollLeft);
+			const newValue = Math.round(minmax(0, null, scrollLeft));
+
+			if (oldValue === newValue) return state;
+
+			return { ...state, scrollLeft: newValue };
 		});
 	}
 
@@ -130,7 +134,10 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	zoomOut() {
-		this.updateState((state) => ({ ...state, zoom: state.zoom / 1.2 }));
+		this.updateState((state) => ({
+			...state,
+			zoom: state.zoom / 1.2,
+		}));
 	}
 
 	setZoom(zoom: number) {

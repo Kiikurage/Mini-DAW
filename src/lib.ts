@@ -52,3 +52,20 @@ export function formatDuration(durationInTick: number) {
 			return `${durationInTick} tick`;
 	}
 }
+
+export function addListener<
+	E extends HTMLElement,
+	K extends keyof HTMLElementEventMap,
+>(
+	target: E,
+	type: K,
+	listener: (this: E, ev: HTMLElementEventMap[K]) => void,
+): () => void;
+export function addListener(
+	target: EventTarget,
+	type: string,
+	listener: EventListenerOrEventListenerObject,
+) {
+	target.addEventListener(type, listener);
+	return () => target.removeEventListener(type, listener);
+}
