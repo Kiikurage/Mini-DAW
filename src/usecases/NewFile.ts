@@ -3,7 +3,7 @@ import type { EventBus } from "../EventBus.ts";
 import { Channel } from "../models/Channel.ts";
 import { Song } from "../models/Song.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
-import { SoundFontInstrumentKey } from "../SoundFontInstrument.ts";
+import { PreInstalledSoundFontInstrumentKey } from "../SoundFontInstrument.ts";
 
 export const NewFileKey = ComponentKey<NewFile>("NewFile");
 
@@ -26,8 +26,8 @@ export function NewFile({ bus }: { bus: EventBus }) {
 					new Channel({
 						id: 0,
 						label: "",
-						instrumentKey: new SoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.soundFontUrl,
+						instrumentKey: new PreInstalledSoundFontInstrumentKey(
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),
@@ -37,8 +37,8 @@ export function NewFile({ bus }: { bus: EventBus }) {
 					new Channel({
 						id: 1,
 						label: "",
-						instrumentKey: new SoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.soundFontUrl,
+						instrumentKey: new PreInstalledSoundFontInstrumentKey(
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),
@@ -48,8 +48,8 @@ export function NewFile({ bus }: { bus: EventBus }) {
 					new Channel({
 						id: 2,
 						label: "",
-						instrumentKey: new SoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.soundFontUrl,
+						instrumentKey: new PreInstalledSoundFontInstrumentKey(
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),
@@ -61,4 +61,5 @@ export function NewFile({ bus }: { bus: EventBus }) {
 		);
 	};
 }
+
 export type NewFile = ReturnType<typeof NewFile>;

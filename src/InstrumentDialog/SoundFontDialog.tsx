@@ -11,7 +11,7 @@ import { Link } from "../react/Link.ts";
 import { ListBox } from "../react/ListBox/ListBox.tsx";
 import type { OverlayPortal } from "../react/OverlayPortal.ts";
 import { Select } from "../react/Select/Select.tsx";
-import { SoundFontInstrumentKey } from "../SoundFontInstrument.ts";
+import { PreInstalledSoundFontInstrumentKey, type SoundFontInstrumentKey, } from "../SoundFontInstrument.ts";
 import type { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import type { UpdateChannel } from "../usecases/UpdateChannel.ts";
@@ -60,9 +60,9 @@ function SoundFontDialogView({
 	updateChannel: UpdateChannel;
 }) {
 	const [instrumentKey, _setInstrumentKey] = useState(
-		controller.channel.instrumentKey as SoundFontInstrumentKey,
+		controller.channel.instrumentKey as PreInstalledSoundFontInstrumentKey,
 	);
-	const setInstrumentKey = (key: SoundFontInstrumentKey) => {
+	const setInstrumentKey = (key: PreInstalledSoundFontInstrumentKey) => {
 		_setInstrumentKey(key);
 		instrumentStore.getOrLoad(key);
 	};
@@ -113,7 +113,11 @@ function SoundFontDialogView({
 									if (soundFont === undefined) return;
 
 									setInstrumentKey(
-										new SoundFontInstrumentKey(soundFont.soundFontUrl, 0, 0),
+										new PreInstalledSoundFontInstrumentKey(
+											soundFont.name,
+											0,
+											0,
+										),
 									);
 								}}
 							>
@@ -180,8 +184,8 @@ function SoundFontDialogView({
 											value={instrumentKey.presetNumber}
 											onChange={(presetNumber) => {
 												setInstrumentKey(
-													new SoundFontInstrumentKey(
-														instrumentKey.url,
+													new PreInstalledSoundFontInstrumentKey(
+														instrumentKey.name,
 														presetNumber as number,
 														0,
 													),
@@ -215,8 +219,8 @@ function SoundFontDialogView({
 											}
 											onChange={(bankNumber) => {
 												setInstrumentKey(
-													new SoundFontInstrumentKey(
-														instrumentKey.url,
+													new PreInstalledSoundFontInstrumentKey(
+														instrumentKey.name,
 														instrumentKey.presetNumber,
 														bankNumber as number,
 													),

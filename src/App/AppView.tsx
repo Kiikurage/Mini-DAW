@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { AudioContextKey } from "../AudioContextHolder.ts";
 import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
@@ -83,7 +82,6 @@ export function AppView() {
 					updateSong={useComponent(UpdateSongKey)}
 					instrumentStore={useComponent(InstrumentStore.Key)}
 					editor={useComponent(Editor.Key)}
-					audioContext={useComponent(AudioContextKey)}
 					soundFontStore={useComponent(SoundFontStore.Key)}
 					updateChannel={useComponent(UpdateChannelKey)}
 					overlayPortal={useComponent(OverlayPortal.Key)}

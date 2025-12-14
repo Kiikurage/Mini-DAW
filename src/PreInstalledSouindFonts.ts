@@ -1,6 +1,13 @@
 import SOUNDFONT_URL from "../soundfont/GeneralUser-GS/GeneralUser-GS.sf2?url";
 
-export const PreInstalledSouindFonts = [
+export interface PreInstalledSouindFont {
+	readonly name: string;
+	readonly soundFontUrl: string;
+	readonly creatorUrl: string;
+	readonly licenseUrl: string;
+}
+
+export const PreInstalledSouindFonts: readonly PreInstalledSouindFont[] = [
 	{
 		name: "GeneralUser GS",
 		soundFontUrl: SOUNDFONT_URL,

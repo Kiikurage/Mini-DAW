@@ -3,12 +3,13 @@ import type { DIContainer } from "./Dependency/DIContainer.ts";
 import type { Hash } from "./Hashable.ts";
 import { assertNotNullish } from "./lib.ts";
 import type { Instrument } from "./models/Instrument.ts";
-import type { InstrumentKey } from "./models/InstrumentKey.ts";
+import type { InstrumentKey, SerializedInstrumentKey } from "./models/InstrumentKey.ts";
+import { PreInstalledSouindFonts } from "./PreInstalledSouindFonts.ts";
 import type { InstrumentZone } from "./SoundFont/InstrumentZone.ts";
 import type { Preset } from "./SoundFont/Preset.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
 
-export class SoundFontInstrumentKey implements InstrumentKey {
+export abstract class SoundFontInstrumentKey implements InstrumentKey {
 	constructor(
 		public readonly url: string,
 		public readonly presetNumber: number,
@@ -31,7 +32,11 @@ export class SoundFontInstrumentKey implements InstrumentKey {
 		return `${this.url}::${this.presetNumber}::${this.bankNumber}`;
 	}
 
-	serialize(): SerializedSoundFontInstrumentKey {
+	abstract serialize(): SerializedInstrumentKey;
+}
+
+export class ExternalSoundFontInstrumentKey extends SoundFontInstrumentKey {
+	override serialize(): SerializedExternalSoundFontInstrumentKey {
 		return {
 			type: "sf",
 			url: this.url,
@@ -41,9 +46,20 @@ export class SoundFontInstrumentKey implements InstrumentKey {
 	}
 
 	static deserialize(
-		data: SerializedSoundFontInstrumentKey,
+		data: SerializedExternalSoundFontInstrumentKey,
 	): SoundFontInstrumentKey {
-		return new SoundFontInstrumentKey(
+		const preInstalledSoundFont = PreInstalledSouindFonts.find(
+			(sf) => sf.soundFontUrl === data.url,
+		);
+		if (preInstalledSoundFont !== undefined) {
+			return new PreInstalledSoundFontInstrumentKey(
+				preInstalledSoundFont.name,
+				data.presetNumber,
+				data.bankNumber,
+			);
+		}
+
+		return new ExternalSoundFontInstrumentKey(
 			data.url,
 			data.presetNumber,
 			data.bankNumber,
@@ -51,9 +67,55 @@ export class SoundFontInstrumentKey implements InstrumentKey {
 	}
 }
 
-export interface SerializedSoundFontInstrumentKey {
+export interface SerializedExternalSoundFontInstrumentKey {
 	type: "sf";
 	url: string;
+	presetNumber: number;
+	bankNumber: number;
+}
+
+export class PreInstalledSoundFontInstrumentKey
+	extends SoundFontInstrumentKey
+	implements InstrumentKey
+{
+	constructor(
+		public readonly name: string,
+		presetNumber: number,
+		bankNumber: number,
+	) {
+		const preInstalledSoundFont = PreInstalledSouindFonts.find(
+			(sf) => sf.name === name,
+		);
+		if (preInstalledSoundFont === undefined) {
+			throw new Error(`Pre-installed sound font "${name}" not found.`);
+		}
+
+		super(preInstalledSoundFont.soundFontUrl, presetNumber, bankNumber);
+	}
+
+	override serialize(): SerializedInstrumentKey {
+		return {
+			type: "preInstalledSF",
+			name: this.name,
+			presetNumber: this.presetNumber,
+			bankNumber: this.bankNumber,
+		};
+	}
+
+	static deserialize(
+		data: SerializedPreInstalledSoundFontInstrumentKey,
+	): SoundFontInstrumentKey {
+		return new PreInstalledSoundFontInstrumentKey(
+			data.name,
+			data.presetNumber,
+			data.bankNumber,
+		);
+	}
+}
+
+export interface SerializedPreInstalledSoundFontInstrumentKey {
+	type: "preInstalledSF";
+	name: string;
 	presetNumber: number;
 	bankNumber: number;
 }

@@ -14,7 +14,7 @@ import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import type { OverlayPortal } from "../react/OverlayPortal.ts";
 import type { SongStore } from "../SongStore.ts";
-import { SoundFontInstrumentKey } from "../SoundFontInstrument.ts";
+import { PreInstalledSoundFontInstrumentKey } from "../SoundFontInstrument.ts";
 import type { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import type { AddChannel } from "../usecases/AddChannel.ts";
@@ -92,8 +92,8 @@ export function ChannelListView({
 						title="チャンネルを追加"
 						size="sm"
 						onClick={() => {
-							const instrumentKey = new SoundFontInstrumentKey(
-								PreInstalledSouindFonts[0]!.soundFontUrl,
+							const instrumentKey = new PreInstalledSoundFontInstrumentKey(
+								PreInstalledSouindFonts[0]!.name,
 								0,
 								0,
 							);
