@@ -141,6 +141,9 @@ class PianoRollViewController {
 	private readonly handleWheel = (ev: WheelEvent) => {
 		this.editor.setScrollLeft(this.editor.state.scrollLeft + ev.deltaX);
 		this.pianoRoll.setScrollTop(this.pianoRoll.state.scrollTop + ev.deltaY);
+		if (ev.deltaX !== 0) {
+			this.player.setAutoScrollEnabled(false);
+		}
 	};
 
 	private readonly handlePointerDown = (ev: PointerEvent) => {

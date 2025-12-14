@@ -3,6 +3,7 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import { minmax } from "../lib.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
+import { widthPerTick } from "./PianoRoll/PianoRollViewRenderer.ts";
 
 /**
  * PianoRollとParameterEditorとで共有される状態。
@@ -139,20 +140,21 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	zoomIn() {
-		this.updateState((state) => ({ ...state, zoom: state.zoom * 1.2 }));
+		this.setZoom(this.state.zoom * 1.2);
 	}
 
 	zoomOut() {
-		this.updateState((state) => ({
-			...state,
-			zoom: state.zoom / 1.2,
-		}));
+		this.setZoom(this.state.zoom / 1.2);
 	}
 
 	setZoom(zoom: number) {
 		this.updateState((state) => {
-			if (state.zoom === zoom) return state;
-			return { ...state, zoom };
+			const center =
+				(this.state.scrollLeft + this.state.width / 2) /
+				widthPerTick(this.state.zoom);
+			const scrollLeft = center * widthPerTick(zoom) - this.state.width / 2;
+
+			return { ...state, zoom, scrollLeft };
 		});
 	}
 
