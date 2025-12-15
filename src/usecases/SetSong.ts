@@ -6,7 +6,7 @@ export const SetSongKey = ComponentKey<SetSong>("SetSong");
 
 export function SetSong({ bus }: { bus: EventBus }) {
 	return (song: Song) => {
-		bus.emitPhasedEvents("song.set", song);
+		bus.emitPhasedEvents("song.put", song);
 	};
 }
 export type SetSong = ReturnType<typeof SetSong>;

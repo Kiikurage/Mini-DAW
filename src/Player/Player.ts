@@ -45,12 +45,12 @@ export class Player extends Stateful<PlayerState> {
 			isAutoScrollEnabled: false,
 		});
 
-		bus.on("song.set.after", (song) => {
+		bus.on("song.put.after", (song) => {
 			for (const channel of song.channels) {
 				instrumentStore.getOrLoad(channel.instrumentKey);
 			}
 		});
-		bus.on("channel.delete.before", (channelId: number) => {
+		bus.on("channel.remove.before", (channelId: number) => {
 			this.cancelMuteChannel(channelId);
 		});
 	}

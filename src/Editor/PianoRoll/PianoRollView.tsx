@@ -8,9 +8,9 @@ import { PointerEventManager } from "../../PointerEventManager/PointerEventManag
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import {
-	type DeleteNotes,
-	DeleteNotesKey,
-} from "../../usecases/DeleteNotes.ts";
+	type RemoveNotes,
+	RemoveNotesKey,
+} from "../../usecases/RemoveNotes.ts";
 import { type SetNotes, SetNotesKey } from "../../usecases/SetNotes.ts";
 import { Editor } from "../Editor.ts";
 import { PianoRoll } from "./PianoRoll.ts";
@@ -23,21 +23,21 @@ export function PianoRollView({
 	player,
 	editor,
 	setNotes,
-	deleteNotes,
+	removeNotes,
 }: {
 	instrumentStore?: InstrumentStore;
 	songStore?: SongStore;
 	player?: Player;
 	editor?: Editor;
 	setNotes?: SetNotes;
-	deleteNotes?: DeleteNotes;
+	removeNotes?: RemoveNotes;
 }) {
 	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
 	songStore = useComponent(SongStore.Key, songStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
 	setNotes = useComponent(SetNotesKey, setNotes);
-	deleteNotes = useComponent(DeleteNotesKey, deleteNotes);
+	removeNotes = useComponent(RemoveNotesKey, removeNotes);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -53,7 +53,7 @@ export function PianoRollView({
 				pianoRoll,
 				songStore,
 				setNotes,
-				deleteNotes,
+				removeNotes,
 				player,
 				editor,
 			),
@@ -109,7 +109,7 @@ export function PianoRollView({
 				disposable();
 			}
 		};
-	}, [editor, instrumentStore, player, songStore, deleteNotes, setNotes]);
+	}, [editor, instrumentStore, player, songStore, removeNotes, setNotes]);
 
 	return (
 		<canvas

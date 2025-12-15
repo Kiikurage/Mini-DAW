@@ -8,7 +8,7 @@ interface EventBusEventMap {
 	/**
 	 * 曲データの設定
 	 */
-	"song.set": [song: Song];
+	"song.put": [song: Song];
 
 	/**
 	 * 曲のプロパティの変更
@@ -23,7 +23,7 @@ interface EventBusEventMap {
 	/**
 	 * チャンネルの削除
 	 */
-	"channel.delete": [channelId: number];
+	"channel.remove": [channelId: number];
 
 	/**
 	 * チャンネルのプロパティの変更
@@ -31,14 +31,14 @@ interface EventBusEventMap {
 	"channel.update": [channelId: number, patch: ChannelPatch];
 
 	/**
-	 * ノートの追加または更新
+	 * ノートの追加または置換
 	 */
-	"notes.set": [channelId: number, notes: Iterable<Note>];
+	"notes.put": [channelId: number, notes: Iterable<Note>];
 
 	/**
 	 * ノートの削除
 	 */
-	"notes.delete": [channelId: number, noteIds: Iterable<number>];
+	"notes.remove": [channelId: number, noteIds: Iterable<number>];
 }
 
 type PhasedEvents<E> = {

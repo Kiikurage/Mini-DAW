@@ -26,14 +26,20 @@ export class Song {
 		return this.channels.find((ch) => ch.id === channelId) ?? null;
 	}
 
-	insertChannel(channel: Channel, index: number) {
+	putChannel(channel: Channel) {
 		const channels = [...this.channels];
-		channels.splice(index, 0, channel);
-
-		return new Song({ ...this, channels });
+		const index = channels.findIndex((ch) => ch.id === channel.id);
+		if (index === -1) {
+			channels.push(channel);
+			return new Song({ ...this, channels });
+		} else {
+			if (channels[index] === channel) return this;
+			channels[index] = channel;
+			return new Song({ ...this, channels });
+		}
 	}
 
-	deleteChannel(channelId: number) {
+	removeChannel(channelId: number) {
 		const channels = this.channels.filter((ch) => ch.id !== channelId);
 		if (channels.length === this.channels.length) return this;
 
@@ -51,18 +57,18 @@ export class Song {
 		return new Song({ ...this, channels });
 	}
 
-	setNotes(channelId: number, newNotes: Iterable<Note>) {
+	putNotes(channelId: number, newNotes: Iterable<Note>) {
 		const channel = this.channels.find((ch) => ch.id === channelId);
 		if (channel === undefined) return this;
 
-		return this.replaceChannel(channel.setNotes(newNotes));
+		return this.replaceChannel(channel.putNotes(newNotes));
 	}
 
-	deleteNotes(channelId: number, ids: Iterable<number>) {
+	removeNotes(channelId: number, ids: Iterable<number>) {
 		const channel = this.channels.find((ch) => ch.id === channelId);
 		if (channel === undefined) return this;
 
-		return this.replaceChannel(channel.deleteNotes(ids));
+		return this.replaceChannel(channel.removeNotes(ids));
 	}
 
 	setTitle(title: string) {

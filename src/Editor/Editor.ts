@@ -113,22 +113,22 @@ export class Editor extends Stateful<EditorState> {
 		});
 
 		bus
-			.on("song.set.before", () => {
+			.on("song.put.before", () => {
 				this.setActiveChannel(null);
 			})
-			.on("song.set.after", (song) => {
+			.on("song.put.after", (song) => {
 				const firstChannel = song.channels[0];
 				if (firstChannel !== undefined) {
 					this.setActiveChannel(firstChannel.id);
 				}
 			})
-			.on("channel.delete.before", (channelId: number) => {
+			.on("channel.remove.before", (channelId: number) => {
 				if (this.state.activeChannelId === channelId) {
 					this.setActiveChannel(null);
 				}
 				this.cancelPreviewChannel(channelId);
 			})
-			.on("notes.delete.before", (channelId, noteIds) => {
+			.on("notes.remove.before", (channelId, noteIds) => {
 				if (this.state.activeChannelId === channelId) {
 					this.unselectNotes(noteIds);
 				}
@@ -227,45 +227,55 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
+	setAllSelectedNotes(selectedNoteIds: Iterable<number>) {
+		this.updateState((state) => {
+			const newSelectedNoteIds = new Set(selectedNoteIds);
+			if (
+				newSelectedNoteIds.size === state.selectedNoteIds.size &&
+				[...selectedNoteIds].every((id) => state.selectedNoteIds.has(id))
+			) {
+				return state;
+			}
+
+			return { ...state, selectedNoteIds: newSelectedNoteIds };
+		});
+	}
+
 	selectAllNotes() {
 		const activeChannel = getActiveChannel(this.songStore.state, this.state);
 		if (activeChannel === null) return;
 
-		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));
+		this.setAllSelectedNotes(
+			activeChannel.notes.values().map((note) => note.id),
+		);
 	}
 
-	unselectAllNotes() {
-		this.setSelectedNotes([]);
-	}
-
-	setSelectedNotes(selectedNoteIds: Iterable<number>) {
-		this.updateState((state) => {
-			return { ...state, selectedNoteIds: new Set(selectedNoteIds) };
-		});
+	clearSelectedNotes() {
+		this.setAllSelectedNotes([]);
 	}
 
 	selectNotes(noteIds: readonly number[]) {
-		this.updateState((state) => {
-			const selectedNoteIds = new Set(state.selectedNoteIds);
-			for (const noteId of noteIds) {
-				selectedNoteIds.add(noteId);
-			}
-			if (selectedNoteIds.size === state.selectedNoteIds.size) return state;
+		const selectedNoteIds = new Set(this.state.selectedNoteIds);
+		for (const noteId of noteIds) {
+			selectedNoteIds.add(noteId);
+		}
+		if (selectedNoteIds.size === this.state.selectedNoteIds.size) {
+			return this.state;
+		}
 
-			return { ...state, selectedNoteIds };
-		});
+		this.setAllSelectedNotes(selectedNoteIds);
 	}
 
 	unselectNotes(noteIds: Iterable<number>) {
-		this.updateState((state) => {
-			const selectedNoteIds = new Set(state.selectedNoteIds);
-			for (const noteId of noteIds) {
-				selectedNoteIds.delete(noteId);
-			}
-			if (selectedNoteIds.size === state.selectedNoteIds.size) return state;
+		const selectedNoteIds = new Set(this.state.selectedNoteIds);
+		for (const noteId of noteIds) {
+			selectedNoteIds.delete(noteId);
+		}
+		if (selectedNoteIds.size === this.state.selectedNoteIds.size) {
+			return this.state;
+		}
 
-			return { ...state, selectedNoteIds };
-		});
+		this.setAllSelectedNotes(selectedNoteIds);
 	}
 
 	zoomIn() {

@@ -5,9 +5,9 @@ import { isNotNullish } from "../lib.ts";
 import type { Note } from "../models/Note.ts";
 import type { SongStore } from "../SongStore.ts";
 
-export const DeleteNotesKey = ComponentKey<DeleteNotes>("DeleteNotes");
+export const RemoveNotesKey = ComponentKey<RemoveNotes>("RemoveNotes");
 
-export function DeleteNotes({
+export function RemoveNotes({
 	songStore,
 	history,
 	bus,
@@ -26,13 +26,13 @@ export function DeleteNotes({
 
 		history.execute({
 			do: () => {
-				bus.emitPhasedEvents("notes.delete", channelId, noteIds);
+				bus.emitPhasedEvents("notes.remove", channelId, noteIds);
 			},
 			undo: () => {
-				bus.emitPhasedEvents("notes.set", channelId, notes);
+				bus.emitPhasedEvents("notes.put", channelId, notes);
 			},
 		});
 		history.markCheckpoint();
 	};
 }
-export type DeleteNotes = ReturnType<typeof DeleteNotes>;
+export type RemoveNotes = ReturnType<typeof RemoveNotes>;

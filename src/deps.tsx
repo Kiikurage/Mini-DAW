@@ -13,12 +13,12 @@ import { SongStore } from "./SongStore.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
 import { StatusBar } from "./StatusBar/StatusBar.tsx";
 import { AddChannel, AddChannelKey } from "./usecases/AddChannel.ts";
-import { DeleteChannel, DeleteChannelKey } from "./usecases/DeleteChannel.ts";
-import { DeleteNotes, DeleteNotesKey } from "./usecases/DeleteNotes.ts";
 import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
+import { RemoveChannel, RemoveChannelKey } from "./usecases/RemoveChannel.ts";
+import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
 import {
 	SetNoteParameter,
@@ -77,7 +77,7 @@ export function configureDeps() {
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
 					deps.get(SetNotesKey),
-					deps.get(DeleteNotesKey),
+					deps.get(RemoveNotesKey),
 				);
 			})
 			.set(ContextMenuManager.Key, (deps) => {
@@ -92,7 +92,7 @@ export function configureDeps() {
 					deps.get(SaveFileKey),
 					deps.get(LoadFileKey),
 					deps.get(MoveNotesKey),
-					deps.get(DeleteNotesKey),
+					deps.get(RemoveNotesKey),
 				);
 			})
 
@@ -119,8 +119,8 @@ export function configureDeps() {
 					songStore: deps.get(SongStore.Key),
 				});
 			})
-			.set(DeleteChannelKey, (deps) => {
-				return DeleteChannel({
+			.set(RemoveChannelKey, (deps) => {
+				return RemoveChannel({
 					history: deps.get(EditHistoryManager.Key),
 					songStore: deps.get(SongStore.Key),
 					bus: deps.get(EventBus.Key),
@@ -141,8 +141,8 @@ export function configureDeps() {
 					setNotes: deps.get(SetNotesKey),
 				});
 			})
-			.set(DeleteNotesKey, (deps) => {
-				return DeleteNotes({
+			.set(RemoveNotesKey, (deps) => {
+				return RemoveNotes({
 					songStore: deps.get(SongStore.Key),
 					history: deps.get(EditHistoryManager.Key),
 					bus: deps.get(EventBus.Key),

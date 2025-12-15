@@ -13,32 +13,30 @@ export class SongStore extends Stateful<Song> {
 
 		bus
 			.on("channel.add", (channel) => {
-				this.appendChannel(channel);
+				this.putChannel(channel);
 			})
-			.on("channel.delete", (channelId) => {
-				this.deleteChannel(channelId);
+			.on("channel.remove", (channelId) => {
+				this.removeChannel(channelId);
 			})
 			.on("channel.update", (channelId, patch) => {
 				this.updateChannel(channelId, (channel) => channel.applyPatch(patch));
 			})
-			.on("notes.set", (channelId, notes) => {
-				this.setNotes(channelId, notes);
+			.on("notes.put", (channelId, notes) => {
+				this.putNotes(channelId, notes);
 			})
-			.on("notes.delete", (channelId, noteIds) =>
-				this.deleteNotes(channelId, noteIds),
+			.on("notes.remove", (channelId, noteIds) =>
+				this.removeNotes(channelId, noteIds),
 			)
-			.on("song.set", (song) => this.setSong(song))
+			.on("song.put", (song) => this.setSong(song))
 			.on("song.update", (patch) => this.applySongPatch(patch));
 	}
 
-	appendChannel(channel: Channel) {
-		this.updateState((state) =>
-			state.insertChannel(channel, state.channels.length),
-		);
+	putChannel(channel: Channel) {
+		this.updateState((state) => state.putChannel(channel));
 	}
 
-	deleteChannel(channelId: number) {
-		this.updateState((state) => state.deleteChannel(channelId));
+	removeChannel(channelId: number) {
+		this.updateState((state) => state.removeChannel(channelId));
 	}
 
 	updateChannel(channelId: number, updater: (channel: Channel) => Channel) {
@@ -55,12 +53,12 @@ export class SongStore extends Stateful<Song> {
 	 * @param channelId チャンネルID
 	 * @param notes 追加・更新するノート
 	 */
-	setNotes(channelId: number, notes: Iterable<Note>) {
-		this.updateState((state) => state.setNotes(channelId, notes));
+	putNotes(channelId: number, notes: Iterable<Note>) {
+		this.updateState((state) => state.putNotes(channelId, notes));
 	}
 
-	deleteNotes(channelId: number, noteIds: Iterable<number>) {
-		this.updateState((state) => state.deleteNotes(channelId, noteIds));
+	removeNotes(channelId: number, noteIds: Iterable<number>) {
+		this.updateState((state) => state.removeNotes(channelId, noteIds));
 	}
 
 	setSong(song: Song) {

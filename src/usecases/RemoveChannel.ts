@@ -3,9 +3,9 @@ import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
 import type { SongStore } from "../SongStore.ts";
 
-export const DeleteChannelKey = ComponentKey<DeleteChannel>("DeleteChannel");
+export const RemoveChannelKey = ComponentKey<RemoveChannel>("RemoveChannel");
 
-export function DeleteChannel({
+export function RemoveChannel({
 	history,
 	songStore,
 	bus,
@@ -20,7 +20,7 @@ export function DeleteChannel({
 
 		history.execute({
 			do: () => {
-				bus.emitPhasedEvents("channel.delete", channelId);
+				bus.emitPhasedEvents("channel.remove", channelId);
 			},
 			undo: () => {
 				bus.emitPhasedEvents("channel.add", channel);
@@ -29,4 +29,4 @@ export function DeleteChannel({
 		history.markCheckpoint();
 	};
 }
-export type DeleteChannel = ReturnType<typeof DeleteChannel>;
+export type RemoveChannel = ReturnType<typeof RemoveChannel>;

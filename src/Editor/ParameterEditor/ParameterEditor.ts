@@ -147,7 +147,7 @@ export class ParameterEditor
 		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			if (ev.button === MouseEventButton.PRIMARY) {
 				if (!ev.metaKey) {
-					this.editor.unselectAllNotes();
+					this.editor.clearSelectedNotes();
 				}
 			}
 
@@ -192,7 +192,7 @@ export class ParameterEditor
 						}
 					}
 				}
-				this.editor.setSelectedNotes([...selectedNoteIds, ...noteIdsInArea]);
+				this.editor.setAllSelectedNotes([...selectedNoteIds, ...noteIdsInArea]);
 			});
 			ev.addDragEndSessionListener(() => {
 				this.editor.stopMarqueeSelection();

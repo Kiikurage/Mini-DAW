@@ -6,7 +6,7 @@ import type { PointerEventManagerEvent } from "../../PointerEventManager/Pointer
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
-import type { DeleteNotes } from "../../usecases/DeleteNotes.ts";
+import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
 import type { Editor, EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
@@ -261,7 +261,7 @@ export function toggleNoteSelectionFeature(
 					});
 				}
 			} else {
-				editor.unselectAllNotes();
+				editor.clearSelectedNotes();
 				editor.selectNotes([note.id]);
 			}
 		},
@@ -272,19 +272,19 @@ export function toggleNoteSelectionFeature(
  * ノートをダブルクリックで削除する
  * @param note
  * @param editor
- * @param deleteNotes
+ * @param removeNotes
  */
-export function deleteNotesByDoubleClickFeature(
+export function removeNotesByDoubleClickFeature(
 	note: Note,
 	editor: Editor,
-	deleteNotes: DeleteNotes,
+	removeNotes: RemoveNotes,
 ): PointerEventManagerInteractionHandle {
 	return {
 		handleDoubleClick: () => {
 			const activeChannelId = editor.state.activeChannelId;
 			if (activeChannelId === null) return;
 
-			deleteNotes(activeChannelId, [note.id]);
+			removeNotes(activeChannelId, [note.id]);
 		},
 	};
 }

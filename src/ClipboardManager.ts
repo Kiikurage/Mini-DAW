@@ -4,7 +4,7 @@ import { getSelectedNotes } from "./getSelectedNotes.ts";
 import { Note, type SerializedNote } from "./models/Note.ts";
 import type { Player } from "./Player/Player.ts";
 import type { SongStore } from "./SongStore.ts";
-import type { DeleteNotes } from "./usecases/DeleteNotes.ts";
+import type { RemoveNotes } from "./usecases/RemoveNotes.ts";
 import type { SetNotes } from "./usecases/SetNotes.ts";
 
 export class ClipboardManager {
@@ -15,7 +15,7 @@ export class ClipboardManager {
 		private readonly player: Player,
 		private readonly editor: Editor,
 		private readonly setNotes: SetNotes,
-		private readonly deleteNotes: DeleteNotes,
+		private readonly removeNotes: RemoveNotes,
 	) {}
 
 	cut() {
@@ -23,7 +23,7 @@ export class ClipboardManager {
 		if (activeChannelId === null) return;
 
 		this.copy();
-		this.deleteNotes(activeChannelId, this.editor.state.selectedNoteIds);
+		this.removeNotes(activeChannelId, this.editor.state.selectedNoteIds);
 	}
 
 	copy() {
@@ -77,6 +77,6 @@ export class ClipboardManager {
 		if (channelId === null) return;
 
 		this.setNotes(channelId, notes);
-		this.editor.setSelectedNotes(notes.map((note) => note.id));
+		this.editor.setAllSelectedNotes(notes.map((note) => note.id));
 	}
 }

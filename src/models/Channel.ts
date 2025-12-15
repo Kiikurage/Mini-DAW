@@ -1,5 +1,8 @@
 import { Color, type SerializedColor } from "../Color.ts";
-import { InstrumentKey, type SerializedInstrumentKey, } from "./InstrumentKey.ts";
+import {
+	InstrumentKey,
+	type SerializedInstrumentKey,
+} from "./InstrumentKey.ts";
 import { Note, type SerializedNote } from "./Note.ts";
 
 export class Channel {
@@ -52,7 +55,7 @@ export class Channel {
 		return this.label.trim() === "" ? `Channel ${this.id + 1}` : this.label;
 	}
 
-	deleteNotes(ids: Iterable<number>): Channel {
+	removeNotes(ids: Iterable<number>): Channel {
 		const newNotes = new Map(this.notes);
 		for (const id of ids) {
 			newNotes.delete(id);
@@ -62,7 +65,7 @@ export class Channel {
 		return new Channel({ ...this, notes: newNotes });
 	}
 
-	setNotes(newNotes: Iterable<Note>): Channel {
+	putNotes(newNotes: Iterable<Note>): Channel {
 		const oldNotesMap = this.notes;
 		const newNotesMap = new Map(oldNotesMap);
 

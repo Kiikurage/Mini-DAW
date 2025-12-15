@@ -20,7 +20,7 @@ export function AddChannel({
 				bus.emitPhasedEvents("channel.add", channel);
 			},
 			undo: () => {
-				bus.emitPhasedEvents("channel.delete", channel.id);
+				bus.emitPhasedEvents("channel.remove", channel.id);
 			},
 		});
 		history.markCheckpoint();

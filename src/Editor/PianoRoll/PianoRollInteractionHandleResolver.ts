@@ -14,14 +14,14 @@ import {
 import type { PointerEventManagerPointerMoveEvent } from "../../PointerEventManager/PointerEventManagerPointerMoveEvent.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
-import type { DeleteNotes } from "../../usecases/DeleteNotes.ts";
+import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
 import type { Editor } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import {
-	deleteNotesByDoubleClickFeature,
 	moveNotesFeature,
 	type PianoRollPosition,
+	removeNotesByDoubleClickFeature,
 	resizeNoteEndFeature,
 	resizeNoteStartFeature,
 	setCursorFeature,
@@ -70,7 +70,7 @@ export class PianoRollInteractionHandleResolver
 		private readonly pianoRoll: PianoRoll,
 		private readonly songStore: SongStore,
 		private readonly setNotes: SetNotes,
-		private readonly deleteNotes: DeleteNotes,
+		private readonly removeNotes: RemoveNotes,
 		private readonly player: Player,
 		private readonly editor: Editor,
 	) {
@@ -93,7 +93,7 @@ export class PianoRollInteractionHandleResolver
 
 					if (ev.button === MouseEventButton.PRIMARY) {
 						if (!ev.metaKey) {
-							this.editor.unselectAllNotes();
+							this.editor.clearSelectedNotes();
 						}
 					}
 
@@ -115,7 +115,7 @@ export class PianoRollInteractionHandleResolver
 								this.pianoRoll.state,
 							),
 						);
-						this.editor.setSelectedNotes([
+						this.editor.setAllSelectedNotes([
 							...selectedNoteIds,
 							...this.editor.findNotesInMarqueeArea().map((note) => note.id),
 						]);
@@ -161,7 +161,7 @@ export class PianoRollInteractionHandleResolver
 							if (ev.metaKey) {
 								this.editor.selectNotes([note.id]);
 							} else {
-								this.editor.setSelectedNotes([note.id]);
+								this.editor.setAllSelectedNotes([note.id]);
 							}
 						}
 					});
@@ -438,10 +438,10 @@ export class PianoRollInteractionHandleResolver
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: targetNote.id,
 			}),
-			deleteNotesByDoubleClickFeature(
+			removeNotesByDoubleClickFeature(
 				targetNote,
 				this.editor,
-				this.deleteNotes,
+				this.removeNotes,
 			),
 		);
 	}
@@ -461,10 +461,10 @@ export class PianoRollInteractionHandleResolver
 				pianoRoll: this.pianoRoll,
 				previewManager: this.previewManager,
 			}),
-			deleteNotesByDoubleClickFeature(
+			removeNotesByDoubleClickFeature(
 				targetNote,
 				this.editor,
-				this.deleteNotes,
+				this.removeNotes,
 			),
 		);
 	}
@@ -484,10 +484,10 @@ export class PianoRollInteractionHandleResolver
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: targetNote.id,
 			}),
-			deleteNotesByDoubleClickFeature(
+			removeNotesByDoubleClickFeature(
 				targetNote,
 				this.editor,
-				this.deleteNotes,
+				this.removeNotes,
 			),
 		);
 	}

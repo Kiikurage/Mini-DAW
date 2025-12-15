@@ -18,7 +18,7 @@ export function NewFile({ bus }: { bus: EventBus }) {
 		}
 
 		bus.emitPhasedEvents(
-			"song.set",
+			"song.put",
 			new Song({
 				title: "Untitled",
 				bpm: 120,

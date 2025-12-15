@@ -33,11 +33,11 @@ export function SetNotes({
 
 		history.execute({
 			do: () => {
-				bus.emitPhasedEvents("notes.set", channelId, notes);
+				bus.emitPhasedEvents("notes.put", channelId, notes);
 			},
 			undo: () => {
-				bus.emitPhasedEvents("notes.delete", channelId, addedNoteIds);
-				bus.emitPhasedEvents("notes.set", channelId, oldNotes);
+				bus.emitPhasedEvents("notes.remove", channelId, addedNoteIds);
+				bus.emitPhasedEvents("notes.put", channelId, oldNotes);
 			},
 		});
 		history.markCheckpoint();

@@ -45,7 +45,7 @@ export class InstrumentStore extends Stateful<InstrumentStoreState> {
 		super(new InstrumentStoreState());
 
 		bus
-			.on("song.set.after", (song) => {
+			.on("song.put.after", (song) => {
 				for (const channel of song.channels) {
 					this.getOrLoad(channel.instrumentKey);
 				}

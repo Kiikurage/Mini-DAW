@@ -19,9 +19,9 @@ import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import { type AddChannel, AddChannelKey } from "../usecases/AddChannel.ts";
 import {
-	type DeleteChannel,
-	DeleteChannelKey,
-} from "../usecases/DeleteChannel.ts";
+	type RemoveChannel,
+	RemoveChannelKey,
+} from "../usecases/RemoveChannel.ts";
 import {
 	type UpdateChannel,
 	UpdateChannelKey,
@@ -30,7 +30,7 @@ import {
 export function ChannelListView({
 	songStore,
 	addChannel,
-	deleteChannel,
+	removeChannel,
 	updateChannel,
 	instrumentStore,
 	contextMenu,
@@ -42,7 +42,7 @@ export function ChannelListView({
 	songStore?: SongStore;
 	addChannel?: AddChannel;
 	updateChannel?: UpdateChannel;
-	deleteChannel?: DeleteChannel;
+	removeChannel?: RemoveChannel;
 	instrumentStore?: InstrumentStore;
 	contextMenu?: ContextMenuManager;
 	overlayPortal?: OverlayPortal;
@@ -53,7 +53,7 @@ export function ChannelListView({
 	songStore = useComponent(SongStore.Key, songStore);
 	addChannel = useComponent(AddChannelKey, addChannel);
 	updateChannel = useComponent(UpdateChannelKey, updateChannel);
-	deleteChannel = useComponent(DeleteChannelKey, deleteChannel);
+	removeChannel = useComponent(RemoveChannelKey, removeChannel);
 	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
 	contextMenu = useComponent(ContextMenuManager.Key, contextMenu);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
@@ -145,7 +145,7 @@ export function ChannelListView({
 						channel={channel}
 						active={channel.id === activeChannelId}
 						updateChannel={updateChannel}
-						deleteChannel={deleteChannel}
+						removeChannel={removeChannel}
 						instrumentStore={instrumentStore}
 						contextMenu={contextMenu}
 						overlayPortal={overlayPortal}
@@ -164,7 +164,7 @@ function ChannelListItem({
 	active,
 	instrumentStore,
 	contextMenu,
-	deleteChannel,
+	removeChannel,
 	updateChannel,
 	overlayPortal,
 	soundFontStore,
@@ -175,7 +175,7 @@ function ChannelListItem({
 	active?: boolean;
 	instrumentStore: InstrumentStore;
 	contextMenu: ContextMenuManager;
-	deleteChannel: DeleteChannel;
+	removeChannel: RemoveChannel;
 	updateChannel: UpdateChannel;
 	overlayPortal: OverlayPortal;
 	soundFontStore: SoundFontStore;
@@ -242,7 +242,7 @@ function ChannelListItem({
 							type: "action",
 							label: "削除",
 							iconBefore: <MdDelete />,
-							onClick: () => deleteChannel(channel.id),
+							onClick: () => removeChannel(channel.id),
 						},
 					],
 					clientTop: ev.clientY,
