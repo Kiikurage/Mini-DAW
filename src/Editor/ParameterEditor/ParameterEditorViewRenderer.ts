@@ -119,7 +119,7 @@ export function renderCanvas({
 	// ctx.beginPath();
 	// addNotePathAll({
 	// 	ctx,
-	// 	notes: state.getHoveredNotes(),
+	// 	notes: state.getHoverNotes(),
 	// 	tickWidth,
 	// 	scrollLeft,
 	// 	sideBarWidth,

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { PointerEventManager } from "../../CanvasUIController/PointerEventManager.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { addListener } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
+import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import {

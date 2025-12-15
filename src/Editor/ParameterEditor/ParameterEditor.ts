@@ -1,16 +1,16 @@
-import type { PointerEventManagerDelegate } from "../../CanvasUIController/PointerEventManager.ts";
-import type { PointerEventManagerEvent } from "../../CanvasUIController/PointerEventManagerEvent.ts";
-import type { PointerEventManagerInteractionHandle } from "../../CanvasUIController/PointerEventManagerInteractionHandle.ts";
-import type { PositionSnapshot } from "../../CanvasUIController/PositionSnapshot.ts";
 import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { assertNotNullish, minmax } from "../../lib.ts";
 import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
+import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManager.ts";
+import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
+import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
+import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
-import type { Editor } from "../Editor.ts";
+import type { Editor, EditorState } from "../Editor.ts";
 import { SIDEBAR_WIDTH, widthPerTick } from "./ParameterEditorViewRenderer.ts";
 
 export interface ParameterEditorState {
@@ -27,7 +27,7 @@ export interface ParameterEditorState {
 
 export class ParameterEditor
 	extends Stateful<ParameterEditorState>
-	implements PointerEventManagerDelegate
+	implements PointerEventManagerInteractionHandleResolver
 {
 	/**
 	 * ノートおよび選択範囲に対する当たり判定のマージン[px]
@@ -49,16 +49,27 @@ export class ParameterEditor
 		});
 	}
 
+	setCursor(cursor: string) {
+		this.updateState((state) => {
+			if (state.cursor === cursor) return state;
+			return { ...state, cursor };
+		});
+	}
+
 	// region CanvasUIControllerDelegate
 
-	findHandle(
+	resolveHandle(
 		canvasPosition: PositionSnapshot,
 	): PointerEventManagerInteractionHandle | null {
 		if (canvasPosition.x < SIDEBAR_WIDTH) {
 			return null;
 		}
 
-		const position = toParameterEditorPosition(canvasPosition);
+		const position = toParameterEditorPosition(
+			canvasPosition,
+			this.editor.state,
+			this.state,
+		);
 
 		const selectedNoteIds = this.editor.state.selectedNoteIds;
 
@@ -101,37 +112,12 @@ export class ParameterEditor
 		return this.backgroundHandle;
 	}
 
-	setCursor(cursor: string) {
-		this.updateState((state) => {
-			if (state.cursor === cursor) return state;
-			return { ...state, cursor };
-		});
-	}
-
-	getSize(): { width: number; height: number } {
-		return {
-			width: this.editor.state.width,
-			height: this.state.height,
-		};
-	}
-
-	getScrollPosition(): { scrollLeft: number; scrollTop: number } {
-		return {
-			scrollLeft: this.editor.state.scrollLeft,
-			scrollTop: 0,
-		};
-	}
-
-	getZoomLevel(): number {
-		return this.editor.state.zoom;
-	}
-
 	// endregion
 
 	// region Pointer Interaction Handles
 
 	private readonly selectionHandle: PointerEventManagerInteractionHandle = {
-		cursor: "ns-resize",
+		// cursor: "ns-resize",
 		handlePointerDown: (ev) => {
 			const channelId = this.editor.state.activeChannelId;
 			if (channelId === null) return;
@@ -157,7 +143,7 @@ export class ParameterEditor
 	};
 
 	private readonly backgroundHandle: PointerEventManagerInteractionHandle = {
-		cursor: "default",
+		// cursor: "default",
 		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			if (ev.button === MouseEventButton.PRIMARY) {
 				if (!ev.metaKey) {
@@ -167,14 +153,22 @@ export class ParameterEditor
 
 			const selectedNoteIds = this.editor.state.selectedNoteIds;
 			ev.addDragStartSessionListener((ev) => {
-				const position = toParameterEditorPosition(ev.position);
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
 				this.editor.startMarqueeSelection({
 					tick: position.tick,
 					key: 0,
 				});
 			});
 			ev.addDragMoveSessionListener((ev) => {
-				const position = toParameterEditorPosition(ev.position);
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
 				this.editor.setMarqueeAreaTo({ tick: position.tick, key: NUM_KEYS });
 				const marqueeArea = getMarqueeArea(
 					this.editor.state.marqueeAreaFrom,
@@ -208,13 +202,17 @@ export class ParameterEditor
 
 	private createNoteHandle(note: Note): PointerEventManagerInteractionHandle {
 		return {
-			cursor: "ns-resize",
+			// cursor: "ns-resize",
 			handlePointerDown: (ev) => {
 				const channelId = this.editor.state.activeChannelId;
 				if (channelId === null) return;
 
 				ev.addDragStartSessionListener((ev: PointerEventManagerEvent) => {
-					const position = toParameterEditorPosition(ev.position);
+					const position = toParameterEditorPosition(
+						ev.position,
+						this.editor.state,
+						this.state,
+					);
 					this.setNoteParameter(
 						channelId,
 						[note.id],
@@ -223,7 +221,11 @@ export class ParameterEditor
 					);
 				});
 				ev.addDragMoveSessionListener((ev: PointerEventManagerEvent) => {
-					const position = toParameterEditorPosition(ev.position);
+					const position = toParameterEditorPosition(
+						ev.position,
+						this.editor.state,
+						this.state,
+					);
 					this.setNoteParameter(
 						channelId,
 						[note.id],
@@ -232,7 +234,11 @@ export class ParameterEditor
 					);
 				});
 				ev.addDragEndSessionListener((ev: PointerEventManagerEvent) => {
-					const position = toParameterEditorPosition(ev.position);
+					const position = toParameterEditorPosition(
+						ev.position,
+						this.editor.state,
+						this.state,
+					);
 					this.setNoteParameter(
 						channelId,
 						[note.id],
@@ -249,11 +255,13 @@ export class ParameterEditor
 
 function toParameterEditorPosition(
 	position: PositionSnapshot,
+	editorState: EditorState,
+	parameterEditorState: ParameterEditorState,
 ): ParameterEditorPosition {
-	const x = position.x + position.scrollLeft - SIDEBAR_WIDTH;
+	const x = position.x + editorState.scrollLeft - SIDEBAR_WIDTH;
 	const y = position.y;
-	const tick = Math.floor(x / widthPerTick(position.zoom));
-	const value = minmax(0, 1, 1 - y / position.height);
+	const tick = Math.floor(x / widthPerTick(editorState.zoom));
+	const value = minmax(0, 1, 1 - y / parameterEditorState.height);
 
 	return { x, y, tick, value };
 }

@@ -6,7 +6,7 @@ import type { PointerEventManagerInteractionHandle } from "./PointerEventManager
 import type { PositionSnapshot } from "./PositionSnapshot.ts";
 
 /**
- * Canvasに独自に描画するUIの基底クラス
+ * Drag処理やCanvas上での独自UIなど、複雑なPointerEventを管理するクラス
  */
 export class PointerEventManager {
 	/**
@@ -21,10 +21,12 @@ export class PointerEventManager {
 
 	readonly pointers = new Map<number, PointerState>();
 
-	constructor(private readonly delegate: PointerEventManagerDelegate) {}
+	constructor(
+		private readonly handleResolver: PointerEventManagerInteractionHandleResolver,
+	) {}
 
 	readonly handlePointerDown = (nativeEvent: PointerEvent) => {
-		const position = this.resolvePosition(nativeEvent);
+		const position = { x: nativeEvent.offsetX, y: nativeEvent.offsetY };
 
 		let state = this.pointers.get(nativeEvent.pointerId);
 		if (state === undefined) {
@@ -45,14 +47,19 @@ export class PointerEventManager {
 		};
 		state.sessions.set(nativeEvent.button, session);
 
-		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
-		const handle = this.delegate.findHandle(position);
+		const ev = new PointerEventManagerEventImpl(
+			position,
+			nativeEvent,
+			session,
+			this,
+		);
+		const handle = this.handleResolver.resolveHandle(position);
 
 		handle?.handlePointerDown?.(ev);
 	};
 
 	readonly handlePointerMove = (nativeEvent: PointerEvent) => {
-		const position = this.resolvePosition(nativeEvent);
+		const position = { x: nativeEvent.offsetX, y: nativeEvent.offsetY };
 
 		let state = this.pointers.get(nativeEvent.pointerId);
 		if (state === undefined) {
@@ -61,10 +68,13 @@ export class PointerEventManager {
 		}
 		state.position = position;
 
-		this.delegate.onPointerMove?.(this);
-
-		const handle = this.delegate.findHandle(position);
-		this.delegate.setCursor(handle?.cursor ?? "default");
+		const handle = this.handleResolver.resolveHandle(position);
+		handle?.handlePointerMove?.({
+			position,
+			button: nativeEvent.button,
+			metaKey: nativeEvent.metaKey,
+			manager: this,
+		});
 
 		for (const button of [
 			MouseEventButton.PRIMARY,
@@ -85,7 +95,7 @@ export class PointerEventManager {
 	};
 
 	readonly handlePointerUp = (nativeEvent: PointerEvent) => {
-		const position = this.resolvePosition(nativeEvent);
+		const position = { x: nativeEvent.offsetX, y: nativeEvent.offsetY };
 
 		const state = this.pointers.get(nativeEvent.pointerId);
 		assertNotNullish(state);
@@ -104,6 +114,7 @@ export class PointerEventManager {
 				position,
 				nativeEvent,
 				session,
+				this,
 			);
 
 			for (const listener of session.pointerUpListeners) {
@@ -125,14 +136,15 @@ export class PointerEventManager {
 	};
 
 	readonly handleDoubleClick = (nativeEvent: MouseEvent) => {
-		const position = this.resolvePosition(nativeEvent);
+		const position = { x: nativeEvent.offsetX, y: nativeEvent.offsetY };
 		const ev: PointerEventManagerDoubleClickEvent = {
 			position,
 			button: nativeEvent.button,
 			metaKey: nativeEvent.metaKey,
+			manager: this,
 		};
 
-		this.delegate.findHandle(position)?.handleDoubleClick?.(ev);
+		this.handleResolver.resolveHandle(position)?.handleDoubleClick?.(ev);
 	};
 
 	private handleDragStart(
@@ -143,7 +155,12 @@ export class PointerEventManager {
 		if (session.dragging !== "ready") return;
 		session.dragging = "dragging";
 
-		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(
+			position,
+			nativeEvent,
+			session,
+			this,
+		);
 		for (const listener of session.dragStartListeners) {
 			listener(ev);
 		}
@@ -156,7 +173,12 @@ export class PointerEventManager {
 	) {
 		if (session.dragging !== "dragging") return;
 
-		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(
+			position,
+			nativeEvent,
+			session,
+			this,
+		);
 		for (const listener of session.dragMoveListeners) {
 			listener(ev);
 		}
@@ -173,7 +195,12 @@ export class PointerEventManager {
 		}
 		session.dragging = "ended";
 
-		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(
+			position,
+			nativeEvent,
+			session,
+			this,
+		);
 		for (const listener of session.dragEndListeners) {
 			listener(ev);
 		}
@@ -184,70 +211,25 @@ export class PointerEventManager {
 		nativeEvent: PointerEvent,
 		session: PointerSession,
 	) {
-		const ev = new PointerEventManagerEventImpl(position, nativeEvent, session);
+		const ev = new PointerEventManagerEventImpl(
+			position,
+			nativeEvent,
+			session,
+			this,
+		);
 		for (const listener of session.tapListeners) {
 			listener(ev);
 		}
 	}
-
-	/**
-	 * マウスイベントのスクリーン座標系からCanvasUI上の論理座標を解決する。
-	 * @param ev
-	 * @private
-	 */
-	private resolvePosition(ev: MouseEvent): PositionSnapshot {
-		const { scrollLeft, scrollTop } = this.delegate.getScrollPosition();
-		const { width, height } = this.delegate.getSize();
-
-		return {
-			x: ev.offsetX,
-			y: ev.offsetY,
-			scrollLeft,
-			scrollTop,
-			width,
-			height,
-			zoom: this.delegate.getZoomLevel(),
-		};
-	}
 }
 
-export interface PointerEventManagerDelegate {
+export interface PointerEventManagerInteractionHandleResolver {
 	/**
 	 * 座標から、ドラッグハンドルを探す。ハンドルが複数重なっている場合には優先すべきハンドルを解決して返す。
-	 * @private
 	 */
-	findHandle(
+	resolveHandle(
 		position: PositionSnapshot,
 	): PointerEventManagerInteractionHandle | null;
-
-	/**
-	 * カーソルを設定する。
-	 * @param cursor
-	 * @protected
-	 */
-	setCursor(cursor: string): void;
-
-	/**
-	 * Canvasのサイズを取得する。
-	 */
-	getSize(): { width: number; height: number };
-
-	/**
-	 * スクロール位置を取得する。
-	 */
-	getScrollPosition(): { scrollLeft: number; scrollTop: number };
-
-	/**
-	 * 拡大率を取得する。
-	 * @returns 拡大率。等倍の場合は1。
-	 */
-	getZoomLevel(): number;
-
-	/**
-	 * ポインタが移動したときに呼び出され、追加の処理を実装可能。
-	 * @protected
-	 */
-	onPointerMove?(manager: PointerEventManager): void;
 }
 
 interface PointerState {
@@ -272,6 +254,7 @@ class PointerEventManagerEventImpl implements PointerEventManagerEvent {
 		public readonly position: PositionSnapshot,
 		private readonly nativeEvent: MouseEvent,
 		private readonly dragSession: PointerSession,
+		readonly manager: PointerEventManager,
 	) {}
 
 	get button() {

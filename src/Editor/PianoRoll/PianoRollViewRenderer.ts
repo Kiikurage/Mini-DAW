@@ -10,6 +10,10 @@ import type { PlayerState } from "../../Player/Player.ts";
 import type { EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import type { PianoRollState } from "./PianoRoll.ts";
+import {
+	PianoRollHoverNotesManager,
+	type PianoRollHoverNotesManagerState,
+} from "./PianoRollHoverNotesManager.ts";
 
 export const HEIGHT_PER_KEY = 16;
 
@@ -17,6 +21,7 @@ export function renderCanvas({
 	canvas,
 	instrumentStoreState,
 	pianoRollState,
+	pianoRollHoverNotesManagerState,
 	song,
 	playerState,
 	editorState,
@@ -24,6 +29,7 @@ export function renderCanvas({
 	canvas: HTMLCanvasElement;
 	instrumentStoreState: InstrumentStoreState;
 	pianoRollState: PianoRollState;
+	pianoRollHoverNotesManagerState: PianoRollHoverNotesManagerState;
 	song: Song;
 	playerState: PlayerState;
 	editorState: EditorState;
@@ -229,7 +235,7 @@ export function renderCanvas({
 		// endregion
 
 		// region ホバー中のノート
-		for (const noteId of pianoRollState.hoveredNoteIds) {
+		for (const noteId of pianoRollHoverNotesManagerState.hoverNoteIds) {
 			const note = activeChannel.notes.get(noteId);
 			if (note === undefined) continue;
 

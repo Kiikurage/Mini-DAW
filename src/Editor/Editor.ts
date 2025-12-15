@@ -5,6 +5,7 @@ import { getActiveChannel } from "../getActiveChannel.ts";
 import { getMarqueeArea } from "../getMarqueeArea.ts";
 import { minmax } from "../lib.ts";
 import type { Note } from "../models/Note.ts";
+import type { Player } from "../Player/Player.ts";
 import type { SongStore } from "../SongStore.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import { widthPerTick } from "./ParameterEditor/ParameterEditorViewRenderer.ts";
@@ -81,6 +82,7 @@ export class Editor extends Stateful<EditorState> {
 
 	constructor(
 		private readonly songStore: SongStore,
+		player: Player,
 		bus: EventBus,
 	) {
 		super({
@@ -95,6 +97,19 @@ export class Editor extends Stateful<EditorState> {
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
+		});
+
+		player.addChangeListener((state) => {
+			if (!state.isAutoScrollEnabled) return;
+
+			const playHeadX = state.currentTick * widthPerTick(this.state.zoom);
+			const scrollLeft = minmax(
+				playHeadX - this.state.width / 2,
+				playHeadX,
+				this.state.scrollLeft,
+			);
+
+			this.setScrollLeft(scrollLeft);
 		});
 
 		bus

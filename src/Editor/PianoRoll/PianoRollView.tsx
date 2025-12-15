@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
-import { PointerEventManager } from "../../CanvasUIController/PointerEventManager.ts";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { InstrumentStore } from "../../InstrumentStore.ts";
 import { addListener } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
+import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import {
@@ -14,6 +14,7 @@ import {
 import { type SetNotes, SetNotesKey } from "../../usecases/SetNotes.ts";
 import { Editor } from "../Editor.ts";
 import { PianoRoll } from "./PianoRoll.ts";
+import { PianoRollInteractionHandleResolver } from "./PianoRollInteractionHandleResolver.ts";
 import { HEIGHT_PER_KEY, renderCanvas } from "./PianoRollViewRenderer.ts";
 
 export function PianoRollView({
@@ -44,21 +45,25 @@ export function PianoRollView({
 		const canvas = canvasRef.current;
 		if (canvas === null) return;
 
-		const pianoRoll = new PianoRoll(
-			instrumentStore,
-			songStore,
-			setNotes,
-			deleteNotes,
-			player,
-			editor,
-		);
+		const pianoRoll = new PianoRoll(instrumentStore, songStore, editor);
 
-		const pointerEventManager = new PointerEventManager(pianoRoll);
+		const pointerEventManager = new PointerEventManager(
+			new PianoRollInteractionHandleResolver(
+				instrumentStore,
+				pianoRoll,
+				songStore,
+				setNotes,
+				deleteNotes,
+				player,
+				editor,
+			),
+		);
 
 		const render = () => {
 			renderCanvas({
 				canvas,
 				pianoRollState: pianoRoll.state,
+				pianoRollHoverNotesManagerState: pianoRoll.hoverNotesManager.state,
 				instrumentStoreState: instrumentStore.state,
 				song: songStore.state,
 				playerState: player.state,
@@ -71,6 +76,7 @@ export function PianoRollView({
 				canvas.style.cursor = state.cursor;
 			}),
 			pianoRoll.addChangeListener(render),
+			pianoRoll.hoverNotesManager.addChangeListener(render),
 			instrumentStore.addChangeListener(render),
 			songStore.addChangeListener(render),
 			player.addChangeListener(render),

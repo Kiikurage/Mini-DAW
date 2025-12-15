@@ -229,7 +229,6 @@ export class InstrumentZoneImpl extends ZoneImpl implements InstrumentZone {
 				break;
 			}
 			case SFGenerator.SAMPLE_MODES: {
-				// サンプルの再生モード（ループ設定など）TODO
 				const rawValue = gen.amount.getUint8(0);
 				switch (rawValue & 0b11) {
 					case 0: // no loop

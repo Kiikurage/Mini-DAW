@@ -36,7 +36,11 @@ export function configureDeps() {
 				return new AudioContext();
 			})
 			.set(Editor.Key, (deps) => {
-				return new Editor(deps.get(SongStore.Key), deps.get(EventBus.Key));
+				return new Editor(
+					deps.get(SongStore.Key),
+					deps.get(Player.Key),
+					deps.get(EventBus.Key),
+				);
 			})
 			.set(EventBus.Key, () => {
 				return new EventBus();
