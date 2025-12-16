@@ -81,14 +81,13 @@ export function moveNotesFeature(context: {
 				);
 				const keyDiff = position.key - startPosition.key;
 
-				const newNotes = originalNotes.map(
-					(note) =>
-						new Note({
-							...note,
-							key: note.key + keyDiff,
-							tickFrom: note.tickFrom + tickDiff,
-							tickTo: note.tickTo + tickDiff,
-						}),
+				const newNotes = originalNotes.map((note) =>
+					Note.create({
+						...note,
+						key: note.key + keyDiff,
+						tickFrom: note.tickFrom + tickDiff,
+						tickTo: note.tickTo + tickDiff,
+					}),
 				);
 				setNotes(activeChannelId, newNotes);
 
@@ -190,7 +189,7 @@ export function resizeNoteStartFeature(context: {
 	return {
 		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			resizeNotes({ ...context, ev }, (note, tickDiff) => {
-				return new Note({
+				return Note.create({
 					...note,
 					tickFrom: quantize(
 						minmax(
@@ -224,7 +223,7 @@ export function resizeNoteEndFeature(context: {
 	return {
 		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			resizeNotes({ ...context, ev }, (note, tickDiff) => {
-				return new Note({
+				return Note.create({
 					...note,
 					tickTo: quantize(
 						minmax(

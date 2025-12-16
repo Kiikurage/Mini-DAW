@@ -1,9 +1,10 @@
 import { Color, type SerializedColor } from "../Color.ts";
+import type { ControlChangeList } from "./ControlChangeList.ts";
 import {
 	InstrumentKey,
 	type SerializedInstrumentKey,
 } from "./InstrumentKey.ts";
-import { Note, type SerializedNote } from "./Note.ts";
+import type { Note } from "./Note.ts";
 
 export class Channel {
 	static readonly COLORS = [
@@ -21,6 +22,7 @@ export class Channel {
 	readonly label: string;
 	readonly instrumentKey: InstrumentKey;
 	readonly notes: ReadonlyMap<number, Note>;
+	readonly controlChanges: ReadonlyMap<number, ControlChangeList>;
 	readonly color: Color;
 
 	constructor(props: {
@@ -28,12 +30,14 @@ export class Channel {
 		readonly label: string;
 		readonly instrumentKey: InstrumentKey;
 		readonly notes: ReadonlyMap<number, Note>;
+		readonly controlChanges: ReadonlyMap<number, ControlChangeList>;
 		readonly color: Color;
 	}) {
 		this.id = props.id;
 		this.label = props.label;
 		this.instrumentKey = props.instrumentKey;
 		this.notes = props.notes;
+		this.controlChanges = props.controlChanges;
 		this.color = props.color;
 	}
 
@@ -105,9 +109,9 @@ export class Channel {
 	}
 
 	serialize(): SerializedChannel {
-		const serializedNotes: Record<number, SerializedNote> = {};
+		const serializedNotes: Record<number, Note> = {};
 		for (const [key, note] of this.notes) {
-			serializedNotes[key] = note.serialize();
+			serializedNotes[key] = note;
 		}
 
 		return {
@@ -121,8 +125,8 @@ export class Channel {
 
 	static deserialize(data: SerializedChannel): Channel {
 		const notes = new Map<number, Note>();
-		for (const [keyStr, noteData] of Object.entries(data.notes)) {
-			notes.set(Number(keyStr), Note.deserialize(noteData));
+		for (const [keyStr, note] of Object.entries(data.notes)) {
+			notes.set(Number(keyStr), note);
 		}
 
 		return new Channel({
@@ -130,6 +134,7 @@ export class Channel {
 			label: data.label,
 			instrumentKey: InstrumentKey.deserialize(data.instrumentKey),
 			notes,
+			controlChanges: new Map<number, ControlChangeList>(), // Placeholder, as controlChanges are not serialized yet
 			color: Color.deserialize(data.color),
 		});
 	}
@@ -144,6 +149,6 @@ export interface SerializedChannel {
 	readonly id: number;
 	readonly label: string;
 	readonly instrumentKey: SerializedInstrumentKey;
-	readonly notes: Record<number, SerializedNote>;
+	readonly notes: Record<number, Note>;
 	readonly color: SerializedColor;
 }

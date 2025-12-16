@@ -5,7 +5,20 @@ import { Preset } from "./Preset.ts";
 import { type PresetZone, PresetZoneImpl } from "./PresetZone.ts";
 import { RIFF } from "./RIFF.ts";
 import { Sample } from "./Sample.ts";
-import { type IBAG, type IGEN, type IMOD, type INST, parsePDTA, parseSDTA, type PBAG, type PDTA, type PGEN, type PHDR, type PMOD, type SDTA, } from "./sf2.ts";
+import {
+	type IBAG,
+	type IGEN,
+	type IMOD,
+	type INST,
+	type PBAG,
+	type PDTA,
+	type PGEN,
+	type PHDR,
+	type PMOD,
+	parsePDTA,
+	parseSDTA,
+	type SDTA,
+} from "./sf2.ts";
 
 export class SoundFont {
 	private readonly presetHeaders: ReadonlyMap<

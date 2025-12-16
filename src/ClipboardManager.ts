@@ -1,7 +1,7 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { Editor } from "./Editor/Editor.ts";
 import { getSelectedNotes } from "./getSelectedNotes.ts";
-import { Note, type SerializedNote } from "./models/Note.ts";
+import { Note } from "./models/Note.ts";
 import type { Player } from "./Player/Player.ts";
 import type { SongStore } from "./SongStore.ts";
 import type { RemoveNotes } from "./usecases/RemoveNotes.ts";
@@ -32,9 +32,7 @@ export class ClipboardManager {
 		];
 		if (selectedNotes.length === 0) return;
 
-		const serializedData = JSON.stringify(
-			selectedNotes.map((note) => note.serialize()),
-		);
+		const serializedData = JSON.stringify(selectedNotes);
 
 		const type = "text/plain";
 		const blob = new Blob([serializedData], { type });
@@ -50,24 +48,20 @@ export class ClipboardManager {
 		const text = await blob.text();
 		let notes: Note[];
 		try {
-			const serializedData = JSON.parse(text) as SerializedNote[];
+			const originalNotes = JSON.parse(text) as Note[];
 			let nextNoteId = Date.now();
 
-			const originalNotes = serializedData.map((data) =>
-				Note.deserialize(data),
-			);
 			const pasteTickOffset =
 				this.player.state.currentTick -
 				Math.min(...originalNotes.map((note) => note.tickFrom));
 
-			notes = originalNotes.map(
-				(note) =>
-					new Note({
-						...note,
-						id: nextNoteId++,
-						tickFrom: note.tickFrom + pasteTickOffset,
-						tickTo: note.tickTo + pasteTickOffset,
-					}),
+			notes = originalNotes.map((note) =>
+				Note.create({
+					...note,
+					id: nextNoteId++,
+					tickFrom: note.tickFrom + pasteTickOffset,
+					tickTo: note.tickTo + pasteTickOffset,
+				}),
 			);
 		} catch (_ignored) {
 			return;

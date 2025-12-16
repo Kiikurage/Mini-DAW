@@ -5,13 +5,14 @@ import { DIContainer } from "./Dependency/DIContainer.ts";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Editor } from "./Editor/Editor.ts";
 import { EventBus } from "./EventBus.ts";
-import { InstrumentStore } from "./InstrumentStore.ts";
 import { KeyboardHandler } from "./KeyboardHandler.ts";
 import { Player } from "./Player/Player.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { SongStore } from "./SongStore.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
+import { SoundFontSynthesizer } from "./SoundFontSynthesizer.ts";
 import { StatusBar } from "./StatusBar/StatusBar.tsx";
+import { SynthesizerKey } from "./Synthesizer.ts";
 import { AddChannel, AddChannelKey } from "./usecases/AddChannel.ts";
 import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
@@ -51,20 +52,20 @@ export function configureDeps() {
 			.set(SongStore.Key, (deps) => {
 				return new SongStore(deps.get(EventBus.Key));
 			})
-			.set(InstrumentStore.Key, (deps) => {
-				return new InstrumentStore(deps.get(EventBus.Key), deps);
-			})
 			.set(SoundFontStore.Key, () => {
 				return new SoundFontStore();
 			})
 			.set(StatusBar.Key, () => {
 				return new StatusBar();
 			})
+			.set(SynthesizerKey, (deps) => {
+				return new SoundFontSynthesizer(deps.get(AudioContextKey));
+			})
 			.set(Player.Key, (deps) => {
 				return new Player(
 					deps.get(AudioContextKey),
 					deps.get(SongStore.Key),
-					deps.get(InstrumentStore.Key),
+					deps.get(SynthesizerKey),
 					deps.get(EventBus.Key),
 				);
 			})

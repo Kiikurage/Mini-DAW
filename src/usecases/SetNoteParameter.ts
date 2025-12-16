@@ -28,7 +28,7 @@ export function SetNoteParameter({
 		const notes = [...noteIds]
 			.map((noteId) => channel.notes.get(noteId))
 			.filter(isNotNullish)
-			.map((note) => new Note({ ...note, velocity: value }));
+			.map((note) => Note.create({ ...note, velocity: value }));
 
 		setNotes(channelId, notes);
 	};

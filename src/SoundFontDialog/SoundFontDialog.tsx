@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdOpenInNew } from "react-icons/md";
-import type { InstrumentStore } from "../InstrumentStore.ts";
 import type { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { Button } from "../react/Button.ts";
 import { Dialog } from "../react/Dialog.tsx";
@@ -11,9 +11,9 @@ import { Link } from "../react/Link.ts";
 import { ListBox } from "../react/ListBox/ListBox.tsx";
 import type { OverlayPortal } from "../react/OverlayPortal.ts";
 import { Select } from "../react/Select/Select.tsx";
-import { PreInstalledSoundFontInstrumentKey, type SoundFontInstrumentKey, } from "../SoundFontInstrument.ts";
 import type { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
+import type { Synthesizer } from "../Synthesizer.ts";
 import type { UpdateChannel } from "../usecases/UpdateChannel.ts";
 
 export class SoundFontDialog {
@@ -21,7 +21,7 @@ export class SoundFontDialog {
 
 	constructor(
 		private readonly overlayPortal: OverlayPortal,
-		private readonly instrumentStore: InstrumentStore,
+		private readonly synthesizer: Synthesizer,
 		private readonly soundFontStore: SoundFontStore,
 		private readonly updateChannel: UpdateChannel,
 		readonly channel: Channel,
@@ -34,7 +34,7 @@ export class SoundFontDialog {
 				controller={this}
 				onClose={() => this.close()}
 				soundFontStore={this.soundFontStore}
-				instrumentStore={this.instrumentStore}
+				synthesizer={this.synthesizer}
 				updateChannel={this.updateChannel}
 			/>
 		));
@@ -46,29 +46,35 @@ export class SoundFontDialog {
 	}
 }
 
+const PREVIEW_CHANNEL_NUMBER = 999;
+
 function SoundFontDialogView({
+	synthesizer,
 	controller,
 	onClose,
 	soundFontStore,
-	instrumentStore,
 	updateChannel,
 }: {
+	synthesizer: Synthesizer;
 	controller: SoundFontDialog;
 	onClose: () => void;
 	soundFontStore: SoundFontStore;
-	instrumentStore: InstrumentStore;
 	updateChannel: UpdateChannel;
 }) {
 	const [instrumentKey, _setInstrumentKey] = useState(
-		controller.channel.instrumentKey as PreInstalledSoundFontInstrumentKey,
+		controller.channel.instrumentKey as InstrumentKey,
 	);
-	const setInstrumentKey = (key: PreInstalledSoundFontInstrumentKey) => {
+	const setInstrumentKey = (key: InstrumentKey) => {
 		_setInstrumentKey(key);
-		instrumentStore.getOrLoad(key);
+		synthesizer.setBank({
+			channel: PREVIEW_CHANNEL_NUMBER,
+			bankNumber: key.bankNumber,
+		});
+		synthesizer.setPreset({
+			channel: PREVIEW_CHANNEL_NUMBER,
+			programNumber: key.presetNumber,
+		});
 	};
-
-	const instrumentStoreState = useStateful(instrumentStore);
-	const instrument = instrumentStoreState.get(instrumentKey);
 
 	const soundFont = useStateful(soundFontStore, () =>
 		soundFontStore.getOrLoad(instrumentKey.url),
@@ -78,13 +84,11 @@ function SoundFontDialogView({
 	);
 
 	const handleKeyboardPointerDown = (key: number) => {
-		if (instrument === undefined || instrument.status !== "fulfilled") return;
-		instrument.value.noteOn({ key, velocity: 100 });
+		synthesizer.noteOn({ channel: PREVIEW_CHANNEL_NUMBER, key, velocity: 100 });
 	};
 
 	const handleKeyboardPointerUp = (key: number) => {
-		if (instrument === undefined || instrument.status !== "fulfilled") return;
-		instrument.value.noteOff({ key });
+		synthesizer.noteOff({ channel: PREVIEW_CHANNEL_NUMBER, key });
 	};
 
 	const onSubmit = () => {
@@ -94,6 +98,10 @@ function SoundFontDialogView({
 
 		onClose();
 	};
+
+	useEffect(() => {
+		synthesizer.reset(PREVIEW_CHANNEL_NUMBER);
+	}, [synthesizer]);
 
 	return (
 		<Dialog open modal onClose={onClose}>
@@ -112,13 +120,7 @@ function SoundFontDialogView({
 									);
 									if (soundFont === undefined) return;
 
-									setInstrumentKey(
-										new PreInstalledSoundFontInstrumentKey(
-											soundFont.name,
-											0,
-											0,
-										),
-									);
+									setInstrumentKey(new InstrumentKey(soundFont.name, 0, 0));
 								}}
 							>
 								{PreInstalledSouindFonts.map((soundFont) => (
@@ -184,7 +186,7 @@ function SoundFontDialogView({
 											value={instrumentKey.presetNumber}
 											onChange={(presetNumber) => {
 												setInstrumentKey(
-													new PreInstalledSoundFontInstrumentKey(
+													new InstrumentKey(
 														instrumentKey.name,
 														presetNumber as number,
 														0,
@@ -214,12 +216,10 @@ function SoundFontDialogView({
 								<Form.Field label="バンク">
 									{soundFont?.status === "fulfilled" ? (
 										<ListBox
-											value={
-												(instrumentKey as SoundFontInstrumentKey).presetNumber
-											}
+											value={instrumentKey.presetNumber}
 											onChange={(bankNumber) => {
 												setInstrumentKey(
-													new PreInstalledSoundFontInstrumentKey(
+													new InstrumentKey(
 														instrumentKey.name,
 														instrumentKey.presetNumber,
 														bankNumber as number,

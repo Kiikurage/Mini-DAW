@@ -6,7 +6,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"test": "bun test",
-		"lint": "biome check . --write"
+		"lint": "biome check . --write --unsafe"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.1",

@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
-import { Editor } from "../Editor/Editor.ts";
 import { EditorView } from "../Editor/EditorView.tsx";
 import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
 import { KeyboardHandler } from "../KeyboardHandler.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
-import { StatusBar } from "../StatusBar/StatusBar.tsx";
 import { StatusBarView } from "../StatusBar/StatusBarView.tsx";
 import { ToolBar } from "../ToolBar/ToolBar.tsx";
 import {

@@ -1,7 +1,6 @@
 import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { MouseEventButton } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import type { InstrumentStore } from "../../InstrumentStore.ts";
 import { minmax, quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
 import type { Player } from "../../Player/Player.ts";
@@ -14,6 +13,7 @@ import {
 import type { PointerEventManagerPointerMoveEvent } from "../../PointerEventManager/PointerEventManagerPointerMoveEvent.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
+import type { Synthesizer } from "../../Synthesizer.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
 import type { Editor } from "../Editor.ts";
@@ -66,7 +66,7 @@ export class PianoRollInteractionHandleResolver
 	private readonly previewManager: PianoRollPreviewManager;
 
 	constructor(
-		instrumentStore: InstrumentStore,
+		synthesizer: Synthesizer,
 		private readonly pianoRoll: PianoRoll,
 		private readonly songStore: SongStore,
 		private readonly setNotes: SetNotes,
@@ -75,9 +75,9 @@ export class PianoRollInteractionHandleResolver
 		private readonly editor: Editor,
 	) {
 		this.previewManager = new PianoRollPreviewManager(
-			instrumentStore,
 			this.songStore,
 			this.editor,
+			synthesizer,
 		);
 
 		this.backgroundHandle = composeInteractionHandle(
@@ -144,7 +144,7 @@ export class PianoRollInteractionHandleResolver
 								? 1
 								: this.editor.state.newNoteDurationInTick;
 
-							const note = new Note({
+							const note = Note.create({
 								id: Date.now(),
 								key: position.key,
 								tickFrom,

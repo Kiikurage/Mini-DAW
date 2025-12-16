@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
-import { InstrumentStore } from "../../InstrumentStore.ts";
 import { addListener } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
+import { SoundFontStore } from "../../SoundFontStore.ts";
+import { type Synthesizer, SynthesizerKey } from "../../Synthesizer.ts";
 import {
 	type RemoveNotes,
 	RemoveNotesKey,
@@ -18,21 +19,24 @@ import { PianoRollInteractionHandleResolver } from "./PianoRollInteractionHandle
 import { HEIGHT_PER_KEY, renderCanvas } from "./PianoRollViewRenderer.ts";
 
 export function PianoRollView({
-	instrumentStore,
 	songStore,
 	player,
 	editor,
 	setNotes,
 	removeNotes,
+	synthesizer,
+	soundFontStore,
 }: {
-	instrumentStore?: InstrumentStore;
 	songStore?: SongStore;
 	player?: Player;
 	editor?: Editor;
 	setNotes?: SetNotes;
 	removeNotes?: RemoveNotes;
+	synthesizer?: Synthesizer;
+	soundFontStore?: SoundFontStore;
 }) {
-	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
+	synthesizer = useComponent(SynthesizerKey, synthesizer);
+	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
 	songStore = useComponent(SongStore.Key, songStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
@@ -45,11 +49,11 @@ export function PianoRollView({
 		const canvas = canvasRef.current;
 		if (canvas === null) return;
 
-		const pianoRoll = new PianoRoll(instrumentStore, songStore, editor);
+		const pianoRoll = new PianoRoll(soundFontStore, songStore, editor);
 
 		const pointerEventManager = new PointerEventManager(
 			new PianoRollInteractionHandleResolver(
-				instrumentStore,
+				synthesizer,
 				pianoRoll,
 				songStore,
 				setNotes,
@@ -64,10 +68,10 @@ export function PianoRollView({
 				canvas,
 				pianoRollState: pianoRoll.state,
 				pianoRollHoverNotesManagerState: pianoRoll.hoverNotesManager.state,
-				instrumentStoreState: instrumentStore.state,
 				song: songStore.state,
 				playerState: player.state,
 				editorState: editor.state,
+				soundFontStoreState: soundFontStore.state,
 			});
 		};
 
@@ -77,10 +81,10 @@ export function PianoRollView({
 			}),
 			pianoRoll.addChangeListener(render),
 			pianoRoll.hoverNotesManager.addChangeListener(render),
-			instrumentStore.addChangeListener(render),
 			songStore.addChangeListener(render),
 			player.addChangeListener(render),
 			editor.addChangeListener(render),
+			soundFontStore.addChangeListener(render),
 			ResizeObserverWrapper.getInstance().observe(canvas, (entry) => {
 				pianoRoll.setHeight(entry.contentRect.height);
 			}),
@@ -109,7 +113,15 @@ export function PianoRollView({
 				disposable();
 			}
 		};
-	}, [editor, instrumentStore, player, songStore, removeNotes, setNotes]);
+	}, [
+		synthesizer,
+		editor,
+		player,
+		songStore,
+		removeNotes,
+		setNotes,
+		soundFontStore,
+	]);
 
 	return (
 		<canvas

@@ -1,11 +1,11 @@
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
-import type { InstrumentStore } from "../InstrumentStore.ts";
 import { minmax } from "../lib.ts";
 import type { SongStore } from "../SongStore.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
+import type { Synthesizer } from "../Synthesizer.ts";
 
 export interface PlayerState {
 	/**
@@ -35,7 +35,7 @@ export class Player extends Stateful<PlayerState> {
 	constructor(
 		private readonly context: AudioContext,
 		private readonly songStore: StateOnly<SongStore>,
-		private readonly instrumentStore: InstrumentStore,
+		private readonly synthesizer: Synthesizer,
 		bus: EventBus,
 	) {
 		super({
@@ -45,10 +45,13 @@ export class Player extends Stateful<PlayerState> {
 			isAutoScrollEnabled: false,
 		});
 
-		bus.on("song.put.after", (song) => {
-			for (const channel of song.channels) {
-				instrumentStore.getOrLoad(channel.instrumentKey);
-			}
+		bus.on("song.put.after", (_song) => {
+			this.synthesizer.resetAll();
+
+			// TODO: Preload soundFonts
+			// for (const channel of song.channels) {
+			// 	instrumentStore.getOrLoad(channel.instrumentKey);
+			// }
 		});
 		bus.on("channel.remove.before", (channelId: number) => {
 			this.cancelMuteChannel(channelId);
@@ -104,32 +107,26 @@ export class Player extends Stateful<PlayerState> {
 
 	pause() {
 		if (!this.state.isPlaying) return;
-		if (this.rAFTimerId !== null) {
-			cancelAnimationFrame(this.rAFTimerId);
-			this.rAFTimerId = null;
+		if (this.updateCallbackId !== null) {
+			cancelAnimationFrame(this.updateCallbackId);
+			this.updateCallbackId = null;
 		}
 
 		this.setPlaying(false);
-		for (const channel of this.songStore.state.channels) {
-			const instrumentPS = this.instrumentStore.getOrLoad(
-				channel.instrumentKey,
-			);
-			if (instrumentPS.status !== "fulfilled") continue;
-			instrumentPS.value.reset();
-		}
+		this.synthesizer.noteOffAll();
 	}
 
 	play() {
 		if (this.state.isPlaying) return;
 		this.setPlaying(true);
 		this.setAutoScrollEnabled(true);
+		this.startedFromInTick = this.state.currentTick;
+		this.startedAtApplicationTime = performance.now() / 1000;
 
-		const SETUP_TIME_IN_SEC = 0.05;
-		const SECOND_PER_TICK =
-			60 / this.songStore.state.bpm / (TICK_PER_MEASURE / 4);
-
-		// 楽曲を再生開始するAudioContext時刻[sec]
-		const audioStartTime = this.context.currentTime + SETUP_TIME_IN_SEC;
+		// AudioContextへあらかじめキューイングする再生命令の先読みサイズ[秒]
+		// 大きいほど安定するが、操作に対する反応が遅れる(再生直前に適用した編集が反映されない等)
+		// 小さいほど操作に対する反応が良くなるが、負荷が高くなり再生が途切れる可能性が上がる
+		const PRE_ENQUEUE_SIZE_IN_SEC = 1 / 30;
 
 		const audioLastTickFrom = Math.max(
 			...this.songStore.state.channels.map((ch) => ch.lastTickFrom),
@@ -138,66 +135,116 @@ export class Player extends Stateful<PlayerState> {
 			this.setCurrentTick(0);
 		}
 
-		// 楽曲の再生開始位置[tick]
-		const audioStartTick = this.state.currentTick;
-
 		for (const channel of this.songStore.state.channels) {
-			const instrumentPS = this.instrumentStore.getOrLoad(
-				channel.instrumentKey,
-			);
-			if (instrumentPS.status !== "fulfilled") continue;
-			instrumentPS.value.reset();
+			this.synthesizer.setBank({
+				channel: channel.id,
+				bankNumber: channel.instrumentKey.bankNumber,
+			});
+			this.synthesizer.setPreset({
+				channel: channel.id,
+				programNumber: channel.instrumentKey.presetNumber,
+			});
 		}
 
-		const tickTo =
+		const tickEnd =
 			Math.max(...this.songStore.state.channels.map((ch) => ch.tickTo)) +
 			TICK_PER_BEAT;
-		const updatePlayHead = () => {
-			this.rAFTimerId = null;
 
-			const elapsedTime = this.context.currentTime - audioStartTime;
-			const elapsedTicks = Math.floor(elapsedTime / SECOND_PER_TICK);
-			this.updateState((state) => ({
-				...state,
-				currentTick: audioStartTick + elapsedTicks,
-			}));
-
-			if (audioStartTick + elapsedTicks >= tickTo) {
+		let lastEnqueuedTick = this.startedFromInTick;
+		const update = () => {
+			this.updateCallbackId = null;
+			if (tickEnd <= this.currentTick || !this.state.isPlaying) {
 				this.pause();
 				return;
 			}
-			if (this.state.isPlaying) {
-				this.rAFTimerId = requestAnimationFrame(updatePlayHead);
+
+			this.updateState((state) => ({
+				...state,
+				currentTick: Math.floor(this.currentTick),
+			}));
+
+			const nextEnqueueTick =
+				this.currentTick + PRE_ENQUEUE_SIZE_IN_SEC / this.secondPerTick;
+			for (const channel of this.songStore.state.channels) {
+				if (this.state.mutedChannelIds.has(channel.id)) continue;
+
+				for (const note of channel.notes.values()) {
+					if (
+						lastEnqueuedTick <= note.tickFrom &&
+						note.tickFrom < nextEnqueueTick
+					) {
+						this.synthesizer.noteOn({
+							channel: channel.id,
+							key: note.key,
+							velocity: note.velocity,
+							time: this.getContextTimeByTick(note.tickFrom),
+						});
+					}
+
+					if (
+						lastEnqueuedTick <= note.tickTo &&
+						note.tickTo < nextEnqueueTick
+					) {
+						this.synthesizer.noteOff({
+							channel: channel.id,
+							key: note.key,
+							time: this.getContextTimeByTick(note.tickTo),
+						});
+					}
+				}
 			}
+			lastEnqueuedTick = nextEnqueueTick;
+
+			this.updateCallbackId = requestAnimationFrame(update);
 		};
-		this.rAFTimerId = requestAnimationFrame(updatePlayHead);
-
-		for (const channel of this.songStore.state.channels) {
-			if (this.state.mutedChannelIds.has(channel.id)) continue;
-
-			const instrumentPS = this.instrumentStore.getOrLoad(
-				channel.instrumentKey,
-			);
-			if (instrumentPS.status !== "fulfilled") continue;
-			const instrument = instrumentPS.value;
-
-			for (const note of channel.notes.values()) {
-				if (note.tickFrom < audioStartTick) continue;
-
-				instrument.noteOn({
-					key: note.key,
-					velocity: note.velocity,
-					time:
-						audioStartTime + (note.tickFrom - audioStartTick) * SECOND_PER_TICK,
-				});
-				instrument.noteOff({
-					key: note.key,
-					time:
-						audioStartTime + (note.tickTo - audioStartTick) * SECOND_PER_TICK,
-				});
-			}
-		}
+		update();
 	}
 
-	private rAFTimerId: number | null = null;
+	private updateCallbackId: number | null = null;
+
+	/**
+	 * 再生開始時のtick位置[tick]
+	 */
+	private startedFromInTick: number = 0;
+
+	/**
+	 * 再生開始時のアプリケーション時間[sec]
+	 * アプリケーション時間とは、performance.now()で取得できる時間のこと
+	 */
+	private startedAtApplicationTime: number = 0;
+
+	private get secondPerTick(): number {
+		const secondPerMeasure = (60 / this.songStore.state.bpm) * 4;
+		return secondPerMeasure / TICK_PER_MEASURE;
+	}
+
+	/**
+	 * 最新の再生開始からの経過時間[sec]
+	 */
+	private get elapsedTime(): number {
+		return performance.now() / 1000 - this.startedAtApplicationTime;
+	}
+
+	/**
+	 * 最新の再生開始からの経過時間[tick]
+	 */
+	private get elapsedTick(): number {
+		return this.elapsedTime / this.secondPerTick;
+	}
+
+	/**
+	 * 現在の再生位置[tick]
+	 */
+	private get currentTick(): number {
+		return this.startedFromInTick + this.elapsedTick;
+	}
+
+	/**
+	 * 指定したtickのAudioContext上の時刻[秒]を取得する
+	 */
+	private getContextTimeByTick(tick: number): number {
+		return (
+			this.context.currentTime + (tick - this.currentTick) * this.secondPerTick
+		);
+	}
 }

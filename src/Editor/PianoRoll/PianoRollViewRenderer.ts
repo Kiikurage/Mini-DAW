@@ -3,36 +3,33 @@ import { KEY_PER_OCTAVE, NUM_KEYS, TICK_PER_MEASURE } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
-import type { InstrumentStoreState } from "../../InstrumentStore.ts";
 import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
+import type { SoundFontStoreState } from "../../SoundFontStore.ts";
 import type { EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
-import type { PianoRollState } from "./PianoRoll.ts";
-import {
-	PianoRollHoverNotesManager,
-	type PianoRollHoverNotesManagerState,
-} from "./PianoRollHoverNotesManager.ts";
+import { getNoLoopKeys, type PianoRollState } from "./PianoRoll.ts";
+import type { PianoRollHoverNotesManagerState } from "./PianoRollHoverNotesManager.ts";
 
 export const HEIGHT_PER_KEY = 16;
 
 export function renderCanvas({
 	canvas,
-	instrumentStoreState,
 	pianoRollState,
 	pianoRollHoverNotesManagerState,
 	song,
 	playerState,
 	editorState,
+	soundFontStoreState,
 }: {
 	canvas: HTMLCanvasElement;
-	instrumentStoreState: InstrumentStoreState;
 	pianoRollState: PianoRollState;
 	pianoRollHoverNotesManagerState: PianoRollHoverNotesManagerState;
 	song: Song;
 	playerState: PlayerState;
 	editorState: EditorState;
+	soundFontStoreState: SoundFontStoreState;
 }) {
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
@@ -62,14 +59,10 @@ export function renderCanvas({
 	const tickTo = Math.ceil((scrollLeft + mainWidth) / tickWidth);
 
 	const activeChannel = getActiveChannel(song, editorState);
-	const noLoopKeys = (() => {
-		if (activeChannel === null) return new Set<number>();
-
-		const instrument = instrumentStoreState.get(activeChannel.instrumentKey);
-		if (instrument?.status !== "fulfilled") return new Set<number>();
-
-		return instrument.value.noLoopKeys;
-	})();
+	const noLoopKeys =
+		activeChannel === null
+			? new Set<number>()
+			: getNoLoopKeys(activeChannel, soundFontStoreState);
 
 	// region 背景
 	addRectPath({ ctx, x0: 0, y0: 0, x1: totalWidth, y1: totalHeight });
@@ -172,11 +165,7 @@ export function renderCanvas({
 			continue;
 		}
 
-		const instrument = instrumentStoreState.get(channel.instrumentKey);
-		const noLoopKeys =
-			instrument?.status === "fulfilled"
-				? instrument.value.noLoopKeys
-				: new Set<number>();
+		const noLoopKeys = getNoLoopKeys(channel, soundFontStoreState);
 
 		ctx.beginPath();
 		addNotePathAll({
@@ -201,99 +190,95 @@ export function renderCanvas({
 	}
 	// endregion
 
-	if (activeChannel !== null) {
-		// region ノート
-		for (const note of activeChannel.notes.values()) {
-			if (
-				note.key < keyFrom ||
-				keyTo <= note.key ||
-				note.tickTo < tickFrom ||
-				tickTo <= note.tickFrom
-			) {
-				continue;
-			}
-
-			ctx.beginPath();
-			addNotePath({
-				ctx,
-				note,
-				tickWidth,
-				scrollLeft,
-				sideBarWidth,
-				timelineHeight,
-				heightPerKey,
-				scrollTop,
-				noLoopKeys,
-			});
-			ctx.fillStyle = activeChannel.color.setAlpha(
-				note.velocity / 127,
-			).cssString;
-			ctx.fill();
-			ctx.strokeStyle = "#000";
-			ctx.stroke();
+	// region ノート
+	for (const note of activeChannel.notes.values()) {
+		if (
+			note.key < keyFrom ||
+			keyTo <= note.key ||
+			note.tickTo < tickFrom ||
+			tickTo <= note.tickFrom
+		) {
+			continue;
 		}
-		// endregion
 
-		// region ホバー中のノート
-		for (const noteId of pianoRollHoverNotesManagerState.hoverNoteIds) {
-			const note = activeChannel.notes.get(noteId);
-			if (note === undefined) continue;
-
-			if (
-				note.key < keyFrom ||
-				keyTo <= note.key ||
-				note.tickTo < tickFrom ||
-				tickTo <= note.tickFrom
-			) {
-				continue;
-			}
-
-			ctx.beginPath();
-			addNotePath({
-				ctx,
-				note,
-				tickWidth,
-				scrollLeft,
-				sideBarWidth,
-				timelineHeight,
-				heightPerKey,
-				scrollTop,
-				noLoopKeys,
-			});
-			ctx.fillStyle = activeChannel.color
-				.setL(0.7)
-				.setAlpha(note.velocity / 127).cssString;
-			ctx.fill();
-			ctx.strokeStyle = activeChannel.color.setL(0.2).cssString;
-			ctx.stroke();
-		}
-		// endregion
-
-		// region 選択中のノート
 		ctx.beginPath();
-		addNotePathAll({
+		addNotePath({
 			ctx,
-			notes: getSelectedNotes(song, editorState),
+			note,
 			tickWidth,
 			scrollLeft,
 			sideBarWidth,
 			timelineHeight,
 			heightPerKey,
 			scrollTop,
-			keyFrom,
-			keyTo,
-			tickFrom,
-			tickTo,
 			noLoopKeys,
 		});
+		ctx.fillStyle = activeChannel.color.setAlpha(note.velocity / 127).cssString;
+		ctx.fill();
 		ctx.strokeStyle = "#000";
-		ctx.lineWidth = 2 * devicePixelRatio;
 		ctx.stroke();
-		ctx.strokeStyle = "#fff";
-		ctx.lineWidth = devicePixelRatio;
-		ctx.stroke();
-		// endregion
 	}
+	// endregion
+
+	// region ホバー中のノート
+	for (const noteId of pianoRollHoverNotesManagerState.hoverNoteIds) {
+		const note = activeChannel.notes.get(noteId);
+		if (note === undefined) continue;
+
+		if (
+			note.key < keyFrom ||
+			keyTo <= note.key ||
+			note.tickTo < tickFrom ||
+			tickTo <= note.tickFrom
+		) {
+			continue;
+		}
+
+		ctx.beginPath();
+		addNotePath({
+			ctx,
+			note,
+			tickWidth,
+			scrollLeft,
+			sideBarWidth,
+			timelineHeight,
+			heightPerKey,
+			scrollTop,
+			noLoopKeys,
+		});
+		ctx.fillStyle = activeChannel.color
+			.setL(0.7)
+			.setAlpha(note.velocity / 127).cssString;
+		ctx.fill();
+		ctx.strokeStyle = activeChannel.color.setL(0.2).cssString;
+		ctx.stroke();
+	}
+	// endregion
+
+	// region 選択中のノート
+	ctx.beginPath();
+	addNotePathAll({
+		ctx,
+		notes: getSelectedNotes(song, editorState),
+		tickWidth,
+		scrollLeft,
+		sideBarWidth,
+		timelineHeight,
+		heightPerKey,
+		scrollTop,
+		keyFrom,
+		keyTo,
+		tickFrom,
+		tickTo,
+		noLoopKeys,
+	});
+	ctx.strokeStyle = "#000";
+	ctx.lineWidth = 2 * devicePixelRatio;
+	ctx.stroke();
+	ctx.strokeStyle = "#fff";
+	ctx.lineWidth = devicePixelRatio;
+	ctx.stroke();
+	// endregion
 
 	// region 範囲選択マーキー
 	const marqueeArea = getMarqueeArea(

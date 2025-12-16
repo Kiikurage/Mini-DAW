@@ -1,9 +1,9 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Song } from "../models/Song.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
-import { PreInstalledSoundFontInstrumentKey } from "../SoundFontInstrument.ts";
 
 export const NewFileKey = ComponentKey<NewFile>("NewFile");
 
@@ -26,34 +26,37 @@ export function NewFile({ bus }: { bus: EventBus }) {
 					new Channel({
 						id: 0,
 						label: "",
-						instrumentKey: new PreInstalledSoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
+						instrumentKey: new InstrumentKey(
+							PreInstalledSouindFonts[0]?.name,
 							0,
 							0,
 						),
 						notes: new Map(),
+						controlChanges: new Map(),
 						color: Channel.COLORS[0],
 					}),
 					new Channel({
 						id: 1,
 						label: "",
-						instrumentKey: new PreInstalledSoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
+						instrumentKey: new InstrumentKey(
+							PreInstalledSouindFonts[0]?.name,
 							0,
 							0,
 						),
 						notes: new Map(),
+						controlChanges: new Map(),
 						color: Channel.COLORS[1],
 					}),
 					new Channel({
 						id: 2,
 						label: "",
-						instrumentKey: new PreInstalledSoundFontInstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
+						instrumentKey: new InstrumentKey(
+							PreInstalledSouindFonts[0]?.name,
 							0,
 							0,
 						),
 						notes: new Map(),
+						controlChanges: new Map(),
 						color: Channel.COLORS[2],
 					}),
 				],

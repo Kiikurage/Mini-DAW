@@ -1,4 +1,11 @@
-import { createContext, type ReactNode, useContext, useEffectEvent, useLayoutEffect, useRef, } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useContext,
+	useEffectEvent,
+	useLayoutEffect,
+	useRef,
+} from "react";
 import { MdClose } from "react-icons/md";
 import { IconButton } from "./IconButton";
 import { Styles } from "./Styles.ts";

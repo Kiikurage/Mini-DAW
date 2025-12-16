@@ -1,4 +1,11 @@
-import { type FocusEventHandler, type KeyboardEventHandler, type ReactNode, useEffect, useRef, useState, } from "react";
+import {
+	type FocusEventHandler,
+	type KeyboardEventHandler,
+	type ReactNode,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { MdArrowDropDown } from "react-icons/md";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { ListBox } from "../ListBox/ListBox.tsx";

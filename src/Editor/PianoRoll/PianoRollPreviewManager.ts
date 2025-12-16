@@ -1,7 +1,7 @@
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import type { InstrumentStore } from "../../InstrumentStore.ts";
 import type { Note } from "../../models/Note.ts";
 import type { SongStore } from "../../SongStore.ts";
+import type { Synthesizer } from "../../Synthesizer.ts";
 import type { Editor } from "../Editor.ts";
 
 /**
@@ -14,9 +14,9 @@ export class PianoRollPreviewManager {
 	private readonly currentPreviewingNotes = new Set<Note>();
 
 	constructor(
-		private readonly instrumentStore: InstrumentStore,
 		private readonly songStore: SongStore,
 		private readonly editor: Editor,
+		private readonly synthesizer: Synthesizer,
 	) {}
 
 	startPreviewNotes(notes: Iterable<Note>, durationInMS = -1) {
@@ -28,16 +28,15 @@ export class PianoRollPreviewManager {
 		);
 		if (activeChannel === null) return;
 
-		const instrument = this.instrumentStore.state.get(
-			activeChannel.instrumentKey,
-		);
-		if (instrument?.status !== "fulfilled") return;
-
 		const minTickFrom = Math.min(...[...notes].map((note) => note.tickFrom));
 		for (const note of notes) {
 			if (note.tickFrom !== minTickFrom) continue;
 
-			instrument.value.noteOn({ key: note.key, velocity: note.velocity });
+			this.synthesizer.noteOn({
+				channel: activeChannel.id,
+				key: note.key,
+				velocity: note.velocity,
+			});
 			this.currentPreviewingNotes.add(note);
 		}
 
@@ -55,13 +54,8 @@ export class PianoRollPreviewManager {
 		);
 		if (activeChannel === null) return;
 
-		const instrument = this.instrumentStore.state.get(
-			activeChannel.instrumentKey,
-		);
-		if (instrument?.status !== "fulfilled") return;
-
 		for (const note of this.currentPreviewingNotes) {
-			instrument.value.noteOff({ key: note.key });
+			this.synthesizer.noteOff({ channel: activeChannel.id, key: note.key });
 		}
 		this.currentPreviewingNotes.clear();
 	}

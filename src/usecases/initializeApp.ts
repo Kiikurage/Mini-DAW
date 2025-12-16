@@ -16,7 +16,7 @@ export function InitializeApp({
 }) {
 	return () => {
 		newFile(false);
-		editor.setActiveChannel(songStore.state.channels[0]!.id);
+		editor.setActiveChannel(songStore.state.channels[0]?.id);
 	};
 }
 

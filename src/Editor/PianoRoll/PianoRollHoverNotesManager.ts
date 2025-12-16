@@ -1,12 +1,13 @@
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import type {
-	InstrumentStore,
-	InstrumentStoreState,
-} from "../../InstrumentStore.ts";
 import { isNotNullish } from "../../lib.ts";
+import type { Channel } from "../../models/Channel.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
+import type {
+	SoundFontStore,
+	SoundFontStoreState,
+} from "../../SoundFontStore.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { Editor, EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
@@ -44,18 +45,28 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 		private readonly editor: Editor,
 		private readonly pianoRoll: PianoRoll,
 		private readonly songStore: SongStore,
-		private readonly instrumentStore: InstrumentStore,
+		private readonly soundFontStore: SoundFontStore,
 	) {
 		super({ hoverNoteIds: new Set() });
 
 		const update = () => {
+			const activeChannel = getActiveChannel(
+				this.songStore.state,
+				this.editor.state,
+			);
+			if (activeChannel === null) {
+				this.setHoverNoteIds(new Set());
+				return;
+			}
+
 			this.setHoverNoteIds(
 				computeHoverNoteIds(
 					this.pointerPositions,
 					this.editor.state,
 					this.pianoRoll.state,
 					this.songStore.state,
-					this.instrumentStore.state,
+					this.soundFontStore.state,
+					activeChannel,
 				),
 			);
 		};
@@ -69,7 +80,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 		editor.addChangeListener(update);
 		pianoRoll.addChangeListener(update);
 		songStore.addChangeListener(update);
-		instrumentStore.addChangeListener(update);
+		soundFontStore.addChangeListener(update);
 	}
 
 	readonly setPointerPositions: (
@@ -104,9 +115,10 @@ function computeHoverNoteIds(
 	editorState: EditorState,
 	pianoRollState: PianoRollState,
 	song: Song,
-	instrumentStoreState: InstrumentStoreState,
+	soundFontStoreState: SoundFontStoreState,
+	channel: Channel,
 ) {
-	const noLoopKeys = getNoLoopKeys(editorState, song, instrumentStoreState);
+	const noLoopKeys = getNoLoopKeys(channel, soundFontStoreState);
 
 	return new Set(
 		pointerPositions

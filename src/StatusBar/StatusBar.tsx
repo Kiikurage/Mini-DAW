@@ -1,9 +1,9 @@
-import { Stateful } from "../Stateful/Stateful.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
+import { Stateful } from "../Stateful/Stateful.ts";
 
 export class StatusBar extends Stateful<{ message: string | null }> {
 	static readonly Key = ComponentKey.of(StatusBar);
-	
+
 	private timerIdToClearStatusMessage: ReturnType<typeof setTimeout> | null =
 		null;
 

@@ -1,4 +1,4 @@
-export class Note {
+export interface Note {
 	readonly id: number;
 	readonly key: number;
 	readonly tickFrom: number;
@@ -8,50 +8,24 @@ export class Note {
 	 * 音の強さ (0-127)
 	 */
 	readonly velocity: number;
+}
 
-	constructor(props: {
+export const Note = {
+	create(props: {
 		id: number;
 		key: number;
 		tickFrom: number;
 		tickTo: number;
 		velocity: number;
-	}) {
-		this.id = props.id;
-		this.key = props.key;
-		this.tickFrom = Math.max(0, props.tickFrom);
-		this.tickTo = Math.max(this.tickFrom, props.tickTo);
-		this.velocity = props.velocity;
-	}
-
-	get step() {
-		return this.tickTo - this.tickFrom;
-	}
-
-	serialize(): SerializedNote {
+	}): Note {
+		const tickFrom = Math.max(0, props.tickFrom);
+		const tickTo = Math.max(tickFrom, props.tickTo);
 		return {
-			id: this.id,
-			key: this.key,
-			tickFrom: this.tickFrom,
-			tickTo: this.tickTo,
-			velocity: this.velocity,
+			id: props.id,
+			key: props.key,
+			tickFrom,
+			tickTo,
+			velocity: props.velocity,
 		};
-	}
-
-	static deserialize(data: SerializedNote): Note {
-		return new Note({
-			id: data.id,
-			key: data.key,
-			tickFrom: data.tickFrom,
-			tickTo: data.tickTo,
-			velocity: data.velocity,
-		});
-	}
-}
-
-export interface SerializedNote {
-	readonly id: number;
-	readonly key: number;
-	readonly tickFrom: number;
-	readonly tickTo: number;
-	readonly velocity: number;
-}
+	},
+};

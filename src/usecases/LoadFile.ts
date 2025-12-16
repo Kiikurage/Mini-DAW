@@ -58,7 +58,7 @@ function openFileSelectDialog({
 	const input = document.createElement("input");
 	input.type = "file";
 	input.accept = accept;
-	input.addEventListener("change", (ev) => {
+	input.addEventListener("change", (_ev) => {
 		const file = input.files?.[0];
 		if (file === undefined) return;
 		onOpen(file);

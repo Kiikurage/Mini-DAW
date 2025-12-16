@@ -5,18 +5,18 @@ import { MdAdd, MdDelete } from "react-icons/md";
 import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
-import { SoundFontDialog } from "../InstrumentDialog/SoundFontDialog.tsx";
-import { InstrumentStore } from "../InstrumentStore.ts";
 import { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
 import { SongStore } from "../SongStore.ts";
-import { PreInstalledSoundFontInstrumentKey } from "../SoundFontInstrument.ts";
+import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
+import { type Synthesizer, SynthesizerKey } from "../Synthesizer.ts";
 import { type AddChannel, AddChannelKey } from "../usecases/AddChannel.ts";
 import {
 	type RemoveChannel,
@@ -32,10 +32,10 @@ export function ChannelListView({
 	addChannel,
 	removeChannel,
 	updateChannel,
-	instrumentStore,
 	contextMenu,
 	overlayPortal,
 	soundFontStore,
+	synthesizer,
 	editor,
 	player,
 }: {
@@ -43,10 +43,10 @@ export function ChannelListView({
 	addChannel?: AddChannel;
 	updateChannel?: UpdateChannel;
 	removeChannel?: RemoveChannel;
-	instrumentStore?: InstrumentStore;
 	contextMenu?: ContextMenuManager;
 	overlayPortal?: OverlayPortal;
 	soundFontStore?: SoundFontStore;
+	synthesizer?: Synthesizer;
 	editor?: Editor;
 	player?: Player;
 }) {
@@ -54,10 +54,10 @@ export function ChannelListView({
 	addChannel = useComponent(AddChannelKey, addChannel);
 	updateChannel = useComponent(UpdateChannelKey, updateChannel);
 	removeChannel = useComponent(RemoveChannelKey, removeChannel);
-	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
 	contextMenu = useComponent(ContextMenuManager.Key, contextMenu);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
+	synthesizer = useComponent(SynthesizerKey, synthesizer);
 	editor = useComponent(Editor.Key, editor);
 	player = useComponent(Player.Key, player);
 
@@ -107,8 +107,8 @@ export function ChannelListView({
 						title="チャンネルを追加"
 						size="sm"
 						onClick={() => {
-							const instrumentKey = new PreInstalledSoundFontInstrumentKey(
-								PreInstalledSouindFonts[0]!.name,
+							const instrumentKey = new InstrumentKey(
+								PreInstalledSouindFonts[0]?.name,
 								0,
 								0,
 							);
@@ -121,6 +121,7 @@ export function ChannelListView({
 								label: `Channel ${id + 1}`,
 								instrumentKey,
 								notes: new Map(),
+								controlChanges: new Map(),
 								color: Channel.COLORS[id % Channel.COLORS.length]!,
 							});
 							addChannel(channel);
@@ -146,10 +147,10 @@ export function ChannelListView({
 						active={channel.id === activeChannelId}
 						updateChannel={updateChannel}
 						removeChannel={removeChannel}
-						instrumentStore={instrumentStore}
 						contextMenu={contextMenu}
 						overlayPortal={overlayPortal}
 						soundFontStore={soundFontStore}
+						synthesizer={synthesizer}
 						editor={editor}
 						player={player}
 					/>
@@ -162,23 +163,23 @@ export function ChannelListView({
 function ChannelListItem({
 	channel,
 	active,
-	instrumentStore,
 	contextMenu,
 	removeChannel,
 	updateChannel,
 	overlayPortal,
 	soundFontStore,
+	synthesizer,
 	editor,
 	player,
 }: {
 	channel: Channel;
 	active?: boolean;
-	instrumentStore: InstrumentStore;
 	contextMenu: ContextMenuManager;
 	removeChannel: RemoveChannel;
 	updateChannel: UpdateChannel;
 	overlayPortal: OverlayPortal;
 	soundFontStore: SoundFontStore;
+	synthesizer: Synthesizer;
 	editor: Editor;
 	player: Player;
 }) {
@@ -188,20 +189,20 @@ function ChannelListItem({
 		(state) => state.previewChannelIds,
 	);
 
-	const instrumentStoreState = useStateful(instrumentStore);
+	const soundFontStoreState = useStateful(soundFontStore);
 
 	const instrumentName = (() => {
-		const instrumentPS = instrumentStoreState.get(channel.instrumentKey);
-		if (instrumentPS === undefined) return "#N/A";
+		const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+		if (soundFontPromise?.state?.status !== "fulfilled") return "#N/A";
 
-		switch (instrumentPS.status) {
-			case "fulfilled":
-				return instrumentPS.value.name;
-			case "pending":
-				return "(Loading...)";
-			case "rejected":
-				return "(Error)";
-		}
+		const sf = soundFontPromise.state.value;
+		const preset = sf.getPreset(
+			channel.instrumentKey.presetNumber,
+			channel.instrumentKey.bankNumber,
+		);
+		if (preset === null) return "#N/A";
+
+		return preset.name;
 	})();
 
 	const [edit, setEdit] = useState(false);
@@ -230,7 +231,7 @@ function ChannelListItem({
 							onClick: () => {
 								new SoundFontDialog(
 									overlayPortal,
-									instrumentStore,
+									synthesizer,
 									soundFontStore,
 									updateChannel,
 									channel,

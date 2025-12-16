@@ -1,9 +1,18 @@
-import { type ComponentType, createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useEffect, useState, } from "react";
+import {
+	type ComponentType,
+	createContext,
+	type Dispatch,
+	type ReactNode,
+	type SetStateAction,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 
 export function createSlot(): {
-    Slot: ComponentType<{ children?: ReactNode }>;
-    Injector: ComponentType<{ children?: ReactNode }>;
-    Provider: ComponentType<{ children?: ReactNode }>;
+	Slot: ComponentType<{ children?: ReactNode }>;
+	Injector: ComponentType<{ children?: ReactNode }>;
+	Provider: ComponentType<{ children?: ReactNode }>;
 } {
 	const context = createContext<{
 		setContent: Dispatch<SetStateAction<ReactNode>>;

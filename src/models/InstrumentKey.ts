@@ -1,31 +1,38 @@
-import type { DIContainer } from "../Dependency/DIContainer.ts";
-import type { Hashable } from "../Hashable.ts";
-import { ExternalSoundFontInstrumentKey, PreInstalledSoundFontInstrumentKey, type SerializedExternalSoundFontInstrumentKey, type SerializedPreInstalledSoundFontInstrumentKey, } from "../SoundFontInstrument.ts";
-import { type SerializedOscillatorNodeInstrumentKey, WebAudioOscillatorNodeInstrumentKey, } from "../WebAudioOscillatorNodeInstrument.ts";
-import type { Instrument } from "./Instrument.ts";
+import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 
-export interface InstrumentKey extends Hashable {
-	load(deps: DIContainer): Promise<Instrument>;
+export class InstrumentKey {
+	public readonly url: string;
 
-	serialize(): SerializedInstrumentKey;
+	constructor(
+		public readonly name: string,
+		public readonly presetNumber: number,
+		public readonly bankNumber: number,
+	) {
+		const preInstalledSoundFont = PreInstalledSouindFonts.find(
+			(sf) => sf.name === name,
+		);
+		if (preInstalledSoundFont === undefined) {
+			throw new Error(`Pre-installed sound font "${name}" not found.`);
+		}
+
+		this.url = preInstalledSoundFont.soundFontUrl;
+	}
+
+	serialize(): SerializedInstrumentKey {
+		return {
+			name: this.name,
+			presetNumber: this.presetNumber,
+			bankNumber: this.bankNumber,
+		};
+	}
+
+	static deserialize(data: SerializedInstrumentKey): InstrumentKey {
+		return new InstrumentKey(data.name, data.presetNumber, data.bankNumber);
+	}
 }
 
-export type SerializedInstrumentKey =
-	| SerializedOscillatorNodeInstrumentKey
-	| SerializedExternalSoundFontInstrumentKey
-	| SerializedPreInstalledSoundFontInstrumentKey;
-
-export namespace InstrumentKey {
-	export function deserialize(data: SerializedInstrumentKey): InstrumentKey {
-		switch (data.type) {
-			case "oscillator":
-				return WebAudioOscillatorNodeInstrumentKey.deserialize(data);
-			case "sf":
-				return ExternalSoundFontInstrumentKey.deserialize(data);
-			case "preInstalledSF":
-				return PreInstalledSoundFontInstrumentKey.deserialize(data);
-			default:
-				throw new Error(`Unknown instrument key type`, { cause: data });
-		}
-	}
+export interface SerializedInstrumentKey {
+	name: string;
+	presetNumber: number;
+	bankNumber: number;
 }

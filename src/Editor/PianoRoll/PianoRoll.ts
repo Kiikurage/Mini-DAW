@@ -1,15 +1,15 @@
 import { NUM_KEYS } from "../../constants.ts";
 import { ComponentKey } from "../../Dependency/DIContainer.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import type {
-	InstrumentStore,
-	InstrumentStoreState,
-} from "../../InstrumentStore.ts";
 import { minmax } from "../../lib.ts";
-import type { Song } from "../../models/Song.ts";
+import type { Channel } from "../../models/Channel.ts";
 import type { SongStore } from "../../SongStore.ts";
+import type {
+	SoundFontStore,
+	SoundFontStoreState,
+} from "../../SoundFontStore.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
-import type { Editor, EditorState } from "../Editor.ts";
+import type { Editor } from "../Editor.ts";
 import { PianoRollHoverNotesManager } from "./PianoRollHoverNotesManager.ts";
 import { HEIGHT_PER_KEY, TIMELINE_HEIGHT } from "./PianoRollViewRenderer.ts";
 
@@ -36,7 +36,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 	readonly hoverNotesManager: PianoRollHoverNotesManager;
 
 	constructor(
-		private readonly instrumentStore: InstrumentStore,
+		private readonly soundFontStore: SoundFontStore,
 		private readonly songStore: SongStore,
 		private readonly editor: Editor,
 	) {
@@ -50,7 +50,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 			this.editor,
 			this,
 			this.songStore,
-			this.instrumentStore,
+			this.soundFontStore,
 		);
 	}
 
@@ -88,24 +88,29 @@ export class PianoRoll extends Stateful<PianoRollState> {
 	}
 
 	get noLoopKeys(): ReadonlySet<number> {
-		return getNoLoopKeys(
-			this.editor.state,
+		const activeChannel = getActiveChannel(
 			this.songStore.state,
-			this.instrumentStore.state,
+			this.editor.state,
 		);
+		if (activeChannel === null) return new Set();
+
+		return getNoLoopKeys(activeChannel, this.soundFontStore.state);
 	}
 }
 
 export function getNoLoopKeys(
-	editorState: EditorState,
-	song: Song,
-	instrumentStoreState: InstrumentStoreState,
+	channel: Channel,
+	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
-	const activeChannel = getActiveChannel(song, editorState);
-	if (activeChannel === null) return new Set();
+	const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+	if (soundFontPromise?.state?.status !== "fulfilled") return new Set();
 
-	const instrument = instrumentStoreState.get(activeChannel.instrumentKey);
-	if (instrument?.status !== "fulfilled") return new Set();
+	const soundFont = soundFontPromise.state.value;
+	const preset = soundFont.getPreset(
+		channel.instrumentKey.presetNumber,
+		channel.instrumentKey.bankNumber,
+	);
+	if (preset === null) return new Set();
 
-	return instrument.value.noLoopKeys;
+	return preset.getNoLoopKeys();
 }

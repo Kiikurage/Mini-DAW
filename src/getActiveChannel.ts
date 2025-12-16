@@ -1,10 +1,11 @@
+import type { EditorState } from "./Editor/Editor.ts";
 import type { Channel } from "./models/Channel.ts";
 import type { Song } from "./models/Song.ts";
 
 export function getActiveChannel(
 	song: Song,
-	pianoRollState: { activeChannelId: number | null },
+	editorState: EditorState,
 ): Channel | null {
-	if (pianoRollState.activeChannelId === null) return null;
-	return song.getChannel(pianoRollState.activeChannelId);
+	if (editorState.activeChannelId === null) return null;
+	return song.getChannel(editorState.activeChannelId);
 }

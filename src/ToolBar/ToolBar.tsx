@@ -3,19 +3,16 @@ import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
-import { SoundFontDialog } from "../InstrumentDialog/SoundFontDialog.tsx";
-import { InstrumentStore } from "../InstrumentStore.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { Form } from "../react/Form.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
 import { SongStore } from "../SongStore.ts";
-import {
-	PreInstalledSoundFontInstrumentKey,
-	type SoundFontInstrumentKey,
-} from "../SoundFontInstrument.ts";
+import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
+import { type Synthesizer, SynthesizerKey } from "../Synthesizer.ts";
 import {
 	type UpdateChannel,
 	UpdateChannelKey,
@@ -28,29 +25,29 @@ export function ToolBar({
 	player,
 	songStore,
 	updateSong,
-	instrumentStore,
 	soundFontStore,
 	editor,
 	updateChannel,
 	overlayPortal,
+	synthesizer,
 }: {
 	player?: Player;
 	songStore?: SongStore;
 	updateSong?: UpdateSong;
-	instrumentStore?: InstrumentStore;
 	soundFontStore?: SoundFontStore;
 	editor?: Editor;
 	updateChannel?: UpdateChannel;
 	overlayPortal?: OverlayPortal;
+	synthesizer?: Synthesizer;
 }) {
 	player = useComponent(Player.Key, player);
 	songStore = useComponent(SongStore.Key, songStore);
 	updateSong = useComponent(UpdateSongKey, updateSong);
-	instrumentStore = useComponent(InstrumentStore.Key, instrumentStore);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
 	editor = useComponent(Editor.Key, editor);
 	updateChannel = useComponent(UpdateChannelKey, updateChannel);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
+	synthesizer = useComponent(SynthesizerKey, synthesizer);
 
 	const playHeadTick = useStateful(player, (state) => state.currentTick);
 	const isPlaying = useStateful(player, (state) => state.isPlaying);
@@ -64,7 +61,7 @@ export function ToolBar({
 
 	const soundFont = (() => {
 		if (activeChannel === null) return null;
-		const instrumentKey = activeChannel.instrumentKey as SoundFontInstrumentKey;
+		const instrumentKey = activeChannel.instrumentKey;
 		const soundFont = soundFontStoreState.get(instrumentKey.url);
 		if (soundFont?.state.status !== "fulfilled") return null;
 		return soundFont.state.value;
@@ -99,42 +96,28 @@ export function ToolBar({
 						<Form.Field label="プリセット">
 							<PresetSelect
 								soundFont={soundFont}
-								value={
-									(activeChannel.instrumentKey as SoundFontInstrumentKey)
-										.presetNumber
-								}
+								value={activeChannel.instrumentKey.presetNumber}
 								onChange={(presetNumber) => {
-									const instrumentKey = new PreInstalledSoundFontInstrumentKey(
-										(
-											activeChannel.instrumentKey as PreInstalledSoundFontInstrumentKey
-										).name,
+									const instrumentKey = new InstrumentKey(
+										activeChannel.instrumentKey.name,
 										presetNumber,
 										0,
 									);
 									updateChannel(activeChannel.id, { instrumentKey });
-									instrumentStore.getOrLoad(instrumentKey);
 								}}
 							/>
 						</Form.Field>
 						<Form.Field label="バンク">
 							<BankSelect
-								presetNumber={
-									(activeChannel.instrumentKey as SoundFontInstrumentKey)
-										.presetNumber
-								}
+								presetNumber={activeChannel.instrumentKey.presetNumber}
 								soundFont={soundFont}
 								onChange={(bankNumber) => {
-									const instrumentKey = new PreInstalledSoundFontInstrumentKey(
-										(
-											activeChannel.instrumentKey as PreInstalledSoundFontInstrumentKey
-										).name,
-										(
-											activeChannel.instrumentKey as PreInstalledSoundFontInstrumentKey
-										).presetNumber,
+									const instrumentKey = new InstrumentKey(
+										activeChannel.instrumentKey.name,
+										activeChannel.instrumentKey.presetNumber,
 										bankNumber,
 									);
 									updateChannel(activeChannel.id, { instrumentKey });
-									instrumentStore.getOrLoad(instrumentKey);
 								}}
 							/>
 						</Form.Field>
@@ -143,7 +126,7 @@ export function ToolBar({
 							onClick={() => {
 								new SoundFontDialog(
 									overlayPortal,
-									instrumentStore,
+									synthesizer,
 									soundFontStore,
 									updateChannel,
 									activeChannel,

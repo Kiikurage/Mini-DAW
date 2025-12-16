@@ -27,14 +27,13 @@ export function MoveNotes({
 			[...noteIds]
 				.map((noteId) => channel.notes.get(noteId))
 				.filter(isNotNullish)
-				.map(
-					(note) =>
-						new Note({
-							...note,
-							key: note.key + keyDiff,
-							tickFrom: note.tickFrom + tickDiff,
-							tickTo: note.tickTo + tickDiff,
-						}),
+				.map((note) =>
+					Note.create({
+						...note,
+						key: note.key + keyDiff,
+						tickFrom: note.tickFrom + tickDiff,
+						tickTo: note.tickTo + tickDiff,
+					}),
 				),
 		);
 	};
