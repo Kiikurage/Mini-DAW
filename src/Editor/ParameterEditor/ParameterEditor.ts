@@ -2,7 +2,6 @@ import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { assertNotNullish, minmax } from "../../lib.ts";
-import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManager.ts";
 import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
@@ -11,6 +10,7 @@ import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapsho
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
 import type { Editor, EditorState } from "../Editor.ts";
+import type { ParameterSample } from "./ParameterEditorSampleDelegate.ts";
 import { SIDEBAR_WIDTH, widthPerTick } from "./ParameterEditorViewRenderer.ts";
 
 export interface ParameterEditorState {
@@ -35,7 +35,6 @@ export class ParameterEditor
 	static readonly HIT_TEST_MARGIN_PIXEL = 8;
 
 	constructor(
-		private readonly setNoteParameter: SetNoteParameter,
 		private readonly songStore: Stateful<Song>,
 		private readonly editor: Editor,
 	) {
@@ -46,13 +45,6 @@ export class ParameterEditor
 		this.updateState((state) => {
 			if (state.height === height) return state;
 			return { ...state, height };
-		});
-	}
-
-	setCursor(cursor: string) {
-		this.updateState((state) => {
-			if (state.cursor === cursor) return state;
-			return { ...state, cursor };
 		});
 	}
 
@@ -71,7 +63,12 @@ export class ParameterEditor
 			this.state,
 		);
 
-		const selectedNoteIds = this.editor.state.selectedNoteIds;
+		const delegate = this.editor.getParameterSampleDelegate();
+		const samples = [...delegate.getAllSamples()];
+		const selectedSamples = [...delegate.getSelectedSamples()];
+		const selectedSampleIds = new Set<number>(
+			selectedSamples.map((sample) => sample.id),
+		);
 
 		const activeChannelId = this.editor.state.activeChannelId;
 		if (activeChannelId === null) return this.backgroundHandle;
@@ -82,9 +79,9 @@ export class ParameterEditor
 		);
 		if (activeChannel !== null) {
 			// 1. 選択中のノート
-			for (const note of activeChannel.notes.values()) {
-				if (!selectedNoteIds.has(note.id)) continue;
-				const x = note.tickFrom * widthPerTick(this.editor.state.zoom);
+			for (const sample of samples) {
+				if (!selectedSampleIds.has(sample.id)) continue;
+				const x = sample.tick * widthPerTick(this.editor.state.zoom);
 
 				if (
 					x - ParameterEditor.HIT_TEST_MARGIN_PIXEL <= position.x &&
@@ -94,16 +91,16 @@ export class ParameterEditor
 				}
 			}
 
-			// 2. その他のノート
-			for (const note of activeChannel.notes.values()) {
-				if (selectedNoteIds.has(note.id)) continue;
-				const x = note.tickFrom * widthPerTick(this.editor.state.zoom);
+			// 2. その他のサンプル
+			for (const sample of samples) {
+				if (selectedSampleIds.has(sample.id)) continue;
+				const x = sample.tick * widthPerTick(this.editor.state.zoom);
 
 				if (
 					x - ParameterEditor.HIT_TEST_MARGIN_PIXEL <= position.x &&
 					position.x < x + ParameterEditor.HIT_TEST_MARGIN_PIXEL
 				) {
-					return this.createNoteHandle(note);
+					return this.createSampleHandle(sample);
 				}
 			}
 		}
@@ -125,19 +122,34 @@ export class ParameterEditor
 			const selectedNoteIds = [...this.editor.state.selectedNoteIds];
 
 			ev.addDragStartSessionListener((ev: PointerEventManagerEvent) => {
-				const value = minmax(0, 1, 1 - ev.position.y / this.state.height);
-				const velocity = Math.floor(value * 127);
-				this.setNoteParameter(channelId, selectedNoteIds, "velocity", velocity);
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
+				this.editor
+					.getParameterSampleDelegate()
+					.update(selectedNoteIds, position.value);
 			});
 			ev.addDragMoveSessionListener((ev: PointerEventManagerEvent) => {
-				const value = minmax(0, 1, 1 - ev.position.y / this.state.height);
-				const velocity = Math.floor(value * 127);
-				this.setNoteParameter(channelId, selectedNoteIds, "velocity", velocity);
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
+				this.editor
+					.getParameterSampleDelegate()
+					.update(selectedNoteIds, position.value);
 			});
 			ev.addDragEndSessionListener((ev: PointerEventManagerEvent) => {
-				const value = minmax(0, 1, 1 - ev.position.y / this.state.height);
-				const velocity = Math.floor(value * 127);
-				this.setNoteParameter(channelId, selectedNoteIds, "velocity", velocity);
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
+				this.editor
+					.getParameterSampleDelegate()
+					.update(selectedNoteIds, position.value);
 			});
 		},
 	};
@@ -158,10 +170,7 @@ export class ParameterEditor
 					this.editor.state,
 					this.state,
 				);
-				this.editor.startMarqueeSelection({
-					tick: position.tick,
-					key: 0,
-				});
+				this.editor.startMarqueeSelection({ tick: position.tick, key: 0 });
 			});
 			ev.addDragMoveSessionListener((ev) => {
 				const position = toParameterEditorPosition(
@@ -197,54 +206,64 @@ export class ParameterEditor
 			ev.addDragEndSessionListener(() => {
 				this.editor.stopMarqueeSelection();
 			});
+
+			ev.addTapSessionListener((ev) => {
+				const delegate = this.editor.getParameterSampleDelegate();
+				const position = toParameterEditorPosition(
+					ev.position,
+					this.editor.state,
+					this.state,
+				);
+
+				delegate.handleTap?.(position);
+			});
 		},
 	};
 
-	private createNoteHandle(note: Note): PointerEventManagerInteractionHandle {
+	private createSampleHandle(
+		sample: ParameterSample,
+	): PointerEventManagerInteractionHandle {
 		return {
 			// cursor: "ns-resize",
 			handlePointerDown: (ev) => {
-				const channelId = this.editor.state.activeChannelId;
-				if (channelId === null) return;
-
 				ev.addDragStartSessionListener((ev: PointerEventManagerEvent) => {
+					const channelId = this.editor.state.activeChannelId;
+					if (channelId === null) return;
+
 					const position = toParameterEditorPosition(
 						ev.position,
 						this.editor.state,
 						this.state,
 					);
-					this.setNoteParameter(
-						channelId,
-						[note.id],
-						"velocity",
-						position.value * 127,
-					);
+					this.editor
+						.getParameterSampleDelegate()
+						.update([sample.id], position.value);
 				});
 				ev.addDragMoveSessionListener((ev: PointerEventManagerEvent) => {
+					const channelId = this.editor.state.activeChannelId;
+					if (channelId === null) return;
+
 					const position = toParameterEditorPosition(
 						ev.position,
 						this.editor.state,
 						this.state,
 					);
-					this.setNoteParameter(
-						channelId,
-						[note.id],
-						"velocity",
-						position.value * 127,
-					);
+					this.editor
+						.getParameterSampleDelegate()
+						.update([sample.id], position.value);
 				});
 				ev.addDragEndSessionListener((ev: PointerEventManagerEvent) => {
+					const channelId = this.editor.state.activeChannelId;
+					if (channelId === null) return;
+
 					const position = toParameterEditorPosition(
 						ev.position,
 						this.editor.state,
 						this.state,
 					);
-					this.setNoteParameter(
-						channelId,
-						[note.id],
-						"velocity",
-						position.value * 127,
-					);
+					this.editor
+						.getParameterSampleDelegate()
+						.update([sample.id], position.value);
 				});
 			},
 		};
@@ -261,7 +280,7 @@ function toParameterEditorPosition(
 	const x = position.x + editorState.scrollLeft - SIDEBAR_WIDTH;
 	const y = position.y;
 	const tick = Math.floor(x / widthPerTick(editorState.zoom));
-	const value = minmax(0, 1, 1 - y / parameterEditorState.height);
+	const value = minmax(0, 1, 1 - y / parameterEditorState.height) * 127;
 
 	return { x, y, tick, value };
 }

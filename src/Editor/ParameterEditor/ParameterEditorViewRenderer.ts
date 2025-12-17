@@ -1,12 +1,14 @@
 import { TICK_PER_MEASURE } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
-import { getSelectedNotes } from "../../getSelectedNotes.ts";
-import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
 import type { EditorState } from "../Editor.ts";
 import type { ParameterEditorState } from "./ParameterEditor.ts";
+import type {
+	ParameterEditorSampleDelegate,
+	ParameterSample,
+} from "./ParameterEditorSampleDelegate.ts";
 
 export function widthPerMeasure(zoom: number) {
 	return 180 * zoom;
@@ -22,12 +24,14 @@ export function renderCanvas({
 	song,
 	playerState,
 	editorState,
+	delegate,
 }: {
 	canvas: HTMLCanvasElement;
 	parameterEditorState: ParameterEditorState;
 	song: Song;
 	playerState: PlayerState;
 	editorState: EditorState;
+	delegate: ParameterEditorSampleDelegate;
 }) {
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
@@ -94,54 +98,30 @@ export function renderCanvas({
 	ctx.stroke();
 	// endregion
 
-	// region ノート
-	if (activeChannel !== null) {
-		ctx.beginPath();
-		addNotePathAll({
-			ctx,
-			notes: activeChannel.notes.values(),
-			tickWidth,
-			scrollLeft,
-			sideBarWidth,
-			totalHeight,
-			barWidth,
-			tickFrom,
-			tickTo,
-		});
-		ctx.fillStyle = activeChannel.color.cssString;
-		ctx.fill();
-		ctx.strokeStyle = "#000";
-		ctx.stroke();
-	}
-	// endregion
-
-	// region ホバー中のノート
-	// ctx.beginPath();
-	// addNotePathAll({
-	// 	ctx,
-	// 	notes: state.getHoverNotes(),
-	// 	tickWidth,
-	// 	scrollLeft,
-	// 	sideBarWidth,
-	// 	timelineHeight,
-	// 	heightPerKey,
-	// 	scrollTop,
-	// 	keyFrom,
-	// 	keyTo,
-	// 	tickFrom,
-	// 	tickTo,
-	// });
-	// ctx.fillStyle = state.channel.color.setL(0.7).cssString;
-	// ctx.fill();
-	// ctx.strokeStyle = state.channel.color.setL(0.2).cssString;
-	// ctx.stroke();
-	// endregion
-
-	// region 選択中のノート
+	// region サンプル
 	ctx.beginPath();
-	addNotePathAll({
+	addSamplePathAll({
 		ctx,
-		notes: getSelectedNotes(song, editorState),
+		samples: delegate.getAllSamples(),
+		tickWidth,
+		scrollLeft,
+		sideBarWidth,
+		totalHeight,
+		barWidth,
+		tickFrom,
+		tickTo,
+	});
+	ctx.fillStyle = activeChannel.color.cssString;
+	ctx.fill();
+	ctx.strokeStyle = "#000";
+	ctx.stroke();
+	// endregion
+
+	// region 選択中のサンプル
+	ctx.beginPath();
+	addSamplePathAll({
+		ctx,
+		samples: delegate.getSelectedSamples(),
 		tickWidth,
 		scrollLeft,
 		sideBarWidth,
@@ -189,29 +169,6 @@ export function renderCanvas({
 	}
 	// endregion
 
-	// region 選択範囲
-	// const selectionArea = state.computeSelectionArea();
-	// if (selectionArea !== null) {
-	// 	ctx.beginPath();
-	//
-	// 	const { keyFrom, keyTo, tickFrom, tickTo } = selectionArea;
-	// 	const x0 = sideBarWidth + tickFrom * tickWidth - scrollLeft;
-	// 	const x1 = sideBarWidth + tickTo * tickWidth - scrollLeft;
-	// 	const y0 = (NUM_KEYS - keyFrom) * heightPerKey - scrollTop;
-	// 	const y1 = (NUM_KEYS - keyTo) * heightPerKey - scrollTop;
-	//
-	// 	addRectPath({ ctx, x0, y0, x1, y1 });
-	//
-	// 	ctx.strokeStyle = "#000";
-	// 	ctx.lineWidth = 2 * devicePixelRatio;
-	// 	ctx.stroke();
-	//
-	// 	ctx.strokeStyle = "#fff";
-	// 	ctx.lineWidth = devicePixelRatio;
-	// 	ctx.stroke();
-	// }
-	// endregion
-
 	// region サイドバー背景
 	ctx.beginPath();
 	addRectPath({ ctx, x0: 0, y0: 0, x1: sideBarWidth, y1: totalHeight });
@@ -245,7 +202,7 @@ export function renderCanvas({
 	// endregion
 }
 
-function addNotePathAll({
+function addSamplePathAll({
 	ctx,
 	tickWidth,
 	scrollLeft,
@@ -254,7 +211,7 @@ function addNotePathAll({
 	barWidth,
 	tickFrom,
 	tickTo,
-	notes,
+	samples,
 }: {
 	ctx: CanvasRenderingContext2D;
 	tickWidth: number;
@@ -264,10 +221,10 @@ function addNotePathAll({
 	barWidth: number;
 	tickFrom: number;
 	tickTo: number;
-	notes: Iterable<Note>;
+	samples: Iterable<ParameterSample>;
 }) {
-	for (const note of notes) {
-		addNotePath({
+	for (const sample of samples) {
+		addSamplePath({
 			ctx,
 			tickWidth,
 			scrollLeft,
@@ -276,12 +233,12 @@ function addNotePathAll({
 			barWidth,
 			tickFrom,
 			tickTo,
-			note,
+			sample,
 		});
 	}
 }
 
-function addNotePath({
+function addSamplePath({
 	ctx,
 	tickWidth,
 	scrollLeft,
@@ -290,7 +247,7 @@ function addNotePath({
 	barWidth,
 	tickFrom,
 	tickTo,
-	note,
+	sample,
 }: {
 	ctx: CanvasRenderingContext2D;
 	tickWidth: number;
@@ -300,13 +257,13 @@ function addNotePath({
 	barWidth: number;
 	tickFrom: number;
 	tickTo: number;
-	note: Note;
+	sample: ParameterSample;
 }) {
-	if (note.tickTo < tickFrom || tickTo <= note.tickFrom) return;
+	if (sample.tick < tickFrom || tickTo <= sample.tick) return;
 
-	const x = sideBarWidth + note.tickFrom * tickWidth - scrollLeft;
+	const x = sideBarWidth + sample.tick * tickWidth - scrollLeft;
 	const y1 = totalHeight;
-	const y0 = totalHeight * (1 - note.velocity / 127);
+	const y0 = totalHeight * (1 - sample.value / 127);
 
 	ctx.moveTo(x, y1);
 	ctx.lineTo(x, y0);

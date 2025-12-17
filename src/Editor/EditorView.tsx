@@ -1,12 +1,15 @@
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Select } from "../react/Select/Select.tsx";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
+import { useStateful } from "../Stateful/useStateful.tsx";
 import { Editor } from "./Editor.ts";
 import { ParameterEditorView } from "./ParameterEditor/ParameterEditorView.tsx";
+import { ParameterType } from "./ParameterType.ts";
 import { PianoRollView } from "./PianoRoll/PianoRollView.tsx";
 
 export function EditorView({ editor }: { editor?: Editor }) {
 	editor = useComponent(Editor.Key, editor);
+	const parameterType = useStateful(editor, (state) => state.parameterType);
 
 	const resizeObserverRef = useResizeObserver((entry) => {
 		editor.setWidth(entry.contentRect.width);
@@ -47,12 +50,20 @@ export function EditorView({ editor }: { editor?: Editor }) {
 					padding: "4px 8px",
 				}}
 			>
-				<Select value="velocity">
-					<Select.Option value="velocity">velocity</Select.Option>
-					<Select.Option value="pitch bend">pitch bend</Select.Option>
-					<Select.Option value="modulation">modulation</Select.Option>
-					<Select.Option value="vibrate">vibrate</Select.Option>
-					<Select.Option value="pan">pan</Select.Option>
+				<Select
+					value={parameterType.label}
+					onChange={(value) => {
+						const parameterType = ParameterType.find((p) => p.label === value);
+						if (parameterType === undefined) return;
+
+						editor.setParameterType(parameterType);
+					}}
+				>
+					{ParameterType.map((p) => (
+						<Select.Option key={p.label} value={p.label}>
+							{p.label}
+						</Select.Option>
+					))}
 				</Select>
 			</div>
 			<div

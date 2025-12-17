@@ -1,5 +1,6 @@
 import { Color, type SerializedColor } from "../Color.ts";
-import type { ControlChangeList } from "./ControlChangeList.ts";
+import { ControlChangeList } from "./ControlChangeList.ts";
+import type { ControlType } from "./ControlType.ts";
 import {
 	InstrumentKey,
 	type SerializedInstrumentKey,
@@ -22,7 +23,7 @@ export class Channel {
 	readonly label: string;
 	readonly instrumentKey: InstrumentKey;
 	readonly notes: ReadonlyMap<number, Note>;
-	readonly controlChanges: ReadonlyMap<number, ControlChangeList>;
+	readonly controlChanges: ReadonlyMap<ControlType, ControlChangeList>;
 	readonly color: Color;
 
 	constructor(props: {
@@ -30,7 +31,7 @@ export class Channel {
 		readonly label: string;
 		readonly instrumentKey: InstrumentKey;
 		readonly notes: ReadonlyMap<number, Note>;
-		readonly controlChanges: ReadonlyMap<number, ControlChangeList>;
+		readonly controlChanges: ReadonlyMap<ControlType, ControlChangeList>;
 		readonly color: Color;
 	}) {
 		this.id = props.id;
@@ -97,6 +98,25 @@ export class Channel {
 		return new Channel({ ...this, instrumentKey });
 	}
 
+	putControlChange(
+		controlType: ControlType,
+		ticks: Iterable<number>,
+		value: number,
+	): Channel {
+		let oldControlChangeList = this.controlChanges.get(controlType);
+		if (oldControlChangeList === undefined) {
+			oldControlChangeList = ControlChangeList.create();
+		}
+
+		const newControlChangeList = oldControlChangeList.put(ticks, value);
+		if (newControlChangeList === oldControlChangeList) return this;
+
+		const controlChanges = new Map(this.controlChanges);
+		controlChanges.set(controlType, newControlChangeList);
+
+		return new Channel({ ...this, controlChanges });
+	}
+
 	applyPatch(patch: ChannelPatch): Channel {
 		let channel: Channel = this;
 		if (patch.label !== undefined) {
@@ -134,7 +154,7 @@ export class Channel {
 			label: data.label,
 			instrumentKey: InstrumentKey.deserialize(data.instrumentKey),
 			notes,
-			controlChanges: new Map<number, ControlChangeList>(), // Placeholder, as controlChanges are not serialized yet
+			controlChanges: new Map(), // TODO
 			color: Color.deserialize(data.color),
 		});
 	}

@@ -49,9 +49,19 @@ export class SoundFontSynthesizer implements Synthesizer {
 			null;
 	}
 
+	channelNoteOffAll(channel: number) {
+		this.getChannel(channel)?.noteOffAll();
+	}
+
 	noteOffAll() {
 		for (const channel of this.channels.values()) {
 			channel.noteOffAll();
+		}
+	}
+
+	stopImmediatelyAll() {
+		for (const channel of this.channels.values()) {
+			channel.stopImmediately();
 		}
 	}
 
@@ -65,6 +75,10 @@ export class SoundFontSynthesizer implements Synthesizer {
 			channel.reset();
 		}
 		this.channels.clear();
+	}
+
+	setPitchBend(channel: number, cents: number, time?: number): void {
+		this.getOrCreateChannel(channel).setPitchBend(cents, time);
 	}
 
 	private getChannel(
@@ -115,6 +129,7 @@ class SoundFontSynthesizerChannel {
 			velocity,
 			this.preset,
 			this.masterVolumeNode,
+			this.pitchBend,
 		);
 		note.onEnded = () => {
 			this.notes.delete(note);
@@ -144,11 +159,50 @@ class SoundFontSynthesizerChannel {
 		}
 	}
 
+	stopImmediately(): void {
+		for (const note of this.notes) {
+			note.dispose();
+		}
+	}
+
 	reset() {
 		for (const note of this.notes) {
 			note.dispose();
 		}
 		this.notes.clear();
+		this.currentPitchBend = 0;
+		this.queueudPitchBendControlChanges.length = 0;
+	}
+
+	/**
+	 * ピッチベンド [cent]
+	 */
+	currentPitchBend: number = 0;
+	get pitchBend(): number {
+		while (this.queueudPitchBendControlChanges.length > 0) {
+			const message = this.queueudPitchBendControlChanges[0];
+			if (message === undefined) break;
+			if (message.time > this.context.currentTime) break;
+
+			this.currentPitchBend = message.cents;
+			this.queueudPitchBendControlChanges.shift();
+		}
+		return this.currentPitchBend;
+	}
+
+	private readonly queueudPitchBendControlChanges: {
+		time: number;
+		cents: number;
+	}[] = [];
+
+	setPitchBend(cents: number, time?: number): void {
+		time ??= this.context.currentTime;
+		this.queueudPitchBendControlChanges.push({ time, cents });
+		this.queueudPitchBendControlChanges.sort((a, b) => a.time - b.time);
+
+		for (const note of this.notes) {
+			note.setPitchBend(cents, time);
+		}
 	}
 }
 
@@ -164,6 +218,7 @@ class SoundFontNote {
 		readonly velocity: number,
 		readonly preset: Preset,
 		readonly destination: AudioNode,
+		private pitchBendInCents: number,
 	) {}
 
 	onEnded?: () => void;
@@ -178,7 +233,8 @@ class SoundFontNote {
 				this.context,
 			);
 			if (bufferSource === null) continue;
-			bufferSource.detune.value = instrumentZone.getTuneForKey(this.key);
+			bufferSource.detune.value =
+				instrumentZone.getTuneForKey(this.key) + this.pitchBendInCents;
 
 			const velocityNode = this.context.createGain();
 			velocityNode.gain.value = (this.velocity / 100) ** 2;
@@ -256,6 +312,17 @@ class SoundFontNote {
 			zone.volumeEnvelopeNode.disconnect();
 		}
 		this.zones.clear();
+	}
+
+	setPitchBend(cents: number, time?: number): void {
+		time = time ?? this.context.currentTime;
+
+		for (const zone of this.zones) {
+			zone.bufferSource.detune.setValueAtTime(
+				zone.instrumentZone.getTuneForKey(this.key) + cents,
+				time,
+			);
+		}
 	}
 }
 

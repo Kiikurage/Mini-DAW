@@ -13,21 +13,18 @@ export class ControlChangeList {
 		this.messages = props.messages;
 	}
 
-	put(tick: number, value: number): ControlChangeList {
-		const { index, exact } = this.findIndex(tick);
-		if (exact) {
-			const messages = [...this.messages];
-			messages[index] = { tick, value };
-			return new ControlChangeList({ messages });
-		} else {
-			return new ControlChangeList({
-				messages: [
-					...this.messages.slice(0, index),
-					{ tick, value },
-					...this.messages.slice(index),
-				],
-			});
+	put(ticks: Iterable<number>, value: number): ControlChangeList {
+		const messages = [...this.messages];
+
+		for (const tick of ticks) {
+			const { index, exact } = this.findIndex(tick);
+			if (exact) {
+				messages[index] = { tick, value };
+			} else {
+				messages.splice(index, 0, { tick, value });
+			}
 		}
+		return new ControlChangeList({ messages });
 	}
 
 	remove(tick: number): ControlChangeList {
@@ -37,6 +34,10 @@ export class ControlChangeList {
 		const messages = [...this.messages];
 		messages.splice(index, 1);
 		return new ControlChangeList({ messages });
+	}
+
+	toArray(): ControlChange[] {
+		return [...this.messages];
 	}
 
 	private findIndex(tick: number): { index: number; exact: boolean } {

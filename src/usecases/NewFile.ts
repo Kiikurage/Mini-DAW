@@ -27,7 +27,7 @@ export function NewFile({ bus }: { bus: EventBus }) {
 						id: 0,
 						label: "",
 						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]?.name,
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),
@@ -39,7 +39,7 @@ export function NewFile({ bus }: { bus: EventBus }) {
 						id: 1,
 						label: "",
 						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]?.name,
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),
@@ -51,7 +51,7 @@ export function NewFile({ bus }: { bus: EventBus }) {
 						id: 2,
 						label: "",
 						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]?.name,
+							PreInstalledSouindFonts[0]!.name,
 							0,
 							0,
 						),

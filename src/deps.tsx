@@ -18,6 +18,10 @@ import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
+import {
+	PutControlChange,
+	PutControlChangeKey,
+} from "./usecases/PutControlChange.ts";
 import { RemoveChannel, RemoveChannelKey } from "./usecases/RemoveChannel.ts";
 import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
@@ -41,6 +45,8 @@ export function configureDeps() {
 					deps.get(SongStore.Key),
 					deps.get(Player.Key),
 					deps.get(EventBus.Key),
+					deps.get(SetNoteParameterKey),
+					deps.get(PutControlChangeKey),
 				);
 			})
 			.set(EventBus.Key, () => {
@@ -156,6 +162,13 @@ export function configureDeps() {
 				});
 			})
 
+			// UseCases - Control
+			.set(PutControlChangeKey, (deps) => {
+				return PutControlChange({
+					bus: deps.get(EventBus.Key),
+				});
+			})
+
 			// UseCases - File
 			.set(NewFileKey, (deps) => {
 				return NewFile({
@@ -179,6 +192,8 @@ export function configureDeps() {
 					newFile: deps.get(NewFileKey),
 					songStore: deps.get(SongStore.Key),
 					editor: deps.get(Editor.Key),
+					soundFontStore: deps.get(SoundFontStore.Key),
+					synthesizer: deps.get(SynthesizerKey),
 				});
 			})
 	);

@@ -8,7 +8,13 @@ import type { Note } from "../models/Note.ts";
 import type { Player } from "../Player/Player.ts";
 import type { SongStore } from "../SongStore.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
+import type { PutControlChange } from "../usecases/PutControlChange.ts";
+import type { SetNoteParameter } from "../usecases/SetNoteParameter.ts";
+import { ControlChangeDelegate } from "./ParameterEditor/ControlChangeDelegate.ts";
+import type { ParameterEditorSampleDelegate } from "./ParameterEditor/ParameterEditorSampleDelegate.ts";
 import { widthPerTick } from "./ParameterEditor/ParameterEditorViewRenderer.ts";
+import { VelocityDelegate } from "./ParameterEditor/VelocityDelegate.ts";
+import { ParameterType } from "./ParameterType.ts";
 
 /**
  * PianoRollとParameterEditorとで共有される状態。
@@ -75,6 +81,11 @@ export interface EditorState {
 	 * この値とは異なる可能性がある。
 	 */
 	readonly marqueeAreaTo: null | { key: number; tick: number };
+
+	/**
+	 * 現在表示しているパラメータの種類
+	 */
+	readonly parameterType: ParameterType;
 }
 
 export class Editor extends Stateful<EditorState> {
@@ -84,6 +95,8 @@ export class Editor extends Stateful<EditorState> {
 		private readonly songStore: SongStore,
 		player: Player,
 		bus: EventBus,
+		private readonly setNoteParameter: SetNoteParameter,
+		private readonly putControlChange: PutControlChange,
 	) {
 		super({
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
@@ -97,6 +110,7 @@ export class Editor extends Stateful<EditorState> {
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
+			parameterType: ParameterType[0],
 		});
 
 		player.addChangeListener((state) => {
@@ -133,6 +147,33 @@ export class Editor extends Stateful<EditorState> {
 					this.unselectNotes(noteIds);
 				}
 			});
+	}
+
+	setParameterType(parameterType: ParameterType) {
+		this.updateState((state) => {
+			if (state.parameterType === parameterType) return state;
+			return { ...state, parameterType };
+		});
+	}
+
+	getParameterSampleDelegate(): ParameterEditorSampleDelegate {
+		switch (this.state.parameterType.type) {
+			case "velocity": {
+				return new VelocityDelegate(
+					this.songStore,
+					this,
+					this.setNoteParameter,
+				);
+			}
+			case "controlChange": {
+				return new ControlChangeDelegate(
+					this.songStore,
+					this,
+					this.putControlChange,
+					this.state.parameterType.controlType,
+				);
+			}
+		}
 	}
 
 	setActiveChannel(activeChannelId: number | null) {

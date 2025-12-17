@@ -2,7 +2,10 @@ import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import { minmax } from "../lib.ts";
+import { ControlType } from "../models/ControlType.ts";
 import type { SongStore } from "../SongStore.ts";
+import { SoundFontStore } from "../SoundFontStore.ts";
+import type { SoundFontSynthesizer } from "../SoundFontSynthesizer.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import type { Synthesizer } from "../Synthesizer.ts";
@@ -47,14 +50,10 @@ export class Player extends Stateful<PlayerState> {
 
 		bus.on("song.put.after", (_song) => {
 			this.synthesizer.resetAll();
-
-			// TODO: Preload soundFonts
-			// for (const channel of song.channels) {
-			// 	instrumentStore.getOrLoad(channel.instrumentKey);
-			// }
+			this.clearMutedChannels();
 		});
 		bus.on("channel.remove.before", (channelId: number) => {
-			this.cancelMuteChannel(channelId);
+			this.removeChannelFromMute(channelId);
 		});
 	}
 
@@ -62,11 +61,10 @@ export class Player extends Stateful<PlayerState> {
 		currentTick = minmax(0, null, currentTick);
 		if (this.state.currentTick === currentTick) return;
 
+		const isPlaying = this.state.isPlaying;
+		this.pause();
 		this.updateState((state) => ({ ...state, currentTick }));
-		if (this.state.isPlaying) {
-			this.pause();
-			this.play();
-		}
+		if (isPlaying) this.play();
 	}
 
 	setPlaying(isPlaying: boolean) {
@@ -85,19 +83,30 @@ export class Player extends Stateful<PlayerState> {
 		}
 	}
 
-	toggleMuteChannel(channelId: number) {
-		this.updateState((state) => {
-			const mutedChannelIds = new Set(state.mutedChannelIds);
-			if (mutedChannelIds.has(channelId)) {
-				mutedChannelIds.delete(channelId);
-			} else {
-				mutedChannelIds.add(channelId);
-			}
-			return { ...state, mutedChannelIds };
-		});
+	clearMutedChannels() {
+		this.updateState((state) => ({ ...state, mutedChannelIds: new Set() }));
 	}
 
-	cancelMuteChannel(channelId: number) {
+	toggleMuteChannel(channelId: number) {
+		if (this.state.mutedChannelIds.has(channelId)) {
+			this.removeChannelFromMute(channelId);
+		} else {
+			this.addChannelToMute(channelId);
+		}
+	}
+
+	addChannelToMute(channelId: number) {
+		if (this.state.mutedChannelIds.has(channelId)) return;
+
+		this.updateState((state) => {
+			const mutedChannelIds = new Set(state.mutedChannelIds);
+			mutedChannelIds.add(channelId);
+			return { ...state, mutedChannelIds };
+		});
+		this.synthesizer.channelNoteOffAll(channelId);
+	}
+
+	removeChannelFromMute(channelId: number) {
 		this.updateState((state) => {
 			const mutedChannelIds = new Set(state.mutedChannelIds);
 			mutedChannelIds.delete(channelId);
@@ -190,6 +199,24 @@ export class Player extends Stateful<PlayerState> {
 							key: note.key,
 							time: this.getContextTimeByTick(note.tickTo),
 						});
+					}
+				}
+
+				for (const [type, cc] of channel.controlChanges) {
+					if (type !== ControlType.PITCH_BEND) continue;
+
+					for (const message of cc.messages) {
+						if (
+							lastEnqueuedTick <= message.tick &&
+							message.tick < nextEnqueueTick
+						) {
+							console.log(message);
+							this.synthesizer.setPitchBend(
+								channel.id,
+								message.value,
+								this.getContextTimeByTick(message.tick),
+							);
+						}
 					}
 				}
 			}

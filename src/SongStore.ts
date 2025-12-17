@@ -28,7 +28,12 @@ export class SongStore extends Stateful<Song> {
 				this.removeNotes(channelId, noteIds),
 			)
 			.on("song.put", (song) => this.setSong(song))
-			.on("song.update", (patch) => this.applySongPatch(patch));
+			.on("song.update", (patch) => this.applySongPatch(patch))
+			.on("control.put", (args) => {
+				this.updateChannel(args.channelId, (channel) => {
+					return channel.putControlChange(args.type, args.ticks, args.value);
+				});
+			});
 	}
 
 	putChannel(channel: Channel) {

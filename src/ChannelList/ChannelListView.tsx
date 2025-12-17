@@ -108,7 +108,7 @@ export function ChannelListView({
 						size="sm"
 						onClick={() => {
 							const instrumentKey = new InstrumentKey(
-								PreInstalledSouindFonts[0]?.name,
+								PreInstalledSouindFonts[0]!.name,
 								0,
 								0,
 							);

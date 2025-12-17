@@ -62,7 +62,7 @@ function SoundFontDialogView({
 	updateChannel: UpdateChannel;
 }) {
 	const [instrumentKey, _setInstrumentKey] = useState(
-		controller.channel.instrumentKey as InstrumentKey,
+		controller.channel.instrumentKey,
 	);
 	const setInstrumentKey = (key: InstrumentKey) => {
 		_setInstrumentKey(key);
