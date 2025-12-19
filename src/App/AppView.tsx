@@ -5,6 +5,7 @@ import { EditorView } from "../Editor/EditorView.tsx";
 import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
 import { KeyboardHandler } from "../KeyboardHandler.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { Splitter } from "../Splitter/Splitter.tsx";
 import { StatusBarView } from "../StatusBar/StatusBarView.tsx";
 import { ToolBar } from "../ToolBar/ToolBar.tsx";
 import {
@@ -51,10 +52,10 @@ export function AppView({
 				inset: 0,
 				display: "grid",
 				gridTemplate: `
-				"GlobalMenuBar GlobalMenuBar" min-content
-				"ToolBar ToolBar" min-content
-				"SidePane Editor " 1fr
-				"StatusBar StatusBar" min-content / min-content 1fr min-content;
+				"GlobalMenuBar" min-content
+				"ToolBar" min-content
+				"Main " 1fr
+				"StatusBar" min-content / 1fr;
 			`.trim(),
 			}}
 		>
@@ -71,38 +72,18 @@ export function AppView({
 				<ToolBar />
 			</div>
 
-			<div
-				css={{
-					gridArea: "Editor",
-					position: "relative",
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "stretch",
-					justifyContent: "stretch",
-				}}
-			>
-				<EditorView />
+			<div css={{ gridArea: "Main", position: "relative" }}>
+				<Splitter direction="row">
+					<Splitter.Area defaultSize={240}>
+						<ChannelListView />
+					</Splitter.Area>
+					<Splitter.Area flex>
+						<EditorView />
+					</Splitter.Area>
+				</Splitter>
 			</div>
 
-			<div
-				css={{
-					gridArea: "SidePane",
-					backgroundColor: "var(--color-sidepanel-background)",
-					borderRight: "1px solid var(--color-sidepanel-border)",
-					color: "var(--color-sidepanel-foreground)",
-					boxSizing: "border-box",
-					width: 240,
-					position: "relative",
-				}}
-			>
-				<ChannelListView />
-			</div>
-
-			<footer
-				css={{
-					gridArea: "StatusBar",
-				}}
-			>
+			<footer css={{ gridArea: "StatusBar" }}>
 				<StatusBarView />
 			</footer>
 

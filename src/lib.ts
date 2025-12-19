@@ -1,7 +1,11 @@
 import { TICK_PER_MEASURE } from "./constants.ts";
 
+export function isNullish(x: unknown): x is null | undefined {
+	return x === null || x === undefined;
+}
+
 export function isNotNullish<T>(x: T | null | undefined): x is T {
-	return x !== null && x !== undefined;
+	return !isNullish(x);
 }
 
 export function assertNotNullish<T>(
@@ -68,4 +72,22 @@ export function addListener(
 ) {
 	target.addEventListener(type, listener);
 	return () => target.removeEventListener(type, listener);
+}
+
+export function run<T>(fn: () => T): T {
+	return fn();
+}
+
+export const EmptySet: ReadonlySet<never> = new Set<never>();
+
+export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
+	if (iterable instanceof Set) {
+		return iterable;
+	} else {
+		return new Set(iterable);
+	}
+}
+
+export function toMutableSet<T>(iterable: Iterable<T>): Set<T> {
+	return new Set(iterable);
 }

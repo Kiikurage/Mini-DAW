@@ -1,8 +1,9 @@
 import { NUM_KEYS } from "../../constants.ts";
 import { ComponentKey } from "../../Dependency/DIContainer.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import { minmax } from "../../lib.ts";
+import { EmptySet, minmax } from "../../lib.ts";
 import type { Channel } from "../../models/Channel.ts";
+import { PromiseState } from "../../PromiseState.ts";
 import type { SongStore } from "../../SongStore.ts";
 import type {
 	SoundFontStore,
@@ -57,7 +58,15 @@ export class PianoRoll extends Stateful<PianoRollState> {
 	setHeight(height: number) {
 		this.updateState((state) => {
 			if (state.height === height) return state;
-			return { ...state, height };
+			return {
+				...state,
+				height,
+				scrollTop: minmax(
+					0,
+					NUM_KEYS * HEIGHT_PER_KEY - (height - TIMELINE_HEIGHT),
+					state.scrollTop,
+				),
+			};
 		});
 	}
 
@@ -92,7 +101,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 			this.songStore.state,
 			this.editor.state,
 		);
-		if (activeChannel === null) return new Set();
+		if (activeChannel === null) return EmptySet;
 
 		return getNoLoopKeys(activeChannel, this.soundFontStore.state);
 	}
@@ -103,14 +112,14 @@ export function getNoLoopKeys(
 	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
 	const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
-	if (soundFontPromise?.state?.status !== "fulfilled") return new Set();
+	if (!PromiseState.isFulfilled(soundFontPromise?.state)) return EmptySet;
 
-	const soundFont = soundFontPromise.state.value;
+	const soundFont = soundFontPromise.state;
 	const preset = soundFont.getPreset(
 		channel.instrumentKey.presetNumber,
 		channel.instrumentKey.bankNumber,
 	);
-	if (preset === null) return new Set();
+	if (preset === null) return EmptySet;
 
 	return preset.getNoLoopKeys();
 }

@@ -71,7 +71,7 @@ export class SoundFontStore extends Stateful<SoundFontStoreState> {
 			const entry = await promise;
 			this.updateState((state) =>
 				state.set(url, {
-					state: PromiseState.fulfilled(entry),
+					state: entry,
 					promise: Promise.resolve(entry),
 				}),
 			);

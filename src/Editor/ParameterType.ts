@@ -1,10 +1,12 @@
 import { ControlType } from "../models/ControlType.ts";
 
-interface VelocityParametrType {
-	type: "velocity";
-	label: string;
-}
-interface ControlChangeParametrType {
+export const VelocityParameterType = {
+	type: "velocity",
+	label: "Velocity",
+} as const;
+export type VelocityParametrType = typeof VelocityParameterType;
+
+export interface ControlChangeParametrType {
 	type: "controlChange";
 	label: string;
 	controlType: ControlType;
@@ -12,7 +14,7 @@ interface ControlChangeParametrType {
 export type ParameterType = VelocityParametrType | ControlChangeParametrType;
 
 export const ParameterType = [
-	{ type: "velocity", label: "Velocity" },
+	VelocityParameterType,
 	{
 		type: "controlChange",
 		label: "Pitch Bend",

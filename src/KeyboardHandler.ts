@@ -18,8 +18,6 @@ export class KeyboardHandler {
 		private readonly editor: Editor,
 		private readonly saveFile: SaveFile,
 		private readonly loadFile: LoadFile,
-		private readonly moveNotes: MoveNotes,
-		private readonly removeNotes: RemoveNotes,
 	) {}
 
 	handleKeyDown(ev: KeyboardEvent) {
@@ -28,68 +26,39 @@ export class KeyboardHandler {
 		switch (ev.key) {
 			case "Delete":
 			case "Backspace": {
-				const activeChannelId = this.editor.state.activeChannelId;
-				if (activeChannelId === null) return;
-
-				const selectedNoteIds = this.editor.state.selectedNoteIds;
-				if (selectedNoteIds.size === 0) return false;
-
-				this.removeNotes(activeChannelId, selectedNoteIds);
+				this.editor.removeSelectedItems();
 				return true;
 			}
 			case "ArrowLeft": {
-				const activeChannelId = this.editor.state.activeChannelId;
-				if (activeChannelId === null) return false;
-
-				const selectedNoteIds = this.editor.state.selectedNoteIds;
-				if (selectedNoteIds.size === 0) return false;
-
-				this.moveNotes(
-					activeChannelId,
-					selectedNoteIds,
-					0,
-					-this.editor.state.quantizeUnitInTick,
-				);
+				this.editor.moveSelectedItems({
+					tickOffset: -this.editor.state.quantizeUnitInTick,
+					keyOffset: 0,
+				});
 				return true;
 			}
 			case "ArrowUp": {
-				const activeChannelId = this.editor.state.activeChannelId;
-				if (activeChannelId === null) return false;
-
-				const selectedNoteIds = this.editor.state.selectedNoteIds;
-				if (selectedNoteIds.size === 0) return false;
-
-				this.moveNotes(activeChannelId, selectedNoteIds, 1, 0);
+				this.editor.moveSelectedItems({
+					tickOffset: 0,
+					keyOffset: 1,
+				});
 				return true;
 			}
 			case "ArrowRight": {
-				const activeChannelId = this.editor.state.activeChannelId;
-				if (activeChannelId === null) return false;
-
-				const selectedNoteIds = this.editor.state.selectedNoteIds;
-				if (selectedNoteIds.size === 0) return false;
-
-				this.moveNotes(
-					activeChannelId,
-					selectedNoteIds,
-					0,
-					this.editor.state.quantizeUnitInTick,
-				);
+				this.editor.moveSelectedItems({
+					tickOffset: this.editor.state.quantizeUnitInTick,
+					keyOffset: 0,
+				});
 				return true;
 			}
 			case "ArrowDown": {
-				const activeChannelId = this.editor.state.activeChannelId;
-				if (activeChannelId === null) return false;
-
-				const selectedNoteIds = this.editor.state.selectedNoteIds;
-				if (selectedNoteIds.size === 0) return false;
-
-				this.moveNotes(activeChannelId, selectedNoteIds, -1, 0);
+				this.editor.moveSelectedItems({
+					tickOffset: 0,
+					keyOffset: -1,
+				});
 				return true;
 			}
 			case "Escape": {
-				if (this.editor.state.selectedNoteIds.size === 0) return false;
-				this.editor.clearSelectedNotes();
+				this.editor.clearSelection();
 				return true;
 			}
 			case " ": {
@@ -98,7 +67,7 @@ export class KeyboardHandler {
 			}
 			case "a": {
 				if (ev.ctrlKey || ev.metaKey) {
-					this.editor.selectAllNotes();
+					this.editor.putAllNotesToSelection();
 					return true;
 				}
 				break;

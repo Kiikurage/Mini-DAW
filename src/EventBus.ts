@@ -1,5 +1,6 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { Channel, ChannelPatch } from "./models/Channel.ts";
+import type { ControlChange } from "./models/ControlChange.ts";
 import type { ControlType } from "./models/ControlType.ts";
 import type { Note } from "./models/Note.ts";
 import type { Song, SongPatch } from "./models/Song.ts";
@@ -48,8 +49,18 @@ interface EventBusEventMap {
 		args: {
 			channelId: number;
 			type: ControlType;
+			changes: Iterable<ControlChange>;
+		},
+	];
+
+	/**
+	 * コントロールチェンジの削除
+	 */
+	"control.remove": [
+		args: {
+			channelId: number;
+			type: ControlType;
 			ticks: Iterable<number>;
-			value: number;
 		},
 	];
 }

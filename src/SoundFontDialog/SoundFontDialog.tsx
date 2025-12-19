@@ -3,6 +3,7 @@ import { MdOpenInNew } from "react-icons/md";
 import type { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
+import { PromiseState } from "../PromiseState.ts";
 import { Button } from "../react/Button.ts";
 import { Dialog } from "../react/Dialog.tsx";
 import { Form } from "../react/Form.tsx";
@@ -181,7 +182,7 @@ function SoundFontDialogView({
 						>
 							<div css={{ width: 200 }}>
 								<Form.Field label="プリセット">
-									{soundFont?.status === "fulfilled" ? (
+									{PromiseState.isFulfilled(soundFont) ? (
 										<ListBox
 											value={instrumentKey.presetNumber}
 											onChange={(presetNumber) => {
@@ -195,7 +196,7 @@ function SoundFontDialogView({
 											}}
 										>
 											<ListBox.OptionList>
-												{soundFont.value.getPresetNames().map((preset) => (
+												{soundFont.getPresetNames().map((preset) => (
 													<ListBox.Option
 														key={preset.number}
 														value={preset.number}
@@ -205,16 +206,16 @@ function SoundFontDialogView({
 												))}
 											</ListBox.OptionList>
 										</ListBox>
-									) : soundFont?.status === "pending" ? (
+									) : PromiseState.isPending(soundFont) ? (
 										<span>ロード中...</span>
-									) : soundFont?.status === "rejected" ? (
+									) : PromiseState.isRejected(soundFont) ? (
 										<span>サウンドフォントの読み込みに失敗しました</span>
 									) : null}
 								</Form.Field>
 							</div>
 							<div css={{ width: 200 }}>
 								<Form.Field label="バンク">
-									{soundFont?.status === "fulfilled" ? (
+									{PromiseState.isFulfilled(soundFont) ? (
 										<ListBox
 											value={instrumentKey.presetNumber}
 											onChange={(bankNumber) => {
@@ -228,7 +229,7 @@ function SoundFontDialogView({
 											}}
 										>
 											<ListBox.OptionList>
-												{soundFont.value
+												{soundFont
 													.getPresetsByPresetNumber(instrumentKey.presetNumber)
 													.map((preset) => (
 														<ListBox.Option
@@ -240,9 +241,9 @@ function SoundFontDialogView({
 													))}
 											</ListBox.OptionList>
 										</ListBox>
-									) : soundFont?.status === "pending" ? (
+									) : PromiseState.isPending(soundFont) ? (
 										<span>ロード中...</span>
-									) : soundFont?.status === "rejected" ? (
+									) : PromiseState.isRejected(soundFont) ? (
 										<span>サウンドフォントの読み込みに失敗しました</span>
 									) : null}
 								</Form.Field>

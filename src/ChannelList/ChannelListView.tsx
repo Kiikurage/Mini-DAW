@@ -9,6 +9,7 @@ import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
+import { PromiseState } from "../PromiseState.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
@@ -73,6 +74,10 @@ export function ChannelListView({
 				flexDirection: "column",
 				alignItems: "stretch",
 				justifyContent: "stretch",
+				backgroundColor: "var(--color-sidepanel-background)",
+				borderRight: "1px solid var(--color-sidepanel-border)",
+				color: "var(--color-sidepanel-foreground)",
+				boxSizing: "border-box",
 			}}
 		>
 			<header
@@ -193,9 +198,9 @@ function ChannelListItem({
 
 	const instrumentName = (() => {
 		const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
-		if (soundFontPromise?.state?.status !== "fulfilled") return "#N/A";
+		if (!PromiseState.isFulfilled(soundFontPromise?.state)) return "#N/A";
 
-		const sf = soundFontPromise.state.value;
+		const sf = soundFontPromise.state;
 		const preset = sf.getPreset(
 			channel.instrumentKey.presetNumber,
 			channel.instrumentKey.bankNumber,

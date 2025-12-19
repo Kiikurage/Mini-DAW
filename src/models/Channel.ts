@@ -1,4 +1,5 @@
 import { Color, type SerializedColor } from "../Color.ts";
+import type { ControlChange } from "./ControlChange.ts";
 import { ControlChangeList } from "./ControlChangeList.ts";
 import type { ControlType } from "./ControlType.ts";
 import {
@@ -100,15 +101,32 @@ export class Channel {
 
 	putControlChange(
 		controlType: ControlType,
-		ticks: Iterable<number>,
-		value: number,
+		changes: Iterable<ControlChange>,
 	): Channel {
 		let oldControlChangeList = this.controlChanges.get(controlType);
 		if (oldControlChangeList === undefined) {
 			oldControlChangeList = ControlChangeList.create();
 		}
 
-		const newControlChangeList = oldControlChangeList.put(ticks, value);
+		const newControlChangeList = oldControlChangeList.put(changes);
+		if (newControlChangeList === oldControlChangeList) return this;
+
+		const controlChanges = new Map(this.controlChanges);
+		controlChanges.set(controlType, newControlChangeList);
+
+		return new Channel({ ...this, controlChanges });
+	}
+
+	removeControlChange(
+		controlType: ControlType,
+		ticks: Iterable<number>,
+	): Channel {
+		let oldControlChangeList = this.controlChanges.get(controlType);
+		if (oldControlChangeList === undefined) {
+			oldControlChangeList = ControlChangeList.create();
+		}
+
+		const newControlChangeList = oldControlChangeList.remove(ticks);
 		if (newControlChangeList === oldControlChangeList) return this;
 
 		const controlChanges = new Map(this.controlChanges);

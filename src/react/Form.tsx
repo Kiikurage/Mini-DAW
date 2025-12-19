@@ -20,8 +20,7 @@ function FormField({
 	flex?: boolean;
 }) {
 	return (
-		// biome-ignore lint/a11y/noLabelWithoutControl: <explanation>
-		<label
+		<div
 			css={[
 				{
 					position: "relative",
@@ -38,7 +37,7 @@ function FormField({
 				{label}
 			</div>
 			<div>{children}</div>
-		</label>
+		</div>
 	);
 }
 

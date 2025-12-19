@@ -1,7 +1,7 @@
 import { type ReactNode, useRef, useState } from "react";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import { Styles } from "../Styles.ts";
+import { BoxShadowStyleBase } from "../Styles.ts";
 import { useResizeObserver } from "../useResizeObserver.ts";
 
 export function PopUp({
@@ -55,13 +55,15 @@ export function PopUp({
 			}}
 		>
 			<div
-				css={{
-					flex: "0 1 auto",
-					minHeight: 0,
-					pointerEvents: "auto",
-					boxShadow: Styles.BOX_SHADOW,
-					borderRadius: 4,
-				}}
+				css={[
+					BoxShadowStyleBase,
+					{
+						flex: "0 1 auto",
+						minHeight: 0,
+						pointerEvents: "auto",
+						borderRadius: 4,
+					},
+				]}
 			>
 				{children}
 			</div>

@@ -95,9 +95,19 @@ export function PianoRollView({
 					player.setAutoScrollEnabled(false);
 				}
 			}),
-			addListener(canvas, "pointerdown", pointerEventManager.handlePointerDown),
+			addListener(canvas, "pointerdown", (ev) => {
+				canvas.setPointerCapture(ev.pointerId);
+				pointerEventManager.handlePointerDown(ev);
+			}),
 			addListener(canvas, "pointermove", pointerEventManager.handlePointerMove),
-			addListener(canvas, "pointerup", pointerEventManager.handlePointerUp),
+			addListener(canvas, "pointerup", (ev) => {
+				canvas.releasePointerCapture(ev.pointerId);
+				pointerEventManager.handlePointerUp(ev);
+			}),
+			addListener(canvas, "pointercancel", (ev) => {
+				canvas.releasePointerCapture(ev.pointerId);
+				pointerEventManager.handlePointerUp(ev);
+			}),
 			addListener(canvas, "dblclick", pointerEventManager.handleDoubleClick),
 		];
 

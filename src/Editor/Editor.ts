@@ -3,17 +3,17 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
 import { getMarqueeArea } from "../getMarqueeArea.ts";
-import { minmax } from "../lib.ts";
+import { EmptySet, minmax, toMutableSet, toSet } from "../lib.ts";
+import type { ControlType } from "../models/ControlType.ts";
 import type { Note } from "../models/Note.ts";
 import type { Player } from "../Player/Player.ts";
 import type { SongStore } from "../SongStore.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
-import type { PutControlChange } from "../usecases/PutControlChange.ts";
-import type { SetNoteParameter } from "../usecases/SetNoteParameter.ts";
-import { ControlChangeDelegate } from "./ParameterEditor/ControlChangeDelegate.ts";
-import type { ParameterEditorSampleDelegate } from "./ParameterEditor/ParameterEditorSampleDelegate.ts";
+import type { MoveNotes } from "../usecases/MoveNotes.ts";
+import type { RemoveControlChanges } from "../usecases/RemoveControlChanges.ts";
+import type { RemoveNotes } from "../usecases/RemoveNotes.ts";
+import { EditorSelection } from "./EditorSelection.ts";
 import { widthPerTick } from "./ParameterEditor/ParameterEditorViewRenderer.ts";
-import { VelocityDelegate } from "./ParameterEditor/VelocityDelegate.ts";
 import { ParameterType } from "./ParameterType.ts";
 
 /**
@@ -52,9 +52,9 @@ export interface EditorState {
 	readonly scrollLeft: number;
 
 	/**
-	 * 選択されているノートのID一覧
+	 * 選択状態
 	 */
-	readonly selectedNoteIds: ReadonlySet<number>;
+	readonly selection: EditorSelection;
 
 	/**
 	 * 時間方向の最小グリッド単位 [tick]
@@ -88,6 +88,124 @@ export interface EditorState {
 	readonly parameterType: ParameterType;
 }
 
+export function clearSelection(state: EditorState): EditorState {
+	if (state.selection.type === "void") return state;
+
+	return { ...state, selection: EditorSelection.void };
+}
+
+export function getSelectedControlChangeTicks(
+	state: EditorState,
+	controlType: ControlType,
+): ReadonlySet<number> {
+	if (
+		state.selection.type === "control" &&
+		state.selection.controlType === controlType
+	) {
+		return state.selection.ticks;
+	} else {
+		return EmptySet;
+	}
+}
+
+export function getSelectedNoteIds(state: EditorState): ReadonlySet<number> {
+	if (state.selection.type === "note") {
+		return state.selection.noteIds;
+	} else {
+		return EmptySet;
+	}
+}
+
+export function setSelectedControlChanges(
+	state: EditorState,
+	controlType: ControlType,
+	ticks: Iterable<number>,
+): EditorState {
+	const tickSet = toSet(ticks);
+	if (tickSet.size === 0) {
+		return {
+			...state,
+			selection: EditorSelection.void,
+		};
+	}
+
+	return {
+		...state,
+		selection: {
+			type: "control",
+			controlType,
+			ticks: tickSet,
+		},
+	};
+}
+
+export function setAllSelectedNotesWithoutMutationCheck(
+	state: EditorState,
+	selectedNoteIds: Iterable<number>,
+): EditorState {
+	const selectedNoteIdSet = toSet(selectedNoteIds);
+	if (selectedNoteIdSet.size === 0) {
+		return {
+			...state,
+			selection: EditorSelection.void,
+		};
+	}
+
+	return {
+		...state,
+		selection: {
+			type: "note",
+			noteIds: selectedNoteIdSet,
+		},
+	};
+}
+
+export function setSelectedNotes(
+	state: EditorState,
+	selectedNoteIds: Iterable<number>,
+): EditorState {
+	const oldSelectedNoteIds = getSelectedNoteIds(state);
+	const newSelectedNoteIds = toSet(selectedNoteIds);
+	if (
+		newSelectedNoteIds.size === oldSelectedNoteIds.size &&
+		[...selectedNoteIds].every((id) => oldSelectedNoteIds.has(id))
+	) {
+		return state;
+	}
+
+	return setAllSelectedNotesWithoutMutationCheck(state, newSelectedNoteIds);
+}
+
+export function putNotesToSelection(
+	state: EditorState,
+	noteIds: Iterable<number>,
+): EditorState {
+	const selectedNoteIds = toMutableSet(getSelectedNoteIds(state));
+	const oldSelectedNoteCount = selectedNoteIds.size;
+
+	for (const noteId of noteIds) {
+		selectedNoteIds.add(noteId);
+	}
+	if (selectedNoteIds.size === oldSelectedNoteCount) return state;
+
+	return setAllSelectedNotesWithoutMutationCheck(state, selectedNoteIds);
+}
+
+function removeNotesFromSelection(
+	state: EditorState,
+	noteIds: Iterable<number>,
+): EditorState {
+	const selectedNoteIds = toMutableSet(getSelectedNoteIds(state));
+	const oldSelectedNoteCount = selectedNoteIds.size;
+
+	for (const noteId of noteIds) {
+		selectedNoteIds.delete(noteId);
+	}
+	if (selectedNoteIds.size === oldSelectedNoteCount) return state;
+
+	return setAllSelectedNotesWithoutMutationCheck(state, selectedNoteIds);
+}
+
 export class Editor extends Stateful<EditorState> {
 	static readonly Key = ComponentKey.of(Editor);
 
@@ -95,8 +213,9 @@ export class Editor extends Stateful<EditorState> {
 		private readonly songStore: SongStore,
 		player: Player,
 		bus: EventBus,
-		private readonly setNoteParameter: SetNoteParameter,
-		private readonly putControlChange: PutControlChange,
+		private readonly removeNotes: RemoveNotes,
+		private readonly moveNotes: MoveNotes,
+		private readonly removeControlChanges: RemoveControlChanges,
 	) {
 		super({
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
@@ -105,7 +224,7 @@ export class Editor extends Stateful<EditorState> {
 			zoom: 1,
 			width: 0,
 			scrollLeft: 0,
-			selectedNoteIds: new Set<number>(),
+			selection: EditorSelection.void,
 			timelineGridUnitInTick: TICK_PER_MEASURE / 4,
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			marqueeAreaFrom: null,
@@ -144,7 +263,7 @@ export class Editor extends Stateful<EditorState> {
 			})
 			.on("notes.remove.before", (channelId, noteIds) => {
 				if (this.state.activeChannelId === channelId) {
-					this.unselectNotes(noteIds);
+					this.removeNotesFromSelection(noteIds);
 				}
 			});
 	}
@@ -154,26 +273,6 @@ export class Editor extends Stateful<EditorState> {
 			if (state.parameterType === parameterType) return state;
 			return { ...state, parameterType };
 		});
-	}
-
-	getParameterSampleDelegate(): ParameterEditorSampleDelegate {
-		switch (this.state.parameterType.type) {
-			case "velocity": {
-				return new VelocityDelegate(
-					this.songStore,
-					this,
-					this.setNoteParameter,
-				);
-			}
-			case "controlChange": {
-				return new ControlChangeDelegate(
-					this.songStore,
-					this,
-					this.putControlChange,
-					this.state.parameterType.controlType,
-				);
-			}
-		}
 	}
 
 	setActiveChannel(activeChannelId: number | null) {
@@ -268,55 +367,36 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
-	setAllSelectedNotes(selectedNoteIds: Iterable<number>) {
-		this.updateState((state) => {
-			const newSelectedNoteIds = new Set(selectedNoteIds);
-			if (
-				newSelectedNoteIds.size === state.selectedNoteIds.size &&
-				[...selectedNoteIds].every((id) => state.selectedNoteIds.has(id))
-			) {
-				return state;
-			}
-
-			return { ...state, selectedNoteIds: newSelectedNoteIds };
-		});
-	}
-
-	selectAllNotes() {
-		const activeChannel = getActiveChannel(this.songStore.state, this.state);
-		if (activeChannel === null) return;
-
-		this.setAllSelectedNotes(
-			activeChannel.notes.values().map((note) => note.id),
+	setSelectedControlChanges(
+		controlType: ControlType,
+		selectedTicks: Iterable<number>,
+	) {
+		this.updateState((state) =>
+			setSelectedControlChanges(state, controlType, selectedTicks),
 		);
 	}
 
-	clearSelectedNotes() {
-		this.setAllSelectedNotes([]);
+	setSelectedNotes(selectedNoteIds: Iterable<number>) {
+		this.updateState((state) => setSelectedNotes(state, selectedNoteIds));
 	}
 
-	selectNotes(noteIds: readonly number[]) {
-		const selectedNoteIds = new Set(this.state.selectedNoteIds);
-		for (const noteId of noteIds) {
-			selectedNoteIds.add(noteId);
-		}
-		if (selectedNoteIds.size === this.state.selectedNoteIds.size) {
-			return this.state;
-		}
-
-		this.setAllSelectedNotes(selectedNoteIds);
+	putNotesToSelection(noteIds: readonly number[]) {
+		this.updateState((state) => putNotesToSelection(state, noteIds));
 	}
 
-	unselectNotes(noteIds: Iterable<number>) {
-		const selectedNoteIds = new Set(this.state.selectedNoteIds);
-		for (const noteId of noteIds) {
-			selectedNoteIds.delete(noteId);
-		}
-		if (selectedNoteIds.size === this.state.selectedNoteIds.size) {
-			return this.state;
-		}
+	putAllNotesToSelection() {
+		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		if (activeChannel === null) return;
 
-		this.setAllSelectedNotes(selectedNoteIds);
+		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));
+	}
+
+	removeNotesFromSelection(noteIds: Iterable<number>) {
+		this.updateState((state) => removeNotesFromSelection(state, noteIds));
+	}
+
+	clearSelection() {
+		this.updateState((state) => clearSelection(state));
 	}
 
 	zoomIn() {
@@ -329,10 +409,14 @@ export class Editor extends Stateful<EditorState> {
 
 	setZoom(zoom: number) {
 		this.updateState((state) => {
-			const center =
+			const center = Math.max(
 				(this.state.scrollLeft + this.state.width / 2) /
-				widthPerTick(this.state.zoom);
-			const scrollLeft = center * widthPerTick(zoom) - this.state.width / 2;
+					widthPerTick(this.state.zoom),
+			);
+			const scrollLeft = Math.max(
+				0,
+				center * widthPerTick(zoom) - this.state.width / 2,
+			);
 
 			return { ...state, zoom, scrollLeft };
 		});
@@ -358,5 +442,51 @@ export class Editor extends Stateful<EditorState> {
 			if (state.quantizeUnitInTick === quantizeUnitInTick) return state;
 			return { ...state, quantizeUnitInTick };
 		});
+	}
+
+	removeSelectedItems() {
+		const activeChannelId = this.state.activeChannelId;
+		if (activeChannelId === null) return;
+
+		switch (this.state.selection.type) {
+			case "void": {
+				return;
+			}
+			case "note": {
+				if (this.state.selection.noteIds.size === 0) return false;
+				this.removeNotes(activeChannelId, this.state.selection.noteIds);
+				return;
+			}
+			case "control": {
+				if (this.state.selection.ticks.size === 0) return false;
+				this.removeControlChanges({
+					channelId: activeChannelId,
+					type: this.state.selection.controlType,
+					ticks: this.state.selection.ticks,
+				});
+				return;
+			}
+		}
+	}
+
+	moveSelectedItems(offset: { tickOffset: number; keyOffset: number }) {
+		const activeChannelId = this.state.activeChannelId;
+		if (activeChannelId === null) return;
+
+		switch (this.state.selection.type) {
+			case "void": {
+				return;
+			}
+			case "note": {
+				if (this.state.selection.noteIds.size === 0) return;
+
+				this.moveNotes(
+					activeChannelId,
+					this.state.selection.noteIds,
+					offset.keyOffset,
+					offset.tickOffset,
+				);
+			}
+		}
 	}
 }

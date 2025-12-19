@@ -3,6 +3,7 @@ import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
+import { addLinePath, addRectPath } from "../canvasUtil.ts";
 import type { EditorState } from "../Editor.ts";
 import type { ParameterEditorState } from "./ParameterEditor.ts";
 import type {
@@ -24,14 +25,16 @@ export function renderCanvas({
 	song,
 	playerState,
 	editorState,
-	delegate,
+	allSamples,
+	selectedSamples,
 }: {
 	canvas: HTMLCanvasElement;
 	parameterEditorState: ParameterEditorState;
 	song: Song;
 	playerState: PlayerState;
 	editorState: EditorState;
-	delegate: ParameterEditorSampleDelegate;
+	allSamples: Iterable<ParameterSample>;
+	selectedSamples: Iterable<ParameterSample>;
 }) {
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
@@ -102,7 +105,7 @@ export function renderCanvas({
 	ctx.beginPath();
 	addSamplePathAll({
 		ctx,
-		samples: delegate.getAllSamples(),
+		samples: allSamples,
 		tickWidth,
 		scrollLeft,
 		sideBarWidth,
@@ -121,7 +124,7 @@ export function renderCanvas({
 	ctx.beginPath();
 	addSamplePathAll({
 		ctx,
-		samples: delegate.getSelectedSamples(),
+		samples: selectedSamples,
 		tickWidth,
 		scrollLeft,
 		sideBarWidth,
@@ -270,43 +273,6 @@ function addSamplePath({
 	ctx.lineTo(x + barWidth, y0);
 	ctx.lineTo(x + barWidth, y1);
 	ctx.closePath();
-}
-
-function addRectPath({
-	ctx,
-	x0,
-	y0,
-	x1,
-	y1,
-}: {
-	ctx: CanvasRenderingContext2D;
-	x0: number;
-	y0: number;
-	x1: number;
-	y1: number;
-}) {
-	ctx.moveTo(x0 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y1 - 0.5);
-	ctx.lineTo(x0 - 0.5, y1 - 0.5);
-	ctx.closePath();
-}
-
-function addLinePath({
-	ctx,
-	x0,
-	y0,
-	x1,
-	y1,
-}: {
-	ctx: CanvasRenderingContext2D;
-	x0: number;
-	y0: number;
-	x1: number;
-	y1: number;
-}) {
-	ctx.moveTo(x0 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y1 - 0.5);
 }
 
 export const SIDEBAR_WIDTH = 32;

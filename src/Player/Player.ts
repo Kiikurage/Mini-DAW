@@ -1,11 +1,9 @@
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
-import { minmax } from "../lib.ts";
+import { EmptySet, minmax } from "../lib.ts";
 import { ControlType } from "../models/ControlType.ts";
 import type { SongStore } from "../SongStore.ts";
-import { SoundFontStore } from "../SoundFontStore.ts";
-import type { SoundFontSynthesizer } from "../SoundFontSynthesizer.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import type { Synthesizer } from "../Synthesizer.ts";
@@ -24,7 +22,7 @@ export interface PlayerState {
 	/**
 	 * ミュートされているチャンネルIDの集合
 	 */
-	mutedChannelIds: Set<number>;
+	mutedChannelIds: ReadonlySet<number>;
 
 	/**
 	 * ピアノロールの自動スクロールが有効かどうか
@@ -44,7 +42,7 @@ export class Player extends Stateful<PlayerState> {
 		super({
 			currentTick: 0,
 			isPlaying: false,
-			mutedChannelIds: new Set(),
+			mutedChannelIds: EmptySet,
 			isAutoScrollEnabled: false,
 		});
 
@@ -84,7 +82,7 @@ export class Player extends Stateful<PlayerState> {
 	}
 
 	clearMutedChannels() {
-		this.updateState((state) => ({ ...state, mutedChannelIds: new Set() }));
+		this.updateState((state) => ({ ...state, mutedChannelIds: EmptySet }));
 	}
 
 	toggleMuteChannel(channelId: number) {

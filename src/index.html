@@ -1,5 +1,8 @@
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=600px, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#18191b" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
     :root {
         --color-primary-100: #001c4e;
@@ -127,16 +130,28 @@
         --color-keyboard-black-stroke: #000;
         --color-keyboard-foreground: var(--color-gray-800);
 
-        background: var(--color-background);
+        background: var(--color-gray-100);
         color: var(--color-foreground);
         margin: 0;
         font-family: Arial, sans-serif;
         font-size: 14px;
         line-height: 1.5;
         user-select: none;
+        overscroll-behavior: none;
+        overflow: clip;
+
+        * {
+            touch-action: manipulation;
+        }
 
         [popover] {
             color: unset;
+            user-select: none;
+        }
+
+        html, body {
+            height: 100svh;
+            overflow: clip;
         }
     }
 </style>

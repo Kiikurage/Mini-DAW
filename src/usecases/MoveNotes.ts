@@ -16,8 +16,8 @@ export function MoveNotes({
 	return (
 		channelId: number,
 		noteIds: Iterable<number>,
-		keyDiff: number,
-		tickDiff: number,
+		keyOffset: number,
+		tickOffset: number,
 	) => {
 		const channel = songStore.state.getChannel(channelId);
 		if (channel === null) return;
@@ -30,9 +30,9 @@ export function MoveNotes({
 				.map((note) =>
 					Note.create({
 						...note,
-						key: note.key + keyDiff,
-						tickFrom: note.tickFrom + tickDiff,
-						tickTo: note.tickTo + tickDiff,
+						key: note.key + keyOffset,
+						tickFrom: note.tickFrom + tickOffset,
+						tickTo: note.tickTo + tickOffset,
 					}),
 				),
 		);

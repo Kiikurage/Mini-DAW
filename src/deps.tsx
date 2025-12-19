@@ -5,6 +5,7 @@ import { DIContainer } from "./Dependency/DIContainer.ts";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Editor } from "./Editor/Editor.ts";
 import { EventBus } from "./EventBus.ts";
+import { GoogleAPIClient } from "./GoogleDriveAPI/GoogleAPIClient.ts";
 import { KeyboardHandler } from "./KeyboardHandler.ts";
 import { Player } from "./Player/Player.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
@@ -23,6 +24,10 @@ import {
 	PutControlChangeKey,
 } from "./usecases/PutControlChange.ts";
 import { RemoveChannel, RemoveChannelKey } from "./usecases/RemoveChannel.ts";
+import {
+	RemoveControlChanges,
+	RemoveControlChangesKey,
+} from "./usecases/RemoveControlChanges.ts";
 import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
 import {
@@ -45,8 +50,9 @@ export function configureDeps() {
 					deps.get(SongStore.Key),
 					deps.get(Player.Key),
 					deps.get(EventBus.Key),
-					deps.get(SetNoteParameterKey),
-					deps.get(PutControlChangeKey),
+					deps.get(RemoveNotesKey),
+					deps.get(MoveNotesKey),
+					deps.get(RemoveControlChangesKey),
 				);
 			})
 			.set(EventBus.Key, () => {
@@ -98,9 +104,10 @@ export function configureDeps() {
 					deps.get(Editor.Key),
 					deps.get(SaveFileKey),
 					deps.get(LoadFileKey),
-					deps.get(MoveNotesKey),
-					deps.get(RemoveNotesKey),
 				);
+			})
+			.set(GoogleAPIClient.Key, (deps) => {
+				return new GoogleAPIClient();
 			})
 
 			// UseCases - Song
@@ -166,6 +173,13 @@ export function configureDeps() {
 			.set(PutControlChangeKey, (deps) => {
 				return PutControlChange({
 					bus: deps.get(EventBus.Key),
+				});
+			})
+			.set(RemoveControlChangesKey, (deps) => {
+				return RemoveControlChanges({
+					bus: deps.get(EventBus.Key),
+					history: deps.get(EditHistoryManager.Key),
+					songStore: deps.get(SongStore.Key),
 				});
 			})
 

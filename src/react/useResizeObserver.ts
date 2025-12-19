@@ -1,4 +1,4 @@
-import { type RefCallback, useCallback } from "react";
+import { type RefCallback, useCallback, useEffectEvent } from "react";
 
 type Callback = (entry: ResizeObserverEntry) => void;
 
@@ -64,15 +64,14 @@ export class ResizeObserverWrapper {
 }
 
 export function useResizeObserver(callback: Callback): RefCallback<Element> {
-	return useCallback(
-		(element) => {
-			if (element === null) return;
+	const onResize = useEffectEvent(callback);
 
-			ResizeObserverWrapper.getInstance().observe(element, callback);
-			return () => {
-				ResizeObserverWrapper.getInstance().unobserve(element, callback);
-			};
-		},
-		[callback],
-	);
+	return useCallback((element) => {
+		if (element === null) return;
+
+		ResizeObserverWrapper.getInstance().observe(element, onResize);
+		return () => {
+			ResizeObserverWrapper.getInstance().unobserve(element, onResize);
+		};
+	}, []);
 }

@@ -5,6 +5,7 @@ import { Editor } from "../Editor/Editor.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
+import { PromiseState } from "../PromiseState.ts";
 import { Form } from "../react/Form.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
@@ -63,8 +64,8 @@ export function ToolBar({
 		if (activeChannel === null) return null;
 		const instrumentKey = activeChannel.instrumentKey;
 		const soundFont = soundFontStoreState.get(instrumentKey.url);
-		if (soundFont?.state.status !== "fulfilled") return null;
-		return soundFont.state.value;
+		if (!PromiseState.isFulfilled(soundFont?.state)) return null;
+		return soundFont.state;
 	})();
 
 	return (

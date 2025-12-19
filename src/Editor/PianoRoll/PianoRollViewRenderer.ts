@@ -7,6 +7,7 @@ import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
 import type { SoundFontStoreState } from "../../SoundFontStore.ts";
+import { addLinePath, addRectPath } from "../canvasUtil.ts";
 import type { EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import { getNoLoopKeys, type PianoRollState } from "./PianoRoll.ts";
@@ -595,43 +596,6 @@ function addNotePath({
 		const R = 2;
 		ctx.roundRect(x0, y0, x1 - x0, y1 - y0, R);
 	}
-}
-
-function addRectPath({
-	ctx,
-	x0,
-	y0,
-	x1,
-	y1,
-}: {
-	ctx: CanvasRenderingContext2D;
-	x0: number;
-	y0: number;
-	x1: number;
-	y1: number;
-}) {
-	ctx.moveTo(x0 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y1 - 0.5);
-	ctx.lineTo(x0 - 0.5, y1 - 0.5);
-	ctx.closePath();
-}
-
-function addLinePath({
-	ctx,
-	x0,
-	y0,
-	x1,
-	y1,
-}: {
-	ctx: CanvasRenderingContext2D;
-	x0: number;
-	y0: number;
-	x1: number;
-	y1: number;
-}) {
-	ctx.moveTo(x0 - 0.5, y0 - 0.5);
-	ctx.lineTo(x1 - 0.5, y1 - 0.5);
 }
 
 const BLACK_KEY_OFFSETS = [1, 3, 6, 8, 10];

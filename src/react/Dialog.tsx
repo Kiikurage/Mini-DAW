@@ -8,7 +8,7 @@ import {
 } from "react";
 import { MdClose } from "react-icons/md";
 import { IconButton } from "./IconButton";
-import { Styles } from "./Styles.ts";
+import { BoxShadowStyleBase } from "./Styles.ts";
 
 const context = createContext<{
 	onClose: () => void;
@@ -33,7 +33,7 @@ function DialogHeader({ children }: { children: ReactNode }) {
 			}}
 		>
 			<span css={{ flex: "1 1 0" }}>{children}</span>
-			<IconButton title="閉じる" onClick={onClose}>
+			<IconButton title="閉じる" onClick={onClose} variant="normalInline">
 				<MdClose />
 			</IconButton>
 		</header>
@@ -108,28 +108,30 @@ export const Dialog = Object.assign(
 							ev.preventDefault();
 						}
 					}}
-					css={{
-						"&::backdrop": {
-							backgroundColor: "rgba(0, 0, 0, 0.3)",
+					css={[
+						BoxShadowStyleBase,
+						{
+							"&::backdrop": {
+								backgroundColor: "rgba(0, 0, 0, 0.3)",
+							},
+							position: "fixed",
+							top: "50%",
+							left: "50%",
+							transform: "translate(-50%, -50%)",
+							background: "var(--color-background)",
+							color: "var(--color-foreground)",
+							outline: "none",
+							border: "1px solid var(--color-border)",
+							borderRadius: 6,
+							minWidth: "min(640px, 80vw)",
+							padding: 0,
+							margin: 0,
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "stretch",
+							justifyContent: "stretch",
 						},
-						position: "fixed",
-						top: "50%",
-						left: "50%",
-						transform: "translate(-50%, -50%)",
-						background: "var(--color-background)",
-						color: "var(--color-foreground)",
-						outline: "none",
-						border: "1px solid var(--color-border)",
-						borderRadius: 6,
-						minWidth: "min(640px, 80vw)",
-						boxShadow: Styles.BOX_SHADOW,
-						padding: 0,
-						margin: 0,
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "stretch",
-						justifyContent: "stretch",
-					}}
+					]}
 				>
 					{children}
 				</dialog>

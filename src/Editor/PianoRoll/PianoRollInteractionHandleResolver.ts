@@ -16,7 +16,7 @@ import type { SongStore } from "../../SongStore.ts";
 import type { Synthesizer } from "../../Synthesizer.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
-import type { Editor } from "../Editor.ts";
+import { type Editor, getSelectedNoteIds } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import {
 	moveNotesFeature,
@@ -89,15 +89,15 @@ export class PianoRollInteractionHandleResolver
 			{
 				handlePointerDown: (ev: PointerEventManagerEvent) => {
 					const flagMultipleNotesSelectedAtStart =
-						this.editor.state.selectedNoteIds.size >= 2;
+						getSelectedNoteIds(this.editor.state).size >= 2;
 
 					if (ev.button === MouseEventButton.PRIMARY) {
 						if (!ev.metaKey) {
-							this.editor.clearSelectedNotes();
+							this.editor.clearSelection();
 						}
 					}
 
-					const selectedNoteIds = this.editor.state.selectedNoteIds;
+					const selectedNoteIds = getSelectedNoteIds(this.editor.state);
 					ev.addDragStartSessionListener((ev) => {
 						this.editor.startMarqueeSelection(
 							toPianoRollPosition(
@@ -115,7 +115,7 @@ export class PianoRollInteractionHandleResolver
 								this.pianoRoll.state,
 							),
 						);
-						this.editor.setAllSelectedNotes([
+						this.editor.setSelectedNotes([
 							...selectedNoteIds,
 							...this.editor.findNotesInMarqueeArea().map((note) => note.id),
 						]);
@@ -159,9 +159,9 @@ export class PianoRollInteractionHandleResolver
 							this.setNotes(this.editor.state.activeChannelId, [note]);
 
 							if (ev.metaKey) {
-								this.editor.selectNotes([note.id]);
+								this.editor.putNotesToSelection([note.id]);
 							} else {
-								this.editor.setAllSelectedNotes([note.id]);
+								this.editor.setSelectedNotes([note.id]);
 							}
 						}
 					});
@@ -279,7 +279,7 @@ export class PianoRollInteractionHandleResolver
 		if (activeChannel !== null) {
 			// 2. 選択中のノート
 			for (const note of activeChannel.notes.values()) {
-				if (!this.editor.state.selectedNoteIds.has(note.id)) continue;
+				if (!getSelectedNoteIds(this.editor.state).has(note.id)) continue;
 
 				const handle = this.findPointerEventsHandleForNote(position, note);
 				if (handle !== null) return handle;
@@ -287,7 +287,7 @@ export class PianoRollInteractionHandleResolver
 
 			// 3. 未選択のノート
 			for (const note of activeChannel.notes.values()) {
-				if (this.editor.state.selectedNoteIds.has(note.id)) continue;
+				if (getSelectedNoteIds(this.editor.state).has(note.id)) continue;
 
 				const handle = this.findPointerEventsHandleForNote(position, note);
 				if (handle !== null) return handle;

@@ -22,8 +22,11 @@ export class ClipboardManager {
 		const activeChannelId = this.editor.state.activeChannelId;
 		if (activeChannelId === null) return;
 
+		const selection = this.editor.state.selection;
+		if (selection.type !== "note") return;
+
 		this.copy();
-		this.removeNotes(activeChannelId, this.editor.state.selectedNoteIds);
+		this.removeNotes(activeChannelId, selection.noteIds);
 	}
 
 	copy() {
@@ -71,6 +74,6 @@ export class ClipboardManager {
 		if (channelId === null) return;
 
 		this.setNotes(channelId, notes);
-		this.editor.setAllSelectedNotes(notes.map((note) => note.id));
+		this.editor.setSelectedNotes(notes.map((note) => note.id));
 	}
 }

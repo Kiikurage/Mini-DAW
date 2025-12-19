@@ -10,6 +10,11 @@ import {
 	useState,
 } from "react";
 import { useStateful } from "../../Stateful/useStateful.tsx";
+import {
+	ListBoxItemStyleBase,
+	ListBoxStyleBase,
+	UIControlStyleBase,
+} from "../Styles.ts";
 import { ListBoxController } from "./ListBoxController.tsx";
 import { ListBoxState } from "./ListBoxState.tsx";
 
@@ -47,32 +52,7 @@ function ListBoxOption({
 			role="option"
 			aria-selected={selected}
 			data-focused={state.focusedOptionId === id}
-			css={{
-				position: "relative",
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "stretch",
-				padding: "4px 16px",
-				borderRadius: 4,
-				outline: "2px solid transparent",
-				outlineOffset: -2,
-				cursor: "default",
-				whiteSpace: "nowrap",
-				overflow: "clip",
-				textOverflow: "ellipsis",
-				userSelect: "none",
-
-				"&:hover": {
-					background: "var(--color-background-hover-weak)",
-				},
-				"&[data-focused='true']": {
-					outline: "2px solid var(--color-primary-500)",
-				},
-				"&[aria-selected='true']": {
-					background: "var(--color-primary-200)",
-				},
-			}}
+			css={[ListBoxItemStyleBase]}
 		>
 			{children}
 		</li>
@@ -130,33 +110,15 @@ function ListBoxOptionList({ children }: { children?: ReactNode }) {
 	}, [state]);
 
 	return (
+		// biome-ignore lint/a11y/useAriaActivedescendantWithTabindex: <explanation>
 		<ul
-			css={{
-				position: "relative",
-				border: "1px solid var(--color-gray-600)",
-				background: "var(--color-background)",
-				borderRadius: 4,
-				margin: 0,
-				padding: "8px 8px",
-				minWidth: 120,
-				maxHeight: "100%",
-				overflow: "auto",
-				boxSizing: "border-box",
-
-				"&:focus": {
-					outline:
-						state.focusedOptionId === null
-							? "2px solid var(--color-primary-500)"
-							: "none",
-				},
-			}}
+			css={[UIControlStyleBase, ListBoxStyleBase]}
 			aria-activedescendant={state.focusedOptionId ?? undefined}
 			// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
 			role="listbox"
 			onKeyDown={handleKeyDown}
 			onClick={handleClick}
 			onBlur={() => controller.setFocusedOptionId(null)}
-			tabIndex={0}
 		>
 			{children}
 		</ul>

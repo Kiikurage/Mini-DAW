@@ -8,7 +8,11 @@ import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapsho
 import type { SongStore } from "../../SongStore.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
-import type { Editor, EditorState } from "../Editor.ts";
+import {
+	type Editor,
+	type EditorState,
+	getSelectedNoteIds,
+} from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import type { PianoRoll, PianoRollState } from "./PianoRoll.ts";
 import type { PianoRollPreviewManager } from "./PianoRollPreviewManager.ts";
@@ -252,16 +256,16 @@ export function toggleNoteSelectionFeature(
 		handlePointerDown: (ev: PointerEventManagerEvent) => {
 			if (ev.button !== MouseEventButton.PRIMARY) return;
 
-			const selected = editor.state.selectedNoteIds.has(note.id);
+			const selected = getSelectedNoteIds(editor.state).has(note.id);
 			if (selected) {
 				if (ev.metaKey) {
 					ev.addTapSessionListener(() => {
-						editor.unselectNotes([note.id]);
+						editor.removeNotesFromSelection([note.id]);
 					});
 				}
 			} else {
-				editor.clearSelectedNotes();
-				editor.selectNotes([note.id]);
+				editor.clearSelection();
+				editor.putNotesToSelection([note.id]);
 			}
 		},
 	};

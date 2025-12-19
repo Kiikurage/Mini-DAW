@@ -1,25 +1,26 @@
 import styled from "@emotion/styled";
+import { UIControlStyleBase } from "./Styles.ts";
 
-export const Input = styled.input({
-	background: "var(--color-background-hover)",
-	border: "1px solid var(--color-gray-800)",
-	color: "var(--color-foreground)",
-	padding: "0 8px",
-	borderRadius: "4px",
-	minWidth: "128px",
-	minHeight: "32px",
-	display: "block",
-	flex: "1 1 auto",
+export const Input = styled.input([
+	UIControlStyleBase,
+	{
+		minWidth: "128px",
+		display: "block",
+		flex: "1 1 auto",
+		outline: "2px solid transparent",
+		outlineOffset: -2,
 
-	"&:hover": {
-		background: "var(--color-background-hover)",
+		"&:hover": {
+			background: "var(--color-background-hover-weak)",
+		},
+
+		"&:active": {
+			background: "var(--color-background-hover)",
+		},
+
+		"&:focus": {
+			background: "var(--color-background-hover-weak)",
+			outline: "2px solid var(--color-primary-500)",
+		},
 	},
-
-	"&:active": {
-		background: "var(--color-background-active)",
-	},
-
-	"&:focus": {
-		background: "var(--color-background-focus)",
-	},
-});
+]);

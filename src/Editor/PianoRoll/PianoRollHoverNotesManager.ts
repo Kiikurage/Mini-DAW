@@ -1,5 +1,5 @@
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import { isNotNullish } from "../../lib.ts";
+import { EmptySet, isNotNullish } from "../../lib.ts";
 import type { Channel } from "../../models/Channel.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
@@ -47,7 +47,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 		private readonly songStore: SongStore,
 		private readonly soundFontStore: SoundFontStore,
 	) {
-		super({ hoverNoteIds: new Set() });
+		super({ hoverNoteIds: EmptySet });
 
 		const update = () => {
 			const activeChannel = getActiveChannel(
@@ -55,7 +55,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 				this.editor.state,
 			);
 			if (activeChannel === null) {
-				this.setHoverNoteIds(new Set());
+				this.setHoverNoteIds(EmptySet);
 				return;
 			}
 
