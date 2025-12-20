@@ -115,9 +115,9 @@ export function PianoRollView({
 			pointerEventManager.install(canvas),
 		];
 
-		// C4(key=60) を中央に表示する
+		// C5(key=72) を中央に表示する
 		pianoRoll.setScrollTop(
-			(NUM_KEYS - 60) * HEIGHT_PER_KEY - canvas.clientHeight / 2,
+			(NUM_KEYS - 72) * HEIGHT_PER_KEY - canvas.clientHeight / 2,
 		);
 
 		render();
