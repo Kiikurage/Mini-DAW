@@ -18,10 +18,8 @@ import {
 	SetNoteParameterKey,
 } from "../../usecases/SetNoteParameter.ts";
 import { Editor } from "../Editor.ts";
-import { ControlChangeDelegate } from "./ControlChangeDelegate.ts";
 import { ParameterEditor } from "./ParameterEditor.ts";
 import { renderCanvas } from "./ParameterEditorViewRenderer.ts";
-import { VelocityDelegate } from "./VelocityDelegate.ts";
 
 export function ParameterEditorView({
 	songStore,
@@ -62,7 +60,17 @@ export function ParameterEditorView({
 			removeControlChange,
 		);
 
-		const pointerEventManager = new PointerEventManager(parameterEditor);
+		const pointerEventManager = new PointerEventManager();
+		pointerEventManager
+			.on("mouseMove", (ev) =>
+				parameterEditor.resolveHandle(ev.position)?.handlePointerMove?.(ev),
+			)
+			.on("pointerDown", (ev) =>
+				parameterEditor.resolveHandle(ev.position)?.handlePointerDown?.(ev),
+			)
+			.on("doubleTap", (ev) =>
+				parameterEditor.resolveHandle(ev.position)?.handleDoubleClick?.(ev),
+			);
 
 		const render = () => {
 			renderCanvas({
@@ -90,20 +98,7 @@ export function ParameterEditorView({
 			addListener(canvas, "wheel", (ev) => {
 				editor.setScrollLeft(editor.state.scrollLeft + ev.deltaX);
 			}),
-			addListener(canvas, "pointerdown", (ev) => {
-				canvas.setPointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerDown(ev);
-			}),
-			addListener(canvas, "pointermove", pointerEventManager.handlePointerMove),
-			addListener(canvas, "pointerup", (ev) => {
-				canvas.releasePointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerUp(ev);
-			}),
-			addListener(canvas, "pointercancel", (ev) => {
-				canvas.releasePointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerUp(ev);
-			}),
-			addListener(canvas, "dblclick", pointerEventManager.handleDoubleClick),
+			pointerEventManager.install(canvas),
 		];
 
 		render();

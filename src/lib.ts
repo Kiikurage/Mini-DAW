@@ -57,6 +57,12 @@ export function formatDuration(durationInTick: number) {
 	}
 }
 
+export function addListener<K extends keyof DocumentEventMap>(
+	target: Document,
+	type: K,
+	listener: (this: Document, ev: DocumentEventMap[K]) => void,
+	options?: AddEventListenerOptions,
+): () => void;
 export function addListener<
 	E extends HTMLElement,
 	K extends keyof HTMLElementEventMap,
@@ -64,14 +70,16 @@ export function addListener<
 	target: E,
 	type: K,
 	listener: (this: E, ev: HTMLElementEventMap[K]) => void,
+	options?: AddEventListenerOptions,
 ): () => void;
 export function addListener(
 	target: EventTarget,
 	type: string,
 	listener: EventListenerOrEventListenerObject,
+	options?: AddEventListenerOptions,
 ) {
-	target.addEventListener(type, listener);
-	return () => target.removeEventListener(type, listener);
+	target.addEventListener(type, listener, options);
+	return () => target.removeEventListener(type, listener, options);
 }
 
 export function run<T>(fn: () => T): T {

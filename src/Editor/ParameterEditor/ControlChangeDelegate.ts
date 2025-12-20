@@ -5,7 +5,6 @@ import { assertNotNullish } from "../../lib.ts";
 import type { ControlChange } from "../../models/ControlChange.ts";
 import type { ControlType } from "../../models/ControlType.ts";
 import type { Song } from "../../models/Song.ts";
-import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
 import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
@@ -113,8 +112,8 @@ function putControlChangeFeature(
 	controlType: ControlType,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown(ev: PointerEventManagerEvent) {
-			ev.addTapSessionListener((ev) => {
+		handlePointerDown(ev) {
+			ev.sessionEvents.on("tap", (ev) => {
 				const channelId = editor.state.activeChannelId;
 				if (channelId === null) return;
 
@@ -183,7 +182,7 @@ function changeValueFeature(
 				controlType,
 			);
 
-			ev.addDragStartSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragStart", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -198,7 +197,7 @@ function changeValueFeature(
 					})),
 				});
 			});
-			ev.addDragMoveSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragMove", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -213,7 +212,7 @@ function changeValueFeature(
 					})),
 				});
 			});
-			ev.addDragEndSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragEnd", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -239,7 +238,7 @@ function selectByRangeFeature(
 	controlType: ControlType,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			if (ev.button === MouseEventButton.PRIMARY) {
 				if (!ev.metaKey) {
 					editor.clearSelection();
@@ -250,7 +249,7 @@ function selectByRangeFeature(
 				editor.state,
 				controlType,
 			);
-			ev.addDragStartSessionListener((ev) => {
+			ev.sessionEvents.on("dragStart", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -258,7 +257,7 @@ function selectByRangeFeature(
 				);
 				editor.startMarqueeSelection({ tick: position.tick, key: 0 });
 			});
-			ev.addDragMoveSessionListener((ev) => {
+			ev.sessionEvents.on("dragMove", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -295,7 +294,7 @@ function selectByRangeFeature(
 					...ticksInArea,
 				]);
 			});
-			ev.addDragEndSessionListener(() => {
+			ev.sessionEvents.on("dragEnd", () => {
 				editor.stopMarqueeSelection();
 			});
 		},
@@ -307,13 +306,13 @@ function toggleSelectionFeature(
 	editor: Editor,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			if (ev.button !== MouseEventButton.PRIMARY) return;
 
 			const selected = getSelectedNoteIds(editor.state).has(sampleId);
 			if (selected) {
 				if (ev.metaKey) {
-					ev.addTapSessionListener(() => {
+					ev.sessionEvents.on("tap", () => {
 						editor.removeNotesFromSelection([sampleId]);
 					});
 				}

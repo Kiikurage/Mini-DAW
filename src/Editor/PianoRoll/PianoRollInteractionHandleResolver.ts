@@ -4,13 +4,11 @@ import { getActiveChannel } from "../../getActiveChannel.ts";
 import { minmax, quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
 import type { Player } from "../../Player/Player.ts";
-import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManager.ts";
-import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
 import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
 } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
-import type { PointerEventManagerPointerMoveEvent } from "../../PointerEventManager/PointerEventManagerPointerMoveEvent.ts";
+import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
 import type { Synthesizer } from "../../Synthesizer.ts";
@@ -51,10 +49,10 @@ export class PianoRollInteractionHandleResolver
 
 	private readonly updatePointerPositionsFeature: PointerEventManagerInteractionHandle =
 		{
-			handlePointerMove: (ev: PointerEventManagerPointerMoveEvent) => {
-				this.pianoRoll.hoverNotesManager.setPointerPositions([
-					...ev.manager.pointers.values().map((p) => p.position),
-				]);
+			handlePointerMove: (ev) => {
+				this.pianoRoll.hoverNotesManager.setPointerPositions(
+					ev.manager.getPointerPositions(),
+				);
 			},
 		};
 
@@ -87,7 +85,7 @@ export class PianoRollInteractionHandleResolver
 				pianoRoll: this.pianoRoll,
 			}),
 			{
-				handlePointerDown: (ev: PointerEventManagerEvent) => {
+				handlePointerDown: (ev) => {
 					const flagMultipleNotesSelectedAtStart =
 						getSelectedNoteIds(this.editor.state).size >= 2;
 
@@ -98,7 +96,7 @@ export class PianoRollInteractionHandleResolver
 					}
 
 					const selectedNoteIds = getSelectedNoteIds(this.editor.state);
-					ev.addDragStartSessionListener((ev) => {
+					ev.sessionEvents.on("dragStart", (ev) => {
 						this.editor.startMarqueeSelection(
 							toPianoRollPosition(
 								ev.position,
@@ -107,7 +105,7 @@ export class PianoRollInteractionHandleResolver
 							),
 						);
 					});
-					ev.addDragMoveSessionListener((ev) => {
+					ev.sessionEvents.on("dragMove", (ev) => {
 						this.editor.setMarqueeAreaTo(
 							toPianoRollPosition(
 								ev.position,
@@ -120,10 +118,10 @@ export class PianoRollInteractionHandleResolver
 							...this.editor.findNotesInMarqueeArea().map((note) => note.id),
 						]);
 					});
-					ev.addDragEndSessionListener(() => {
+					ev.sessionEvents.on("dragEnd", () => {
 						this.editor.stopMarqueeSelection();
 					});
-					ev.addTapSessionListener((ev) => {
+					ev.sessionEvents.on("tap", (ev) => {
 						if (ev.button === MouseEventButton.PRIMARY) {
 							// ノートが複数選択されていたなら選択解除のためのタップとして扱いノート追加はしない
 							if (flagMultipleNotesSelectedAtStart) return;
@@ -175,7 +173,7 @@ export class PianoRollInteractionHandleResolver
 				pianoRoll: this.pianoRoll,
 			}),
 			{
-				handlePointerDown: (ev: PointerEventManagerEvent) => {
+				handlePointerDown: (ev) => {
 					const tick = quantize(
 						toPianoRollPosition(
 							ev.position,
@@ -186,7 +184,7 @@ export class PianoRollInteractionHandleResolver
 					);
 					this.player.setCurrentTick(tick);
 
-					ev.addDragMoveSessionListener((ev) => {
+					ev.sessionEvents.on("dragMove", (ev) => {
 						this.player.setCurrentTick(
 							toPianoRollPosition(
 								ev.position,

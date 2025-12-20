@@ -2,7 +2,7 @@ import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import { minmax, quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
-import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
+import type { PEMPointerEvent } from "../../PointerEventManager/PointerEventManager.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { SongStore } from "../../SongStore.ts";
@@ -56,7 +56,7 @@ export function moveNotesFeature(context: {
 	const { editor, songStore, setNotes, pianoRoll, previewManager } = context;
 
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			const activeChannelId = editor.state.activeChannelId;
 			if (activeChannelId === null) return;
 
@@ -73,7 +73,7 @@ export function moveNotesFeature(context: {
 			let currentPreviewKey = startPosition.key;
 
 			pianoRoll.hoverNotesManager.disableUpdate();
-			ev.addDragMoveSessionListener((ev) => {
+			ev.sessionEvents.on("dragMove", (ev) => {
 				const position = toPianoRollPosition(
 					ev.position,
 					editor.state,
@@ -100,7 +100,7 @@ export function moveNotesFeature(context: {
 					currentPreviewKey = position.key;
 				}
 			});
-			ev.addPointerUpSessionListener(() => {
+			ev.sessionEvents.on("pointerUp", () => {
 				previewManager.stopPreviewNotes();
 				pianoRoll.hoverNotesManager.enableUpdate();
 			});
@@ -121,7 +121,7 @@ export function moveNotesFeature(context: {
  */
 function resizeNotes(
 	context: {
-		ev: PointerEventManagerEvent;
+		ev: PEMPointerEvent;
 		editor: Editor;
 		pianoRoll: PianoRoll;
 		songStore: SongStore;
@@ -151,7 +151,7 @@ function resizeNotes(
 		pianoRoll.state,
 	).tick;
 
-	ev.addDragMoveSessionListener((ev) => {
+	ev.sessionEvents.on("dragMove", (ev) => {
 		const currentTick = toPianoRollPosition(
 			ev.position,
 			editor.state,
@@ -170,7 +170,7 @@ function resizeNotes(
 			}),
 		);
 	});
-	ev.addPointerUpSessionListener(() => {
+	ev.sessionEvents.on("pointerUp", () => {
 		pianoRoll.hoverNotesManager.enableUpdate();
 	});
 }
@@ -191,7 +191,7 @@ export function resizeNoteStartFeature(context: {
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			resizeNotes({ ...context, ev }, (note, tickDiff) => {
 				return Note.create({
 					...note,
@@ -225,7 +225,7 @@ export function resizeNoteEndFeature(context: {
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			resizeNotes({ ...context, ev }, (note, tickDiff) => {
 				return Note.create({
 					...note,
@@ -253,13 +253,13 @@ export function toggleNoteSelectionFeature(
 	editor: Editor,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			if (ev.button !== MouseEventButton.PRIMARY) return;
 
 			const selected = getSelectedNoteIds(editor.state).has(note.id);
 			if (selected) {
 				if (ev.metaKey) {
-					ev.addTapSessionListener(() => {
+					ev.sessionEvents.on("tap", () => {
 						editor.removeNotesFromSelection([note.id]);
 					});
 				}

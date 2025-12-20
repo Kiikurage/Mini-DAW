@@ -1,14 +1,16 @@
-import type { PointerEventManagerDoubleClickEvent } from "./PointerEventManagerDoubleClickEvent.ts";
-import type { PointerEventManagerEvent } from "./PointerEventManagerEvent.ts";
-import type { PointerEventManagerPointerMoveEvent } from "./PointerEventManagerPointerMoveEvent.ts";
+import type {
+	PEMMouseEvent,
+	PEMPointerEvent,
+	PEMTapEvent,
+} from "./PointerEventManager.ts";
 
 /**
  * インタラクション可能なHandle
  */
 export interface PointerEventManagerInteractionHandle {
-	handlePointerMove?: (ev: PointerEventManagerPointerMoveEvent) => void;
-	handlePointerDown?: (ev: PointerEventManagerEvent) => void;
-	handleDoubleClick?: (ev: PointerEventManagerDoubleClickEvent) => void;
+	handlePointerMove?: (ev: PEMMouseEvent) => void;
+	handlePointerDown?: (ev: PEMPointerEvent) => void;
+	handleDoubleClick?: (ev: PEMTapEvent) => void;
 }
 
 /**
@@ -19,17 +21,17 @@ export function composeInteractionHandle(
 	...handles: readonly PointerEventManagerInteractionHandle[]
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerMove: (ev: PointerEventManagerPointerMoveEvent) => {
+		handlePointerMove: (ev: PEMMouseEvent) => {
 			for (const handle of handles) {
 				handle.handlePointerMove?.(ev);
 			}
 		},
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev: PEMPointerEvent) => {
 			for (const handle of handles) {
 				handle.handlePointerDown?.(ev);
 			}
 		},
-		handleDoubleClick: (ev: PointerEventManagerDoubleClickEvent) => {
+		handleDoubleClick: (ev: PEMTapEvent) => {
 			for (const handle of handles) {
 				handle.handleDoubleClick?.(ev);
 			}

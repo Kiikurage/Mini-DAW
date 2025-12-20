@@ -31,17 +31,6 @@ export class EventEmitter<
 		return this;
 	}
 
-	once<K extends keyof E>(
-		eventName: K,
-		callback: (...args: E[K]) => void,
-	): this {
-		const proxy = (...args: E[K]) => {
-			callback(...args);
-			this.off(eventName, proxy);
-		};
-		return this.on(eventName, proxy);
-	}
-
 	emit<K extends keyof E>(eventName: K, ...args: E[K]): void {
 		const callbacks = this.callbackMap.get(eventName as string);
 		if (callbacks === undefined) return;

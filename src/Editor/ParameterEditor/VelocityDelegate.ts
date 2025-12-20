@@ -3,7 +3,6 @@ import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { assertNotNullish } from "../../lib.ts";
 import type { Note } from "../../models/Note.ts";
-import type { PointerEventManagerEvent } from "../../PointerEventManager/PointerEventManagerEvent.ts";
 import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
@@ -100,7 +99,7 @@ function changeValueFeature(
 
 			const selectedNoteIds = getSelectedNoteIds(editor.state);
 
-			ev.addDragStartSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragStart", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -113,7 +112,7 @@ function changeValueFeature(
 					position.value,
 				);
 			});
-			ev.addDragMoveSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragMove", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -126,7 +125,7 @@ function changeValueFeature(
 					position.value,
 				);
 			});
-			ev.addDragEndSessionListener((ev: PointerEventManagerEvent) => {
+			ev.sessionEvents.on("dragEnd", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -149,7 +148,7 @@ function selectByRangeFeature(
 	songStore: SongStore,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			if (ev.button === MouseEventButton.PRIMARY) {
 				if (!ev.metaKey) {
 					editor.clearSelection();
@@ -157,7 +156,7 @@ function selectByRangeFeature(
 			}
 
 			const selectedNoteIds = getSelectedNoteIds(editor.state);
-			ev.addDragStartSessionListener((ev) => {
+			ev.sessionEvents.on("dragStart", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -165,7 +164,7 @@ function selectByRangeFeature(
 				);
 				editor.startMarqueeSelection({ tick: position.tick, key: 0 });
 			});
-			ev.addDragMoveSessionListener((ev) => {
+			ev.sessionEvents.on("dragMove", (ev) => {
 				const position = toParameterEditorPosition(
 					ev.position,
 					editor.state,
@@ -196,7 +195,7 @@ function selectByRangeFeature(
 				}
 				editor.setSelectedNotes([...selectedNoteIds, ...noteIdsInArea]);
 			});
-			ev.addDragEndSessionListener(() => {
+			ev.sessionEvents.on("dragEnd", () => {
 				editor.stopMarqueeSelection();
 			});
 		},
@@ -208,13 +207,13 @@ function toggleSelectionFeature(
 	editor: Editor,
 ): PointerEventManagerInteractionHandle {
 	return {
-		handlePointerDown: (ev: PointerEventManagerEvent) => {
+		handlePointerDown: (ev) => {
 			if (ev.button !== MouseEventButton.PRIMARY) return;
 
 			const selected = getSelectedNoteIds(editor.state).has(sampleId);
 			if (selected) {
 				if (ev.metaKey) {
-					ev.addTapSessionListener(() => {
+					ev.sessionEvents.on("tap", () => {
 						editor.removeNotesFromSelection([sampleId]);
 					});
 				}

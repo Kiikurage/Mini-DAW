@@ -1,15 +1,13 @@
-import { addListener, EmptySet } from "../../lib.ts";
-import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManager.ts";
+import { EmptySet } from "../../lib.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
+import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import type { SongStore } from "../../SongStore.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { PutControlChange } from "../../usecases/PutControlChange.ts";
 import type { RemoveControlChanges } from "../../usecases/RemoveControlChanges.ts";
 import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
 import type { Editor } from "../Editor.ts";
-import type { ParameterType } from "../ParameterType.ts";
 import { ControlChangeDelegate } from "./ControlChangeDelegate.ts";
 import type {
 	ParameterEditorSampleDelegate,

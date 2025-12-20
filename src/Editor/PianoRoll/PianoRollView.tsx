@@ -51,17 +51,34 @@ export function PianoRollView({
 
 		const pianoRoll = new PianoRoll(soundFontStore, songStore, editor);
 
-		const pointerEventManager = new PointerEventManager(
-			new PianoRollInteractionHandleResolver(
-				synthesizer,
-				pianoRoll,
-				songStore,
-				setNotes,
-				removeNotes,
-				player,
-				editor,
-			),
+		const pointerEventManager = new PointerEventManager();
+		const handleResolver = new PianoRollInteractionHandleResolver(
+			synthesizer,
+			pianoRoll,
+			songStore,
+			setNotes,
+			removeNotes,
+			player,
+			editor,
 		);
+		pointerEventManager
+			.on("mouseMove", (ev) =>
+				handleResolver.resolveHandle(ev.position)?.handlePointerMove?.(ev),
+			)
+			.on("pointerDown", (ev) =>
+				handleResolver.resolveHandle(ev.position)?.handlePointerDown?.(ev),
+			)
+			.on("doubleTap", (ev) =>
+				handleResolver.resolveHandle(ev.position)?.handleDoubleClick?.(ev),
+			)
+			.on("gestureStart", (ev) => {
+				const startScrollLeft = editor.state.scrollLeft;
+				const startScrollTop = pianoRoll.state.scrollTop;
+				ev.sessionEvents.on("gestureChange", (ev) => {
+					editor.setScrollLeft(startScrollLeft - ev.distance.x);
+					pianoRoll.setScrollTop(startScrollTop - ev.distance.y);
+				});
+			});
 
 		const render = () => {
 			renderCanvas({
@@ -95,20 +112,7 @@ export function PianoRollView({
 					player.setAutoScrollEnabled(false);
 				}
 			}),
-			addListener(canvas, "pointerdown", (ev) => {
-				canvas.setPointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerDown(ev);
-			}),
-			addListener(canvas, "pointermove", pointerEventManager.handlePointerMove),
-			addListener(canvas, "pointerup", (ev) => {
-				canvas.releasePointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerUp(ev);
-			}),
-			addListener(canvas, "pointercancel", (ev) => {
-				canvas.releasePointerCapture(ev.pointerId);
-				pointerEventManager.handlePointerUp(ev);
-			}),
-			addListener(canvas, "dblclick", pointerEventManager.handleDoubleClick),
+			pointerEventManager.install(canvas),
 		];
 
 		// C4(key=60) を中央に表示する

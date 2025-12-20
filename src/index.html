@@ -1,5 +1,5 @@
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#18191b" />
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -136,23 +136,26 @@
         font-family: Arial, sans-serif;
         font-size: 14px;
         line-height: 1.5;
-        user-select: none;
         overscroll-behavior: none;
         overflow: clip;
+    }
 
-        * {
-            touch-action: manipulation;
-        }
+    * {
+        user-select: none;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
 
-        [popover] {
-            color: unset;
-            user-select: none;
-        }
+    [popover] {
+        color: unset;
+        user-select: none;
+    }
 
-        html, body {
-            height: 100svh;
-            overflow: clip;
-        }
+    html, body {
+        height: 100svh;
+        overflow: clip;
     }
 </style>
+<title>Mini-DAW</title>
 <script type="module" src="index.tsx"></script>
