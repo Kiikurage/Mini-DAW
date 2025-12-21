@@ -50,6 +50,21 @@ export class Player extends Stateful<PlayerState> {
 			this.synthesizer.resetAll();
 			this.clearMutedChannels();
 		});
+		bus.on("channel.update.after", (channelId) => {
+			const channel = this.songStore.state.channels.find(
+				(ch) => ch.id === channelId,
+			);
+			if (channel === undefined) return;
+
+			synthesizer.setBank({
+				channel: channel.id,
+				bankNumber: channel.instrumentKey.bankNumber,
+			});
+			synthesizer.setPreset({
+				channel: channel.id,
+				programNumber: channel.instrumentKey.presetNumber,
+			});
+		});
 		bus.on("channel.remove.before", (channelId: number) => {
 			this.removeChannelFromMute(channelId);
 		});
