@@ -63,6 +63,7 @@ export const UIControlStyleBase: CSSObject = {
 export const ListBoxStyleBase: CSSObject = {
 	position: "relative",
 	minWidth: 120,
+	maxHeight: "100%",
 	overflow: "auto",
 	boxSizing: "border-box",
 	flex: "1 1 auto",
