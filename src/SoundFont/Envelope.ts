@@ -1,13 +1,15 @@
+import { seconds, type Time } from "../units.ts";
+
 export class Envelope {
 	/**
 	 * delay時間 [sec]
 	 */
-	delay: number = 0;
+	delay: Time = seconds(0);
 
 	/**
 	 * attack時間 [sec]
 	 */
-	attack: number = 0;
+	attack: Time = seconds(0);
 
 	/**
 	 * hold時間 [sec]
@@ -21,6 +23,8 @@ export class Envelope {
 
 	/**
 	 * sustainレベル (0.0 - 1.0)
+	 * 1の場合、attackレベルと同じ最大音量を維持
+	 * 0の場合、decayフェーズの終了時に無音になる
 	 */
 	sustain: number = 1;
 
@@ -34,16 +38,16 @@ export class Envelope {
 	 * @param time
 	 */
 	getValueAt(time: number): number {
-		if (time < this.delay) {
+		if (time < this.delay.inSecond()) {
 			return 0;
 		}
 
-		time -= this.delay;
-		if (time < this.attack) {
-			return time / this.attack;
+		time -= this.delay.inSecond();
+		if (time < this.attack.inSecond()) {
+			return time / this.attack.inSecond();
 		}
 
-		time -= this.attack;
+		time -= this.attack.inSecond();
 		if (time < this.hold) {
 			return 1;
 		}
@@ -69,11 +73,11 @@ export class Envelope {
 		let t = time;
 		node.gain.setValueAtTime(0, t);
 
-		t += this.delay;
+		t += this.delay.inSecond();
 		node.gain.setValueAtTime(0, t);
 
-		t += this.attack;
-		node.gain.setTargetAtTime(1, t, this.attack / 5);
+		t += this.attack.inSecond();
+		node.gain.setTargetAtTime(1, t, this.attack.inSecond() / 5);
 
 		t += this.hold;
 		node.gain.setTargetAtTime(1, t, this.hold / 5);

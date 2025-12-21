@@ -1,4 +1,5 @@
 import { minmax } from "../lib.ts";
+import { timecents } from "../units.ts";
 import { Envelope } from "./Envelope.ts";
 import { Range } from "./Range.ts";
 import { type IGEN, type PGEN, SFGenerator } from "./sf2.ts";
@@ -475,12 +476,12 @@ export abstract class ZoneImpl implements Zone {
 			// region モジュレーションEnvelope
 			case SFGenerator.DELAY_MODULATION_ENVELOPE: {
 				const rawValue = minmax(-12000, 5000, gen.amount.getInt16(0, true));
-				this.modulationEnvelope.delay = 2 ** (rawValue / 1200);
+				this.modulationEnvelope.delay = timecents(rawValue);
 				break;
 			}
 			case SFGenerator.ATTACK_MODULATION_ENVELOPE: {
 				const rawValue = minmax(-12000, 8000, gen.amount.getInt16(0, true));
-				this.modulationEnvelope.attack = 2 ** (rawValue / 1200);
+				this.modulationEnvelope.attack = timecents(rawValue);
 				break;
 			}
 			case SFGenerator.HOLD_MODULATION_ENVELOPE: {
@@ -528,13 +529,13 @@ export abstract class ZoneImpl implements Zone {
 
 			// region ボリュームEnvelope
 			case SFGenerator.DELAY_VOLUME_ENVELOPE: {
-				const rawValue = minmax(-1200, 5000, gen.amount.getInt16(0, true));
-				this.volumeEnvelope.delay = 2 ** (rawValue / 1200);
+				const rawValue = minmax(-12000, 5000, gen.amount.getInt16(0, true));
+				this.volumeEnvelope.delay = timecents(rawValue);
 				break;
 			}
 			case SFGenerator.ATTACK_VOLUME_ENVELOPE: {
 				const rawValue = minmax(-12000, 8000, gen.amount.getInt16(0, true));
-				this.volumeEnvelope.attack = 2 ** (rawValue / 1200);
+				this.volumeEnvelope.attack = timecents(rawValue);
 				break;
 			}
 			case SFGenerator.HOLD_VOLUME_ENVELOPE: {
