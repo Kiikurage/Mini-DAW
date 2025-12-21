@@ -1,11 +1,13 @@
-import { FaGithub, FaGoogleDrive } from "react-icons/fa";
-import { MdFullscreen } from "react-icons/md";
+import { FaGithub, FaGoogleDrive, FaRedo, FaUndo } from "react-icons/fa";
+import { MdFullscreen, MdRedo, MdUndo } from "react-icons/md";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
+import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Button } from "./react/Button.ts";
 import { IconButton } from "./react/IconButton.ts";
 import { Link } from "./react/Link.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { FolderSelectDialog } from "./SaveDialog/FolderSelectDialog.tsx";
+import { useStateful } from "./Stateful/useStateful.tsx";
 import { type LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { type SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
@@ -15,16 +17,22 @@ export function GlobalMenuBar({
 	saveFile,
 	loadFile,
 	overlayPortal,
+	history,
 }: {
 	newFile?: NewFile;
 	saveFile?: SaveFile;
 	loadFile?: LoadFile;
 	overlayPortal?: OverlayPortal;
+	history?: EditHistoryManager;
 }) {
 	newFile = useComponent(NewFileKey, newFile);
 	saveFile = useComponent(SaveFileKey, saveFile);
 	loadFile = useComponent(LoadFileKey, loadFile);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
+	history = useComponent(EditHistoryManager.Key, history);
+
+	const canUndo = useStateful(history, (state) => state.canUndo);
+	const canRedo = useStateful(history, (state) => state.canRedo);
 
 	return (
 		<div
@@ -84,6 +92,26 @@ export function GlobalMenuBar({
 					gap: 16,
 				}}
 			>
+				<IconButton
+					variant="normalInline"
+					title="元に戻す"
+					disabled={!canUndo}
+					onClick={async () => {
+						history.undo();
+					}}
+				>
+					<FaUndo size="16" />
+				</IconButton>
+				<IconButton
+					variant="normalInline"
+					title="やり直し"
+					disabled={!canRedo}
+					onClick={async () => {
+						history.redo();
+					}}
+				>
+					<FaRedo size="16" />
+				</IconButton>
 				<IconButton
 					variant="normalInline"
 					title="全画面表示"

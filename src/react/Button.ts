@@ -129,6 +129,10 @@ export const Button = styled.button<{
 		gap: "8px",
 		outline: "none",
 
+		"&[disabled]": {
+			opacity: 0.3,
+			pointerEvents: "none",
+		},
 		"&:focus-visible": {
 			outline: "auto",
 		},
