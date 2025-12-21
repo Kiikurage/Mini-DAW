@@ -109,17 +109,39 @@ class MyData {
     expect(instance2.value).toBe(20);  // 新しい値が反映
     ```
 
-- コールバック呼び出しなど
+- bunのmock APIの使い方
+
+    - 関数の呼び出し回数や引数の検証
+
+        関数名に "mock" などをつけてはいけない。
+        監視・検証用にbun APIでラップされてはいるが、それ以外は通常の関数と変わらないため
+        mockと名前をつけて特別視することは不適切である。
+    
+        ```typescript
+        import { mock } from "bun:test";
+    
+        const callback = mock(() => {});
+        expect(callback).toBeCalled();  // 呼び出し検証
+        expect(callback).toBeCalledTimes(2);  // 呼び出し回数
+        expect(callback).toBeCalledWith(arg);  // 引数検証
+        ```
+
+    - 複雑なクラス（EditHistoryManager, EventBusなど）のmock
+    
+        **そもそもmockをしない。そのような依存を持つコンポーネントはユニットテストでテストしない**
+
+        mock実装はテストに偽の安心感を与える
+        代わりに、そのクラス依存のテストは統合テストで検証する
+        または、ビジネスロジックをクラス依存から分離する設計を検討する
+
+- テストデータ用ヘルパー関数
 
     ```typescript
-    import { mock } from "bun:test";
-    const callback = mock(() => {});
-    
-    // 呼び出し検証
-    expect(callback).toBeCalled();  // 呼ばれたか
-    expect(callback).toBeCalledTimes(2);  // 呼び出し回数
-    expect(callback).toBeCalledWith(arg);  // 正しい引数か
-    expect(callback).not.toBeCalled();  // 呼ばれなかったか
+    // NG: "Mock"プレフィックスを付けない（これはmockではなくテストデータ）
+    const createMockChannel = (id: number, notes: Note[]): Channel => { /* ... */ };
+
+    // OK: シンプルな名前にする
+    const createChannel = (id: number, notes: Note[]): Channel => { /* ... */ };
     ```
 
 - Reactコンポーネントのテスト

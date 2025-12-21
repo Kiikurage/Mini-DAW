@@ -1,25 +1,23 @@
 import { describe, expect, it } from "bun:test";
-import { getActiveChannel } from "./getActiveChannel.ts";
+import { Color } from "./Color.ts";
 import type { EditorState } from "./Editor/Editor.ts";
 import { EditorSelection } from "./Editor/EditorSelection.ts";
-import { Song } from "./models/Song.ts";
+import { getActiveChannel } from "./getActiveChannel.ts";
 import { Channel } from "./models/Channel.ts";
 import { InstrumentKey } from "./models/InstrumentKey.ts";
-import { Color } from "./Color.ts";
+import { Song } from "./models/Song.ts";
 
 describe("getActiveChannel", () => {
-	const createMockChannel = (id: number): Channel => {
-		return new Channel({
-			id,
-			label: `Channel ${id}`,
-			instrumentKey: new InstrumentKey("GeneralUser GS", 0, 0),
-			notes: new Map(),
-			controlChanges: new Map(),
-			color: Color.hsl(0, 0, 0),
-		});
-	};
+	const defaultChannel = new Channel({
+		id: 0,
+		label: `Channel #N/A`,
+		instrumentKey: new InstrumentKey("GeneralUser GS", 0, 0),
+		notes: new Map(),
+		controlChanges: new Map(),
+		color: Color.hsl(0, 0, 0),
+	});
 
-	const createMockEditorState = (
+	const createEditorState = (
 		activeChannelId: number | null,
 	): EditorState => ({
 		newNoteDurationInTick: 480,
@@ -38,9 +36,9 @@ describe("getActiveChannel", () => {
 
 	describe("when active channel exists", () => {
 		it("should return the active channel", () => {
-			const channel1 = createMockChannel(1);
-			const channel2 = createMockChannel(2);
-			const channel3 = createMockChannel(3);
+			const channel1 = new Channel({ ...defaultChannel, id: 0 });
+			const channel2 = new Channel({ ...defaultChannel, id: 1 });
+			const channel3 = new Channel({ ...defaultChannel, id: 2 });
 
 			const song = new Song({
 				title: "Test",
@@ -48,16 +46,16 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(2);
+			const editorState = createEditorState(2);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
-			expect(activeChannel).toBe(channel2);
+			expect(activeChannel).toBe(channel3);
 		});
 
 		it("should return first channel when activeChannelId is 0", () => {
-			const channel1 = createMockChannel(0);
-			const channel2 = createMockChannel(1);
+			const channel1 = new Channel({ ...defaultChannel, id: 0 });
+			const channel2 = new Channel({ ...defaultChannel, id: 1 });
 
 			const song = new Song({
 				title: "Test",
@@ -65,7 +63,7 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(0);
+			const editorState = createEditorState(0);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
@@ -73,30 +71,28 @@ describe("getActiveChannel", () => {
 		});
 
 		it("should return the correct channel from multiple channels", () => {
-			const channels = [
-				createMockChannel(10),
-				createMockChannel(20),
-				createMockChannel(30),
-				createMockChannel(40),
-			];
+			const channel1 = new Channel({ ...defaultChannel, id: 1 });
+			const channel2 = new Channel({ ...defaultChannel, id: 2 });
+			const channel3 = new Channel({ ...defaultChannel, id: 3 });
+			const channel4 = new Channel({ ...defaultChannel, id: 4 });
 
 			const song = new Song({
 				title: "Test",
-				channels,
+				channels: [channel1, channel2, channel3, channel4],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(30);
+			const editorState = createEditorState(2);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
-			expect(activeChannel).toBe(channels[2]);
+			expect(activeChannel).toBe(channel2);
 		});
 	});
 
 	describe("when active channel does not exist", () => {
 		it("should return null when activeChannelId is null", () => {
-			const channel1 = createMockChannel(1);
+			const channel1 = new Channel({ ...defaultChannel, id: 1 });
 
 			const song = new Song({
 				title: "Test",
@@ -104,7 +100,7 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(null);
+			const editorState = createEditorState(null);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
@@ -112,8 +108,8 @@ describe("getActiveChannel", () => {
 		});
 
 		it("should return null when activeChannelId does not exist in song", () => {
-			const channel1 = createMockChannel(1);
-			const channel2 = createMockChannel(2);
+			const channel1 = new Channel({ ...defaultChannel, id: 1 });
+			const channel2 = new Channel({ ...defaultChannel, id: 2 });
 
 			const song = new Song({
 				title: "Test",
@@ -121,7 +117,7 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(999);
+			const editorState = createEditorState(999);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
@@ -135,7 +131,7 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1);
+			const editorState = createEditorState(1);
 
 			const activeChannel = getActiveChannel(song, editorState);
 
@@ -143,7 +139,7 @@ describe("getActiveChannel", () => {
 		});
 
 		it("should return null when activeChannelId is negative", () => {
-			const channel1 = createMockChannel(1);
+			const channel1 = new Channel({ ...defaultChannel, id: 1 });
 
 			const song = new Song({
 				title: "Test",
@@ -151,7 +147,7 @@ describe("getActiveChannel", () => {
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(-1);
+			const editorState = createEditorState(-1);
 
 			const activeChannel = getActiveChannel(song, editorState);
 

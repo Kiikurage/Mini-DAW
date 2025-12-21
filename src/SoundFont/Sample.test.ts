@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Sample } from "./Sample.ts";
 import type { SHDR } from "./sf2.ts";
+import { SampleLink } from "./sf2.ts";
 
 describe("Sample", () => {
 	describe("constructor", () => {
@@ -195,6 +196,8 @@ describe("Sample", () => {
 				sampleRate: 44100,
 				originalPitch: 60,
 				pitchCorrection: 0,
+				sampleLink: 0,
+				sampleType: SampleLink.MONO_SAMPLE,
 			};
 
 			const sample = Sample.create(buffer, shdr);
@@ -215,6 +218,8 @@ describe("Sample", () => {
 				sampleRate: 44100,
 				originalPitch: 60,
 				pitchCorrection: 0,
+				sampleLink: 0,
+				sampleType: SampleLink.MONO_SAMPLE,
 			};
 
 			const sample = Sample.create(buffer, shdr);
@@ -237,6 +242,8 @@ describe("Sample", () => {
 				sampleRate: 44100,
 				originalPitch: 60,
 				pitchCorrection: 0,
+				sampleLink: 0,
+				sampleType: SampleLink.MONO_SAMPLE,
 			};
 
 			const sample = Sample.create(buffer, shdr);
@@ -256,6 +263,8 @@ describe("Sample", () => {
 				sampleRate: 44100,
 				originalPitch: 60,
 				pitchCorrection: 50,
+				sampleLink: 0,
+				sampleType: SampleLink.MONO_SAMPLE,
 			};
 
 			const sample = Sample.create(buffer, shdr);

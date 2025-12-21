@@ -7,7 +7,7 @@ import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Color } from "../Color.ts";
 
 describe("MoveNotes", () => {
-	const createMockChannel = (
+	const createChannel = (
 		id: number,
 		notes: Note[],
 	): Channel => {
@@ -32,18 +32,19 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].key).toBe(64);
-				expect(notes[0].tickFrom).toBe(0);
-				expect(notes[0].tickTo).toBe(480);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+				const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.key).toBe(64);
+				expect(noteArray[0]?.tickFrom).toBe(0);
+				expect(noteArray[0]?.tickTo).toBe(480);
 			});
 
 			const songStoreMock = {
@@ -52,12 +53,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1], 4, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should move note by tick offset", () => {
@@ -69,18 +70,19 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].key).toBe(60);
-				expect(notes[0].tickFrom).toBe(480);
-				expect(notes[0].tickTo).toBe(960);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.key).toBe(60);
+				expect(noteArray[0]?.tickFrom).toBe(480);
+				expect(noteArray[0]?.tickTo).toBe(960);
 			});
 
 			const songStoreMock = {
@@ -89,12 +91,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1], 0, 480);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should move note by both key and tick offset", () => {
@@ -106,18 +108,19 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].key).toBe(67);
-				expect(notes[0].tickFrom).toBe(240);
-				expect(notes[0].tickTo).toBe(720);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.key).toBe(67);
+				expect(noteArray[0]?.tickFrom).toBe(240);
+				expect(noteArray[0]?.tickTo).toBe(720);
 			});
 
 			const songStoreMock = {
@@ -126,12 +129,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1], 7, 240);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should move multiple notes", () => {
@@ -150,17 +153,18 @@ describe("MoveNotes", () => {
 				velocity: 85,
 			});
 
-			const channel = createMockChannel(1, [note1, note2]);
+			const channel = createChannel(1, [note1, note2]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(2);
-				expect(notes[0].key).toBe(62);
-				expect(notes[1].key).toBe(66);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(2);
+				expect(noteArray[0]?.key).toBe(62);
+				expect(noteArray[1]?.key).toBe(66);
 			});
 
 			const songStoreMock = {
@@ -169,12 +173,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1, 2], 2, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should handle zero offset", () => {
@@ -186,17 +190,18 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].key).toBe(60);
-				expect(notes[0].tickFrom).toBe(0);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.key).toBe(60);
+				expect(noteArray[0]?.tickFrom).toBe(0);
 			});
 
 			const songStoreMock = {
@@ -205,12 +210,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1], 0, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should handle negative offsets", () => {
@@ -222,18 +227,19 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].key).toBe(64);
-				expect(notes[0].tickFrom).toBe(480);
-				expect(notes[0].tickTo).toBe(960);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.key).toBe(64);
+				expect(noteArray[0]?.tickFrom).toBe(480);
+				expect(noteArray[0]?.tickTo).toBe(960);
 			});
 
 			const songStoreMock = {
@@ -242,12 +248,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1], -8, -480);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should skip non-existent note IDs", () => {
@@ -259,16 +265,17 @@ describe("MoveNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note]);
+			const channel = createChannel(1, [note]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(1);
-				expect(notes[0].id).toBe(1);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(1);
+				expect(noteArray[0]?.id).toBe(1);
 			});
 
 			const songStoreMock = {
@@ -277,12 +284,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [1, 999], 5, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 	});
 
@@ -294,7 +301,7 @@ describe("MoveNotes", () => {
 				bpm: 120,
 			});
 
-			const setNotesMock = mock(() => {});
+			const setNotes = mock(() => {});
 
 			const songStoreMock = {
 				state: song,
@@ -302,26 +309,27 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(999, [1], 5, 0);
 
-			expect(setNotesMock).not.toBeCalled();
+			expect(setNotes).not.toBeCalled();
 		});
 	});
 
 	describe("edge cases", () => {
 		it("should handle empty note IDs list", () => {
-			const channel = createMockChannel(1, []);
+			const channel = createChannel(1, []);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(0);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(0);
 			});
 
 			const songStoreMock = {
@@ -330,12 +338,12 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			moveNotes(1, [], 5, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 
 		it("should work with iterable note IDs (not just array)", () => {
@@ -354,15 +362,16 @@ describe("MoveNotes", () => {
 				velocity: 85,
 			});
 
-			const channel = createMockChannel(1, [note1, note2]);
+			const channel = createChannel(1, [note1, note2]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const setNotesMock = mock((channelId: number, notes: Note[]) => {
-				expect(notes).toHaveLength(2);
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
+			const noteArray = [...notes];
+				expect(noteArray).toHaveLength(2);
 			});
 
 			const songStoreMock = {
@@ -371,13 +380,13 @@ describe("MoveNotes", () => {
 
 			const moveNotes = MoveNotes({
 				songStore: songStoreMock,
-				setNotes: setNotesMock,
+				setNotes,
 			});
 
 			// Use Set instead of array
 			moveNotes(1, new Set([1, 2]), 5, 0);
 
-			expect(setNotesMock).toBeCalledTimes(1);
+			expect(setNotes).toBeCalledTimes(1);
 		});
 	});
 });

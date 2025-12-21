@@ -1,19 +1,16 @@
 import { describe, expect, it } from "bun:test";
-import { getSelectedNotes } from "./getSelectedNotes.ts";
+import { Color } from "./Color.ts";
 import type { EditorState } from "./Editor/Editor.ts";
 import { EditorSelection } from "./Editor/EditorSelection.ts";
-import { Song } from "./models/Song.ts";
+import { getSelectedNotes } from "./getSelectedNotes.ts";
 import { Channel } from "./models/Channel.ts";
-import { Note } from "./models/Note.ts";
-import { InstrumentKey } from "./models/InstrumentKey.ts";
-import { Color } from "./Color.ts";
 import { ControlChangeList } from "./models/ControlChangeList.ts";
+import { InstrumentKey } from "./models/InstrumentKey.ts";
+import { Note } from "./models/Note.ts";
+import { Song } from "./models/Song.ts";
 
 describe("getSelectedNotes", () => {
-	const createMockChannel = (
-		id: number,
-		notes: Note[],
-	): Channel => {
+	const createChannel = (id: number, notes: Note[]): Channel => {
 		const notesMap = new Map(notes.map((note) => [note.id, note]));
 		return new Channel({
 			id,
@@ -25,7 +22,7 @@ describe("getSelectedNotes", () => {
 		});
 	};
 
-	const createMockEditorState = (
+	const createEditorState = (
 		activeChannelId: number | null,
 		selectedNoteIds: ReadonlySet<number>,
 	): EditorState => ({
@@ -35,12 +32,13 @@ describe("getSelectedNotes", () => {
 		zoom: 1,
 		width: 800,
 		scrollLeft: 0,
-		selection: selectedNoteIds.size > 0
-			? {
-					type: "note",
-					noteIds: selectedNoteIds,
-				}
-			: EditorSelection.void,
+		selection:
+			selectedNoteIds.size > 0
+				? {
+						type: "note",
+						noteIds: selectedNoteIds,
+					}
+				: EditorSelection.void,
 		marqueeAreaFrom: null,
 		marqueeAreaTo: null,
 		timelineGridUnitInTick: 480,
@@ -72,14 +70,14 @@ describe("getSelectedNotes", () => {
 				velocity: 90,
 			});
 
-			const channel = createMockChannel(1, [note1, note2, note3]);
+			const channel = createChannel(1, [note1, note2, note3]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1, new Set([1, 3]));
+			const editorState = createEditorState(1, new Set([1, 3]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
@@ -104,20 +102,20 @@ describe("getSelectedNotes", () => {
 				velocity: 85,
 			});
 
-			const channel = createMockChannel(1, [note1, note2]);
+			const channel = createChannel(1, [note1, note2]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1, new Set([10, 20]));
+			const editorState = createEditorState(1, new Set([10, 20]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
 			expect(selectedNotes).toHaveLength(2);
-			expect(selectedNotes[0].id).toBe(10);
-			expect(selectedNotes[1].id).toBe(20);
+			expect(selectedNotes[0]?.id).toBe(10);
+			expect(selectedNotes[1]?.id).toBe(20);
 		});
 
 		it("should return empty generator when no notes are selected", () => {
@@ -129,14 +127,14 @@ describe("getSelectedNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note1]);
+			const channel = createChannel(1, [note1]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1, new Set());
+			const editorState = createEditorState(1, new Set());
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
@@ -152,7 +150,7 @@ describe("getSelectedNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note1]);
+			const channel = createChannel(1, [note1]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
@@ -160,12 +158,12 @@ describe("getSelectedNotes", () => {
 			});
 
 			// Selection includes ID 1 and 999 (non-existent)
-			const editorState = createMockEditorState(1, new Set([1, 999]));
+			const editorState = createEditorState(1, new Set([1, 999]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
 			expect(selectedNotes).toHaveLength(1);
-			expect(selectedNotes[0].id).toBe(1);
+			expect(selectedNotes[0]?.id).toBe(1);
 		});
 	});
 
@@ -179,14 +177,14 @@ describe("getSelectedNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note1]);
+			const channel = createChannel(1, [note1]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(null, new Set([1]));
+			const editorState = createEditorState(null, new Set([1]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
@@ -202,7 +200,7 @@ describe("getSelectedNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note1]);
+			const channel = createChannel(1, [note1]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
@@ -210,7 +208,7 @@ describe("getSelectedNotes", () => {
 			});
 
 			// Active channel ID 999 does not exist
-			const editorState = createMockEditorState(999, new Set([1]));
+			const editorState = createEditorState(999, new Set([1]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
@@ -228,14 +226,14 @@ describe("getSelectedNotes", () => {
 				velocity: 80,
 			});
 
-			const channel = createMockChannel(1, [note1]);
+			const channel = createChannel(1, [note1]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1, new Set([1]));
+			const editorState = createEditorState(1, new Set([1]));
 
 			const generator = getSelectedNotes(song, editorState);
 
@@ -264,14 +262,14 @@ describe("getSelectedNotes", () => {
 				velocity: 85,
 			});
 
-			const channel = createMockChannel(1, [note1, note2]);
+			const channel = createChannel(1, [note1, note2]);
 			const song = new Song({
 				title: "Test",
 				channels: [channel],
 				bpm: 120,
 			});
 
-			const editorState = createMockEditorState(1, new Set([1, 2]));
+			const editorState = createEditorState(1, new Set([1, 2]));
 
 			const selectedNotes = [...getSelectedNotes(song, editorState)];
 
