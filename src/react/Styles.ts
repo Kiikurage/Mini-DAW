@@ -52,6 +52,7 @@ export const UIControlStyleBase: CSSObject = {
 	margin: 0,
 	minHeight: "32px",
 	padding: "8px 8px",
+	boxSizing: "border-box",
 
 	"&:focus": {
 		outline: "2px solid var(--color-primary-500)",
@@ -62,7 +63,7 @@ export const UIControlStyleBase: CSSObject = {
 export const ListBoxStyleBase: CSSObject = {
 	position: "relative",
 	minWidth: 120,
-	maxHeight: "100%",
 	overflow: "auto",
 	boxSizing: "border-box",
+	flex: "1 1 auto",
 };

@@ -180,87 +180,83 @@ function SoundFontDialogView({
 								maxHeight: "400px",
 							}}
 						>
-							<div css={{ width: 200 }}>
-								<Form.Field label="プリセット">
-									{PromiseState.isFulfilled(soundFont) ? (
-										<ListBox
-											value={instrumentKey.presetNumber}
-											onChange={(presetNumber) => {
-												setInstrumentKey(
-													new InstrumentKey(
-														instrumentKey.name,
-														presetNumber as number,
-														0,
-													),
-												);
-											}}
-										>
-											<ListBox.OptionList>
-												{soundFont.getPresetNames().map((preset) => (
+							<Form.Field label="プリセット" css={{ width: 200 }}>
+								{PromiseState.isFulfilled(soundFont) ? (
+									<ListBox
+										value={instrumentKey.presetNumber}
+										onChange={(presetNumber) => {
+											setInstrumentKey(
+												new InstrumentKey(
+													instrumentKey.name,
+													presetNumber as number,
+													0,
+												),
+											);
+										}}
+									>
+										<ListBox.OptionList>
+											{soundFont.getPresetNames().map((preset) => (
+												<ListBox.Option
+													key={preset.number}
+													value={preset.number}
+												>
+													{preset.number}: {preset.name}
+												</ListBox.Option>
+											))}
+										</ListBox.OptionList>
+									</ListBox>
+								) : PromiseState.isPending(soundFont) ? (
+									<span>ロード中...</span>
+								) : PromiseState.isRejected(soundFont) ? (
+									<span>サウンドフォントの読み込みに失敗しました</span>
+								) : null}
+							</Form.Field>
+							<Form.Field label="バンク" css={{ width: 200 }}>
+								{PromiseState.isFulfilled(soundFont) ? (
+									<ListBox
+										value={instrumentKey.presetNumber}
+										onChange={(bankNumber) => {
+											setInstrumentKey(
+												new InstrumentKey(
+													instrumentKey.name,
+													instrumentKey.presetNumber,
+													bankNumber as number,
+												),
+											);
+										}}
+									>
+										<ListBox.OptionList>
+											{soundFont
+												.getPresetsByPresetNumber(instrumentKey.presetNumber)
+												.map((preset) => (
 													<ListBox.Option
-														key={preset.number}
-														value={preset.number}
+														key={preset.bankNumber}
+														value={preset.bankNumber}
 													>
-														{preset.number}: {preset.name}
+														{preset.bankNumber}: {preset.name}
 													</ListBox.Option>
 												))}
-											</ListBox.OptionList>
-										</ListBox>
-									) : PromiseState.isPending(soundFont) ? (
-										<span>ロード中...</span>
-									) : PromiseState.isRejected(soundFont) ? (
-										<span>サウンドフォントの読み込みに失敗しました</span>
-									) : null}
-								</Form.Field>
-							</div>
-							<div css={{ width: 200 }}>
-								<Form.Field label="バンク">
-									{PromiseState.isFulfilled(soundFont) ? (
-										<ListBox
-											value={instrumentKey.presetNumber}
-											onChange={(bankNumber) => {
-												setInstrumentKey(
-													new InstrumentKey(
-														instrumentKey.name,
-														instrumentKey.presetNumber,
-														bankNumber as number,
-													),
-												);
-											}}
-										>
-											<ListBox.OptionList>
-												{soundFont
-													.getPresetsByPresetNumber(instrumentKey.presetNumber)
-													.map((preset) => (
-														<ListBox.Option
-															key={preset.bankNumber}
-															value={preset.bankNumber}
-														>
-															{preset.bankNumber}: {preset.name}
-														</ListBox.Option>
-													))}
-											</ListBox.OptionList>
-										</ListBox>
-									) : PromiseState.isPending(soundFont) ? (
-										<span>ロード中...</span>
-									) : PromiseState.isRejected(soundFont) ? (
-										<span>サウンドフォントの読み込みに失敗しました</span>
-									) : null}
-								</Form.Field>
-							</div>
-							<Form.Field flex label="プレビュー">
-								<div
-									css={{
-										flex: "1 1 0",
-										overflowX: "scroll",
-										maxWidth: "800px",
-									}}
-								>
-									<Keyboard
-										onPointerDown={handleKeyboardPointerDown}
-										onPointerUp={handleKeyboardPointerUp}
-									/>
-								</div>
+										</ListBox.OptionList>
+									</ListBox>
+								) : PromiseState.isPending(soundFont) ? (
+									<span>ロード中...</span>
+								) : PromiseState.isRejected(soundFont) ? (
+									<span>サウンドフォントの読み込みに失敗しました</span>
+								) : null}
+							</Form.Field>
+							<Form.Field
+								flex
+								label="プレビュー"
+								css={{
+									flex: "1 1 0",
+									overflowX: "scroll",
+									maxWidth: "800px",
+								}}
+							>
+								<Keyboard
+									onPointerDown={handleKeyboardPointerDown}
+									onPointerUp={handleKeyboardPointerUp}
+								/>
 							</Form.Field>
 						</div>
 					</Form.Row>
