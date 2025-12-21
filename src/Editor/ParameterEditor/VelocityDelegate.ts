@@ -185,8 +185,8 @@ function selectByRangeFeature(
 
 						for (const note of channel.notes.values()) {
 							if (
-								note.tickFrom < marqueeArea.tickTo &&
-								note.tickTo > marqueeArea.tickFrom
+								marqueeArea.tickFrom <= note.tickFrom &&
+								note.tickFrom < marqueeArea.tickTo
 							) {
 								noteIdsInArea.push(note.id);
 							}
