@@ -1,10 +1,10 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
+import { EventEmitter } from "./EventEmitter.ts";
 import type { Channel, ChannelPatch } from "./models/Channel.ts";
 import type { ControlChange } from "./models/ControlChange.ts";
 import type { ControlType } from "./models/ControlType.ts";
 import type { Note } from "./models/Note.ts";
 import type { Song, SongPatch } from "./models/Song.ts";
-import { EventEmitter } from "./Stateful/EventEmitter.ts";
 
 interface EventBusEventMap {
 	/**

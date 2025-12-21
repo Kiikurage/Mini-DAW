@@ -22,9 +22,7 @@ export namespace PromiseState {
 	export function isPending<T extends {}>(
 		ps?: PromiseState<T>,
 	): ps is PendingPromiseState {
-		return (
-			ps !== undefined && StatusSymbol in ps && ps[StatusSymbol] === "pending"
-		);
+		return ps === PendingPromiseStateInstance;
 	}
 
 	export function isFulfilled<T extends {}>(ps?: PromiseState<T>): ps is T {

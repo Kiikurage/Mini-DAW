@@ -1,3 +1,2 @@
 [test]
-preload = ["./test-setup.ts"]
-onlyFailures = true
+preload = ["./setup-happy-dom.ts", "./setup-testing-library.ts"]
