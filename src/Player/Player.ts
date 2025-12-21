@@ -47,26 +47,44 @@ export class Player extends Stateful<PlayerState> {
 		});
 
 		bus.on("song.put.after", (_song) => {
-			this.synthesizer.resetAll();
-			this.clearMutedChannels();
+			this.syncSongFromSongStore();
+		});
+		bus.on("song.update.after", (_song) => {
+			this.syncSongFromSongStore();
+		});
+		bus.on("channel.add.after", (channel) => {
+			this.syncChannelFromSongStore(channel.id);
 		});
 		bus.on("channel.update.after", (channelId) => {
-			const channel = this.songStore.state.channels.find(
-				(ch) => ch.id === channelId,
-			);
-			if (channel === undefined) return;
-
-			synthesizer.setBank({
-				channel: channel.id,
-				bankNumber: channel.instrumentKey.bankNumber,
-			});
-			synthesizer.setPreset({
-				channel: channel.id,
-				programNumber: channel.instrumentKey.presetNumber,
-			});
+			this.syncChannelFromSongStore(channelId);
 		});
 		bus.on("channel.remove.before", (channelId: number) => {
 			this.removeChannelFromMute(channelId);
+		});
+	}
+
+	private syncSongFromSongStore() {
+		this.synthesizer.resetAll();
+		this.clearMutedChannels();
+
+		for (const channel of this.songStore.state.channels) {
+			this.syncChannelFromSongStore(channel.id);
+		}
+	}
+
+	private syncChannelFromSongStore(channelId: number) {
+		const channel = this.songStore.state.channels.find(
+			(ch) => ch.id === channelId,
+		);
+		if (channel === undefined) return;
+
+		this.synthesizer.setBank({
+			channel: channel.id,
+			bankNumber: channel.instrumentKey.bankNumber,
+		});
+		this.synthesizer.setPreset({
+			channel: channel.id,
+			programNumber: channel.instrumentKey.presetNumber,
 		});
 	}
 
