@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: bun ci
 
+      - name: Run test
+        run: bun test
+
       - name: Build web package
         run: |
           bun run build
