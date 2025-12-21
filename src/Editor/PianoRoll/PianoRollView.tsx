@@ -138,8 +138,7 @@ export function PianoRollView({
 	]);
 
 	return (
-		<canvas
-			ref={canvasRef}
+		<div
 			css={{
 				position: "absolute",
 				inset: 0,
@@ -147,6 +146,16 @@ export function PianoRollView({
 				height: "100%",
 				background: "var(--color-key-background)",
 			}}
-		/>
+		>
+			<canvas
+				ref={canvasRef}
+				css={{
+					position: "absolute",
+					inset: 0,
+					width: "100%",
+					height: "100%",
+				}}
+			/>
+		</div>
 	);
 }

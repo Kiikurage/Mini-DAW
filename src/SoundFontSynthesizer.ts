@@ -13,7 +13,7 @@ export class SoundFontSynthesizer implements Synthesizer {
 
 	private readonly channels = new Map<number, SoundFontSynthesizerChannel>();
 
-	soundFont: SoundFont | null = null;
+	private soundFont: SoundFont | null = null;
 
 	constructor(private readonly context: AudioContext) {
 		this.masterVolumeNode = this.context.createGain();
@@ -29,24 +29,21 @@ export class SoundFontSynthesizer implements Synthesizer {
 		this.getOrCreateChannel(message.channel).noteOff(message);
 	}
 
+	setSoundFont(soundFont: SoundFont | null) {
+		this.soundFont = soundFont;
+		for (const channel of this.channels.values()) {
+			channel.setSoundFont(soundFont);
+		}
+	}
+
 	setPreset(message: ProgramChangeMessage) {
-		const channel = this.getOrCreateChannel(message.channel);
-
-		channel.presetNumber = message.programNumber;
-
-		channel.preset =
-			this.soundFont?.getPreset(channel.presetNumber, channel.bankNumber) ??
-			null;
+		this.getOrCreateChannel(message.channel).setPresetNumber(
+			message.programNumber,
+		);
 	}
 
 	setBank(message: { channel: number; bankNumber: number }) {
-		const channel = this.getOrCreateChannel(message.channel);
-
-		channel.bankNumber = message.bankNumber;
-
-		channel.preset =
-			this.soundFont?.getPreset(channel.presetNumber, channel.bankNumber) ??
-			null;
+		this.getOrCreateChannel(message.channel).setBankNumber(message.bankNumber);
 	}
 
 	channelNoteOffAll(channel: number) {
@@ -95,10 +92,8 @@ export class SoundFontSynthesizer implements Synthesizer {
 			channel = new SoundFontSynthesizerChannel(
 				this.context,
 				this.masterVolumeNode,
+				this.soundFont,
 			);
-			if (this.soundFont !== null) {
-				channel.preset = this.soundFont.getPreset(0, 0);
-			}
 			this.channels.set(channelNumber, channel);
 		}
 		return channel;
@@ -106,15 +101,36 @@ export class SoundFontSynthesizer implements Synthesizer {
 }
 
 class SoundFontSynthesizerChannel {
-	presetNumber: number = 0;
-	bankNumber: number = 0;
-	preset: Preset | null = null;
+	private presetNumber: number = 0;
+	private bankNumber: number = 0;
+	private preset: Preset | null = null;
 	private readonly notes = new Set<SoundFontNote>();
 
 	constructor(
 		private readonly context: AudioContext,
 		private readonly masterVolumeNode: GainNode,
+		private soundFont: SoundFont | null = null,
 	) {}
+
+	setPresetNumber(presetNumber: number) {
+		this.presetNumber = presetNumber;
+		this.updatePreset();
+	}
+
+	setBankNumber(bankNumber: number) {
+		this.bankNumber = bankNumber;
+		this.updatePreset();
+	}
+
+	setSoundFont(soundFont: SoundFont | null) {
+		this.soundFont = soundFont;
+		this.updatePreset();
+	}
+
+	private updatePreset() {
+		this.preset =
+			this.soundFont?.getPreset(this.presetNumber, this.bankNumber) ?? null;
+	}
 
 	noteOn({ key, velocity, time }: NoteOnMessage): void {
 		if (time === undefined || time < this.context.currentTime) {
@@ -178,6 +194,7 @@ class SoundFontSynthesizerChannel {
 	 * ピッチベンド [cent]
 	 */
 	currentPitchBend: number = 0;
+
 	get pitchBend(): number {
 		while (this.queueudPitchBendControlChanges.length > 0) {
 			const message = this.queueudPitchBendControlChanges[0];

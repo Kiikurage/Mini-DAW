@@ -30,7 +30,7 @@ export function InitializeApp({
 			const sf = await soundFontStore.load(
 				PreInstalledSouindFonts[0]!.soundFontUrl,
 			);
-			(synthesizer as SoundFontSynthesizer).soundFont = sf;
+			(synthesizer as SoundFontSynthesizer).setSoundFont(sf);
 		})();
 
 		newFile(false);
