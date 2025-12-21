@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import type { UserConfig } from "vite";
 import checker from "vite-plugin-checker";
 
@@ -11,6 +12,7 @@ export default {
 	},
 	base: "./",
 	server: {
+		https: {},
 		host: true,
 		watch: {
 			usePolling: true
@@ -19,6 +21,14 @@ export default {
 	plugins: [
 		checker({
 			typescript: true,
+		}),
+		basicSsl({
+			name: 'vite-ssl-dev',
+			domains: [
+				'localhost:5173',
+				'192.168.2.115:5173',
+			],
+			certDir: './cert',
 		}),
 	],
 } satisfies UserConfig;

@@ -1,5 +1,6 @@
 import { FaGithub, FaGoogleDrive, FaRedo, FaUndo } from "react-icons/fa";
-import { MdFullscreen, MdRedo, MdUndo } from "react-icons/md";
+import { MdContentPaste, MdFullscreen, MdRedo, MdUndo } from "react-icons/md";
+import { ClipboardManager } from "./ClipboardManager.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Button } from "./react/Button.ts";
@@ -18,18 +19,21 @@ export function GlobalMenuBar({
 	loadFile,
 	overlayPortal,
 	history,
+	clipboard,
 }: {
 	newFile?: NewFile;
 	saveFile?: SaveFile;
 	loadFile?: LoadFile;
 	overlayPortal?: OverlayPortal;
 	history?: EditHistoryManager;
+	clipboard?: ClipboardManager;
 }) {
 	newFile = useComponent(NewFileKey, newFile);
 	saveFile = useComponent(SaveFileKey, saveFile);
 	loadFile = useComponent(LoadFileKey, loadFile);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	history = useComponent(EditHistoryManager.Key, history);
+	clipboard = useComponent(ClipboardManager.Key, clipboard);
 
 	const canUndo = useStateful(history, (state) => state.canUndo);
 	const canRedo = useStateful(history, (state) => state.canRedo);
@@ -94,9 +98,18 @@ export function GlobalMenuBar({
 			>
 				<IconButton
 					variant="normalInline"
+					title="貼り付け"
+					onClick={() => {
+						void clipboard.paste();
+					}}
+				>
+					<MdContentPaste size="16" />
+				</IconButton>
+				<IconButton
+					variant="normalInline"
 					title="元に戻す"
 					disabled={!canUndo}
-					onClick={async () => {
+					onClick={() => {
 						history.undo();
 					}}
 				>
@@ -106,7 +119,7 @@ export function GlobalMenuBar({
 					variant="normalInline"
 					title="やり直し"
 					disabled={!canRedo}
-					onClick={async () => {
+					onClick={() => {
 						history.redo();
 					}}
 				>

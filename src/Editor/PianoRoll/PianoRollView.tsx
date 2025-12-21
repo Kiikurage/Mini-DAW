@@ -1,12 +1,22 @@
 import { useEffect, useRef } from "react";
+import { MdContentCopy, MdContentCut, MdDelete } from "react-icons/md";
+import { ClipboardManager } from "../../ClipboardManager.ts";
+import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
-import { addListener } from "../../lib.ts";
+import { addListener, EmptySet } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
+import { IconButton } from "../../react/IconButton.ts";
+import {
+	BoxShadowStyleBase,
+	ListBoxStyleBase,
+	UIControlStyleBase,
+} from "../../react/Styles.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
+import { useStateful } from "../../Stateful/useStateful.tsx";
 import { type Synthesizer, SynthesizerKey } from "../../Synthesizer.ts";
 import {
 	type RemoveNotes,
@@ -14,9 +24,18 @@ import {
 } from "../../usecases/RemoveNotes.ts";
 import { type SetNotes, SetNotesKey } from "../../usecases/SetNotes.ts";
 import { Editor } from "../Editor.ts";
+import {
+	widthPerMeasure,
+	widthPerTick,
+} from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import { PianoRoll } from "./PianoRoll.ts";
 import { PianoRollInteractionHandleResolver } from "./PianoRollInteractionHandleResolver.ts";
-import { HEIGHT_PER_KEY, renderCanvas } from "./PianoRollViewRenderer.ts";
+import {
+	HEIGHT_PER_KEY,
+	renderCanvas,
+	SIDEBAR_WIDTH,
+	TIMELINE_HEIGHT,
+} from "./PianoRollViewRenderer.ts";
 
 export function PianoRollView({
 	songStore,
@@ -26,6 +45,7 @@ export function PianoRollView({
 	removeNotes,
 	synthesizer,
 	soundFontStore,
+	clipboard,
 }: {
 	songStore?: SongStore;
 	player?: Player;
@@ -34,6 +54,7 @@ export function PianoRollView({
 	removeNotes?: RemoveNotes;
 	synthesizer?: Synthesizer;
 	soundFontStore?: SoundFontStore;
+	clipboard?: ClipboardManager;
 }) {
 	synthesizer = useComponent(SynthesizerKey, synthesizer);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
@@ -42,14 +63,18 @@ export function PianoRollView({
 	editor = useComponent(Editor.Key, editor);
 	setNotes = useComponent(SetNotesKey, setNotes);
 	removeNotes = useComponent(RemoveNotesKey, removeNotes);
+	clipboard = useComponent(ClipboardManager.Key, clipboard);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const pianoRollRef = useRef<PianoRoll>(null);
+	if (pianoRollRef.current == null) {
+		pianoRollRef.current = new PianoRoll(soundFontStore, songStore, editor);
+	}
+	const pianoRoll = pianoRollRef.current;
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		if (canvas === null) return;
-
-		const pianoRoll = new PianoRoll(soundFontStore, songStore, editor);
 
 		const pointerEventManager = new PointerEventManager();
 		const handleResolver = new PianoRollInteractionHandleResolver(
@@ -135,6 +160,7 @@ export function PianoRollView({
 		removeNotes,
 		setNotes,
 		soundFontStore,
+		pianoRoll,
 	]);
 
 	return (
@@ -156,6 +182,98 @@ export function PianoRollView({
 					height: "100%",
 				}}
 			/>
+			<PianoRollSelectionActionPopup
+				pianoRoll={pianoRoll}
+				editor={editor}
+				songStore={songStore}
+				clipboard={clipboard}
+			/>
+		</div>
+	);
+}
+
+function PianoRollSelectionActionPopup({
+	editor,
+	songStore,
+	pianoRoll,
+	clipboard,
+}: {
+	editor: Editor;
+	songStore: SongStore;
+	pianoRoll: PianoRoll;
+	clipboard: ClipboardManager;
+}) {
+	const editorState = useStateful(editor);
+	const song = useStateful(songStore);
+	const pianoRollState = useStateful(pianoRoll);
+
+	const selection = editorState.selection;
+	if (selection.type !== "note") return null;
+	if (selection.noteIds.size <= 1) return null;
+	if (editorState.marqueeAreaFrom !== null) return null;
+
+	const selectionArea = computeSelectionArea(EmptySet, song, editorState);
+	if (selectionArea == null) return null;
+
+	const selectionBottom =
+		pianoRollState.height -
+		((NUM_KEYS - selectionArea.keyTo) * HEIGHT_PER_KEY -
+			pianoRollState.scrollTop +
+			TIMELINE_HEIGHT) +
+		8;
+	const selectionRight =
+		editorState.width -
+		(selectionArea.tickTo * widthPerTick(editorState.zoom) -
+			editorState.scrollLeft +
+			SIDEBAR_WIDTH) -
+		16;
+
+	return (
+		<div
+			css={[
+				BoxShadowStyleBase,
+				UIControlStyleBase,
+				{
+					position: "absolute",
+					bottom: selectionBottom,
+					right: selectionRight,
+					minHeight: "unset",
+					padding: "4px 8px",
+					display: "flex",
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "center",
+					gap: 8,
+				},
+			]}
+		>
+			<IconButton
+				variant="normalInline"
+				size="sm"
+				onClick={() => {
+					console.log("切り取り！");
+					clipboard.cut();
+				}}
+			>
+				<MdContentCut size={16} />
+			</IconButton>
+			<IconButton
+				variant="normalInline"
+				size="sm"
+				onClick={() => {
+					clipboard.copy();
+				}}
+			>
+				<MdContentCopy size={16} />
+			</IconButton>
+			<IconButton variant="normalInline" size="sm">
+				<MdDelete
+					size={16}
+					onClick={() => {
+						clipboard.cut();
+					}}
+				/>
+			</IconButton>
 		</div>
 	);
 }
