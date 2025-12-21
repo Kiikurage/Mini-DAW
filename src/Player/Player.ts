@@ -30,6 +30,12 @@ export interface PlayerState {
 	isAutoScrollEnabled: boolean;
 }
 
+const InitialProps: PlayerState = {
+	currentTick: 0,
+	isPlaying: false,
+	mutedChannelIds: EmptySet,
+	isAutoScrollEnabled: false,
+};
 export class Player extends Stateful<PlayerState> {
 	static readonly Key = ComponentKey.of(Player);
 
@@ -39,14 +45,10 @@ export class Player extends Stateful<PlayerState> {
 		private readonly synthesizer: Synthesizer,
 		bus: EventBus,
 	) {
-		super({
-			currentTick: 0,
-			isPlaying: false,
-			mutedChannelIds: EmptySet,
-			isAutoScrollEnabled: false,
-		});
+		super(InitialProps);
 
 		bus.on("song.put.after", (_song) => {
+			this.setState(InitialProps);
 			this.syncSongFromSongStore();
 		});
 		bus.on("song.update.after", (_song) => {
