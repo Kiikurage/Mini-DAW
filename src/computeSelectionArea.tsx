@@ -7,7 +7,7 @@ import type { Song } from "./models/Song.ts";
  * 選択されているノートを包含する矩形範囲
  */
 export function computeSelectionArea(
-	noLoopKeys: ReadonlySet<number>,
+	loopKeys: ReadonlySet<number>,
 	song: Song,
 	editorState: EditorState,
 ): PianoRollArea | null {
@@ -17,10 +17,10 @@ export function computeSelectionArea(
 	const keys = notes.map((note) => note.key);
 	const tickFroms = notes.map((note) => note.tickFrom);
 	const tickTos = notes.map((note) => {
-		if (noLoopKeys.has(note.key)) {
-			return note.tickFrom;
-		} else {
+		if (loopKeys.has(note.key)) {
 			return note.tickTo;
+		} else {
+			return note.tickFrom;
 		}
 	});
 

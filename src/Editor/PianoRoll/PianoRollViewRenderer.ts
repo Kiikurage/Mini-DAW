@@ -3,6 +3,7 @@ import { KEY_PER_OCTAVE, NUM_KEYS, TICK_PER_MEASURE } from "../../constants.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
+import { EmptySet } from "../../lib.ts";
 import type { Note } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
@@ -10,7 +11,7 @@ import type { SoundFontStoreState } from "../../SoundFontStore.ts";
 import { addLinePath, addRectPath } from "../canvasUtil.ts";
 import type { EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
-import { getNoLoopKeys, type PianoRollState } from "./PianoRoll.ts";
+import { getLoopKeys, type PianoRollState } from "./PianoRoll.ts";
 import type { PianoRollHoverNotesManagerState } from "./PianoRollHoverNotesManager.ts";
 
 export const HEIGHT_PER_KEY = 16;
@@ -60,10 +61,10 @@ export function renderCanvas({
 	const tickTo = Math.ceil((scrollLeft + mainWidth) / tickWidth);
 
 	const activeChannel = getActiveChannel(song, editorState);
-	const noLoopKeys =
+	const loopKeys =
 		activeChannel === null
-			? new Set<number>()
-			: getNoLoopKeys(activeChannel, soundFontStoreState);
+			? EmptySet
+			: getLoopKeys(activeChannel, soundFontStoreState);
 
 	// region 背景
 	addRectPath({ ctx, x0: 0, y0: 0, x1: totalWidth, y1: totalHeight });
@@ -166,7 +167,7 @@ export function renderCanvas({
 			continue;
 		}
 
-		const noLoopKeys = getNoLoopKeys(channel, soundFontStoreState);
+		const loopKeys = getLoopKeys(channel, soundFontStoreState);
 
 		ctx.beginPath();
 		addNotePathAll({
@@ -182,7 +183,7 @@ export function renderCanvas({
 			keyTo,
 			tickFrom,
 			tickTo,
-			noLoopKeys,
+			loopKeys,
 		});
 		ctx.fillStyle = channel.color.setAlpha(0.3).cssString;
 		ctx.fill();
@@ -212,7 +213,7 @@ export function renderCanvas({
 			timelineHeight,
 			heightPerKey,
 			scrollTop,
-			noLoopKeys,
+			loopKeys,
 		});
 		ctx.fillStyle = activeChannel.color.setAlpha(note.velocity / 127).cssString;
 		ctx.fill();
@@ -245,7 +246,7 @@ export function renderCanvas({
 			timelineHeight,
 			heightPerKey,
 			scrollTop,
-			noLoopKeys,
+			loopKeys,
 		});
 		ctx.fillStyle = activeChannel.color
 			.setL(0.7)
@@ -271,7 +272,7 @@ export function renderCanvas({
 		keyTo,
 		tickFrom,
 		tickTo,
-		noLoopKeys,
+		loopKeys,
 	});
 	ctx.strokeStyle = "#000";
 	ctx.lineWidth = 2 * devicePixelRatio;
@@ -315,7 +316,7 @@ export function renderCanvas({
 	// endregion
 
 	// region 選択範囲
-	const selectionArea = computeSelectionArea(noLoopKeys, song, editorState);
+	const selectionArea = computeSelectionArea(loopKeys, song, editorState);
 	if (
 		selectionArea !== null &&
 		selectionArea.tickTo - selectionArea.tickFrom > 1
@@ -515,7 +516,7 @@ function addNotePathAll({
 	keyTo,
 	tickFrom,
 	tickTo,
-	noLoopKeys,
+	loopKeys,
 }: {
 	ctx: CanvasRenderingContext2D;
 	notes: Iterable<Note>;
@@ -529,7 +530,7 @@ function addNotePathAll({
 	keyTo: number;
 	tickFrom: number;
 	tickTo: number;
-	noLoopKeys: ReadonlySet<number>;
+	loopKeys: ReadonlySet<number>;
 }) {
 	for (const note of notes) {
 		if (
@@ -550,7 +551,7 @@ function addNotePathAll({
 			timelineHeight,
 			heightPerKey,
 			scrollTop,
-			noLoopKeys,
+			loopKeys,
 		});
 	}
 }
@@ -564,7 +565,7 @@ function addNotePath({
 	sideBarWidth,
 	heightPerKey,
 	scrollTop,
-	noLoopKeys,
+	loopKeys,
 }: {
 	ctx: CanvasRenderingContext2D;
 	note: Note;
@@ -574,9 +575,18 @@ function addNotePath({
 	sideBarWidth: number;
 	heightPerKey: number;
 	scrollTop: number;
-	noLoopKeys: ReadonlySet<number>;
+	loopKeys: ReadonlySet<number>;
 }) {
-	if (noLoopKeys.has(note.key)) {
+	if (loopKeys.has(note.key)) {
+		const x0 = sideBarWidth + note.tickFrom * tickWidth - scrollLeft;
+		const x1 = sideBarWidth + note.tickTo * tickWidth - scrollLeft;
+		const y0 =
+			timelineHeight + (NUM_KEYS - note.key - 1) * heightPerKey - scrollTop;
+		const y1 = y0 + heightPerKey;
+
+		const R = 2;
+		ctx.roundRect(x0, y0, x1 - x0, y1 - y0, R);
+	} else {
 		const x = sideBarWidth + note.tickFrom * tickWidth - scrollLeft;
 		const y =
 			timelineHeight +
@@ -586,15 +596,6 @@ function addNotePath({
 		const R = heightPerKey / 2;
 
 		ctx.roundRect(x - R, y - R, R * 2, R * 2, R);
-	} else {
-		const x0 = sideBarWidth + note.tickFrom * tickWidth - scrollLeft;
-		const x1 = sideBarWidth + note.tickTo * tickWidth - scrollLeft;
-		const y0 =
-			timelineHeight + (NUM_KEYS - note.key - 1) * heightPerKey - scrollTop;
-		const y1 = y0 + heightPerKey;
-
-		const R = 2;
-		ctx.roundRect(x0, y0, x1 - x0, y1 - y0, R);
 	}
 }
 

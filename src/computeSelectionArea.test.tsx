@@ -1,18 +1,17 @@
 import { describe, expect, it } from "bun:test";
+import { Color } from "./Color.ts";
 import { computeSelectionArea } from "./computeSelectionArea.tsx";
 import type { EditorState } from "./Editor/Editor.ts";
 import { EditorSelection } from "./Editor/EditorSelection.ts";
-import { Song } from "./models/Song.ts";
 import { Channel } from "./models/Channel.ts";
-import { Note } from "./models/Note.ts";
 import { InstrumentKey } from "./models/InstrumentKey.ts";
-import { Color } from "./Color.ts";
+import { Note } from "./models/Note.ts";
+import { Song } from "./models/Song.ts";
+
+const ALL_KEYS = new Set<number>(new Array(128).fill(0).map((_, i) => i));
 
 describe("computeSelectionArea", () => {
-	const createMockChannel = (
-		id: number,
-		notes: Note[],
-	): Channel => {
+	const createMockChannel = (id: number, notes: Note[]): Channel => {
 		const notesMap = new Map(notes.map((note) => [note.id, note]));
 		return new Channel({
 			id,
@@ -34,12 +33,13 @@ describe("computeSelectionArea", () => {
 		zoom: 1,
 		width: 800,
 		scrollLeft: 0,
-		selection: selectedNoteIds.size > 0
-			? {
-					type: "note",
-					noteIds: selectedNoteIds,
-				}
-			: EditorSelection.void,
+		selection:
+			selectedNoteIds.size > 0
+				? {
+						type: "note",
+						noteIds: selectedNoteIds,
+					}
+				: EditorSelection.void,
 		marqueeAreaFrom: null,
 		marqueeAreaTo: null,
 		timelineGridUnitInTick: 480,
@@ -79,9 +79,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1, 2, 3]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).not.toBeNull();
 			expect(area?.keyFrom).toBe(60);
@@ -107,9 +106,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).not.toBeNull();
 			expect(area?.keyFrom).toBe(64);
@@ -142,9 +140,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1, 2]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).not.toBeNull();
 			expect(area?.keyFrom).toBe(64);
@@ -177,9 +174,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1, 2]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).not.toBeNull();
 			expect(area?.keyFrom).toBe(36);
@@ -212,9 +208,9 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1, 2]));
-			const noLoopKeys = new Set([64]); // note2's key is a no-loop key
-
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const loopKeys = new Set(ALL_KEYS);
+			loopKeys.delete(64);
+			const area = computeSelectionArea(loopKeys, song, editorState);
 
 			// tickTo should be max of: tickTo of note1 (480) and tickFrom of note2 (100)
 			expect(area?.tickTo).toBe(480);
@@ -251,9 +247,10 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1, 2, 3]));
-			const noLoopKeys = new Set([60, 64]); // note1 and note2 are no-loop keys
-
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const loopKeys = new Set(ALL_KEYS);
+			loopKeys.delete(60);
+			loopKeys.delete(64);
+			const area = computeSelectionArea(loopKeys, song, editorState);
 
 			// For no-loop keys: use tickFrom (60: 0, 64: 200)
 			// For regular keys: use tickTo (67: 600)
@@ -278,9 +275,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area?.tickTo).toBe(480);
 		});
@@ -302,9 +298,10 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1]));
-			const noLoopKeys = new Set([72]); // doesn't match note1's key
+			const loopKeys = new Set(ALL_KEYS);
+			loopKeys.delete(72);
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(loopKeys, song, editorState);
 
 			expect(area?.tickTo).toBe(480);
 		});
@@ -328,9 +325,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set());
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).toBeNull();
 		});
@@ -354,9 +350,7 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(999, new Set([1]));
-			const noLoopKeys = new Set<number>();
-
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).toBeNull();
 		});
@@ -380,9 +374,8 @@ describe("computeSelectionArea", () => {
 			});
 
 			const editorState = createMockEditorState(1, new Set([1]));
-			const noLoopKeys = new Set<number>();
 
-			const area = computeSelectionArea(noLoopKeys, song, editorState);
+			const area = computeSelectionArea(ALL_KEYS, song, editorState);
 
 			expect(area).toHaveProperty("keyFrom");
 			expect(area).toHaveProperty("keyTo");

@@ -1,8 +1,14 @@
 import { assertNotNullish } from "../lib.ts";
-import { Instrument } from "./Instrument.ts";
-import { type InstrumentZone, InstrumentZoneImpl } from "./InstrumentZone.ts";
+import {
+	createInstrumentEntry,
+	type InstrumentEntry,
+} from "./InstrumentEntry.ts";
+import {
+	applyInstrumentZoneGenerator,
+	createDefaultInstrumentZoneBuilder,
+	type InstrumentZoneBuilder,
+} from "./InstrumentZoneBuilder.ts";
 import { Preset } from "./Preset.ts";
-import { type PresetZone, PresetZoneImpl } from "./PresetZone.ts";
 import { RIFF } from "./RIFF.ts";
 import { Sample } from "./Sample.ts";
 import {
@@ -18,7 +24,9 @@ import {
 	parsePDTA,
 	parseSDTA,
 	type SDTA,
+	SFGenerator,
 } from "./sf2.ts";
+import { applyZoneGenerator, createDefaultZoneBuilder } from "./ZoneBuilder.ts";
 
 export class SoundFont {
 	private readonly presetHeaders: ReadonlyMap<
@@ -206,27 +214,36 @@ export class SoundFont {
 		if (header === undefined) return null;
 
 		const globalZonePgen: PGEN[] = [];
-		const zones: PresetZone[] = [];
+		const zones: InstrumentEntry[] = [];
+
 		for (const pbag of header.pbags) {
-			const zone = new PresetZoneImpl();
-
-			for (const pgen of globalZonePgen) {
-				zone.applyGenerator(pgen, (instrumentNumber) =>
-					this.loadInstrument(instrumentNumber),
+			const lastGenerator = pbag.generators?.at(-1);
+			if (lastGenerator?.generator === SFGenerator.INSTRUMENT) {
+				const presetZoneBuilder = createDefaultZoneBuilder();
+				const instrumentZoneBuilders = this.loadInstrument(
+					lastGenerator.amount.getUint16(0, true),
 				);
-			}
-			for (const pgen of pbag.generators) {
-				zone.applyGenerator(pgen, (instrumentNumber) =>
-					this.loadInstrument(instrumentNumber),
+				assertNotNullish(
+					instrumentZoneBuilders,
+					"PresetZone: instrument is null",
 				);
-			}
 
-			if (zone.instrument === null) {
+				for (const pgen of globalZonePgen) {
+					applyZoneGenerator(presetZoneBuilder, pgen);
+				}
+				for (const pgen of pbag.generators.slice(0, -1)) {
+					applyZoneGenerator(presetZoneBuilder, pgen);
+				}
+
+				for (const instrumentZoneBuilder of instrumentZoneBuilders) {
+					zones.push(
+						createInstrumentEntry(instrumentZoneBuilder, presetZoneBuilder),
+					);
+				}
+			} else {
 				if (globalZonePgen.length === 0) {
 					globalZonePgen.push(...pbag.generators);
 				}
-			} else {
-				zones.push(zone);
 			}
 		}
 
@@ -234,7 +251,7 @@ export class SoundFont {
 			name: header.phdr.name,
 			presetNumber: header.phdr.preset,
 			bankNumber: header.phdr.bank,
-			zones: zones,
+			entires: zones,
 		});
 	}
 
@@ -242,36 +259,36 @@ export class SoundFont {
 	 * 指定されたインストゥルメント番号に対応するインストゥルメントを取得する。
 	 * @param instrumentNumber
 	 */
-	private loadInstrument(instrumentNumber: number): Instrument | null {
+	private loadInstrument(instrumentNumber: number): InstrumentZoneBuilder[] {
 		const header = this.instrumentHeaders[instrumentNumber];
-		if (header === undefined) return null;
+		assertNotNullish(header, "InstrumentHeader is null");
 
 		const globalZoneIgen: IGEN[] = [];
-		const zones: InstrumentZone[] = [];
+		const zones: InstrumentZoneBuilder[] = [];
 		for (const ibag of header.ibags) {
-			const zone = new InstrumentZoneImpl();
-
-			for (const igen of globalZoneIgen) {
-				zone.applyGenerator(igen, (sampleNumber) =>
-					this.loadSample(sampleNumber),
+			const lastGenerator = ibag.generators?.at(-1);
+			if (lastGenerator?.generator === SFGenerator.SAMPLE_ID) {
+				const zoneBuilder = createDefaultInstrumentZoneBuilder();
+				zoneBuilder.sample = this.loadSample(
+					lastGenerator.amount.getUint16(0, true),
 				);
-			}
-			for (const igen of ibag.generators) {
-				zone.applyGenerator(igen, (sampleNumber) =>
-					this.loadSample(sampleNumber),
-				);
-			}
 
-			if (zone.sample === null) {
+				for (const igen of globalZoneIgen) {
+					applyInstrumentZoneGenerator(zoneBuilder, igen);
+				}
+				for (const igen of ibag.generators.slice(0, -1)) {
+					applyInstrumentZoneGenerator(zoneBuilder, igen);
+				}
+
+				zones.push(zoneBuilder);
+			} else {
 				if (globalZoneIgen.length === 0) {
 					globalZoneIgen.push(...ibag.generators);
 				}
-			} else {
-				zones.push(zone);
 			}
 		}
 
-		return new Instrument(header.inst.name, zones);
+		return zones;
 	}
 
 	/**
@@ -279,9 +296,9 @@ export class SoundFont {
 	 * @param sampleNumber
 	 * @private
 	 */
-	private loadSample(sampleNumber: number): Sample | null {
+	private loadSample(sampleNumber: number): Sample {
 		const shdr = this.pdta.shdr[sampleNumber];
-		if (shdr === undefined) return null;
+		assertNotNullish(shdr, "SampleHeader is null");
 
 		return Sample.create(this.sdta.sample, shdr);
 	}

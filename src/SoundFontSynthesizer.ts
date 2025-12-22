@@ -1,4 +1,4 @@
-import type { InstrumentZone } from "./SoundFont/InstrumentZone.ts";
+import type { InstrumentEntry } from "./SoundFont/InstrumentEntry.ts";
 import type { Preset } from "./SoundFont/Preset.ts";
 import type { SoundFont } from "./SoundFont/SoundFont.ts";
 import type {
@@ -242,33 +242,32 @@ class SoundFontNote {
 
 	noteOn(time: number): void {
 		this.noteOnAt = time;
-		for (const instrumentZone of this.preset.getInstrumentZones(
+		for (const instrumentEntry of this.preset.getInstrumentEntry(
 			this.key,
 			this.velocity,
 		)) {
-			const bufferSource = instrumentZone.createAudioBufferSourceNode(
+			const bufferSource = instrumentEntry.createAudioBufferSourceNode(
 				this.context,
 			);
-			if (bufferSource === null) continue;
 			bufferSource.detune.value =
-				instrumentZone.getTuneForKey(this.key) + this.pitchBendInCents;
+				instrumentEntry.getTuneForKey(this.key) + this.pitchBendInCents;
 
 			const velocityNode = this.context.createGain();
 			velocityNode.gain.value = (this.velocity / 100) ** 2;
 
-			const volumeEnvelopeNode = instrumentZone.volumeEnvelope.createGainNode(
+			const volumeEnvelopeNode = instrumentEntry.volumeEnvelope.createGainNode(
 				this.context,
 				time,
 			);
 
 			const filterNode = this.context.createBiquadFilter();
 			filterNode.type =
-				instrumentZone.initialFilterCutoffFrequency === null
+				instrumentEntry.initialFilterCutoffFrequency === null
 					? "allpass"
 					: "lowpass";
 			filterNode.frequency.value =
-				instrumentZone.initialFilterCutoffFrequency ?? 0;
-			filterNode.Q.value = instrumentZone.initialFilterQ;
+				instrumentEntry.initialFilterCutoffFrequency ?? 0;
+			filterNode.Q.value = instrumentEntry.initialFilterQ;
 
 			bufferSource.connect(velocityNode);
 			velocityNode.connect(filterNode);
@@ -276,7 +275,7 @@ class SoundFontNote {
 			volumeEnvelopeNode.connect(this.destination);
 
 			const synthesizerZone: SoundFontPlayingNoteInstrumentZoneEntry = {
-				instrumentZone,
+				instrumentZone: instrumentEntry,
 				bufferSource,
 				velocityNode,
 				volumeEnvelopeNode,
@@ -344,7 +343,7 @@ class SoundFontNote {
 }
 
 interface SoundFontPlayingNoteInstrumentZoneEntry {
-	instrumentZone: InstrumentZone;
+	instrumentZone: InstrumentEntry;
 	bufferSource: AudioBufferSourceNode;
 	velocityNode: GainNode;
 	volumeEnvelopeNode: GainNode;

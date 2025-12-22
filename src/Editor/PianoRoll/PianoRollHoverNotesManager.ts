@@ -13,7 +13,7 @@ import type { Editor, EditorState } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import { toPianoRollPosition } from "./features.ts";
 import {
-	getNoLoopKeys,
+	getLoopKeys,
 	type PianoRoll,
 	type PianoRollState,
 } from "./PianoRoll.ts";
@@ -118,7 +118,7 @@ function computeHoverNoteIds(
 	soundFontStoreState: SoundFontStoreState,
 	channel: Channel,
 ) {
-	const noLoopKeys = getNoLoopKeys(channel, soundFontStoreState);
+	const loopKeys = getLoopKeys(channel, soundFontStoreState);
 
 	return new Set(
 		pointerPositions
@@ -132,7 +132,15 @@ function computeHoverNoteIds(
 				if (activeChannel === null) return null;
 
 				for (const note of activeChannel.notes.values()) {
-					if (noLoopKeys.has(note.key)) {
+					if (loopKeys.has(note.key)) {
+						if (
+							note.key === position.key &&
+							note.tickFrom <= position.tick &&
+							position.tick < note.tickTo
+						) {
+							return note;
+						}
+					} else {
 						const xFrom = note.tickFrom * widthPerTick(editorState.zoom);
 						const minX = xFrom - HEIGHT_PER_KEY / 2;
 						const maxX = xFrom + HEIGHT_PER_KEY / 2;
@@ -140,14 +148,6 @@ function computeHoverNoteIds(
 							note.key === position.key &&
 							minX <= position.x &&
 							position.x < maxX
-						) {
-							return note;
-						}
-					} else {
-						if (
-							note.key === position.key &&
-							note.tickFrom <= position.tick &&
-							position.tick < note.tickTo
 						) {
 							return note;
 						}

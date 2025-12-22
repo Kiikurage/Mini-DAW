@@ -138,9 +138,9 @@ export class PianoRollInteractionHandleResolver
 									position.tick / this.editor.state.quantizeUnitInTick,
 								) * this.editor.state.quantizeUnitInTick;
 
-							const tickDuration = this.pianoRoll.noLoopKeys.has(position.key)
-								? 1
-								: this.editor.state.newNoteDurationInTick;
+							const tickDuration = this.pianoRoll.loopKeys.has(position.key)
+								? this.editor.state.newNoteDurationInTick
+								: 1;
 
 							const note = Note.create({
 								id: Date.now(),
@@ -304,10 +304,10 @@ export class PianoRollInteractionHandleResolver
 		position: PianoRollPosition,
 		note: Note,
 	): PointerEventManagerInteractionHandle | null {
-		if (this.pianoRoll.noLoopKeys.has(note.key)) {
-			return this.findPointerEventsHandleForNoLoopNote(position, note);
-		} else {
+		if (this.pianoRoll.loopKeys.has(note.key)) {
 			return this.findPointerEventsHandleForLoopNote(position, note);
+		} else {
+			return this.findPointerEventsHandleForNoLoopNote(position, note);
 		}
 	}
 
@@ -375,7 +375,7 @@ export class PianoRollInteractionHandleResolver
 		position: PianoRollPosition,
 	): PointerEventManagerInteractionHandle | null {
 		const selectionArea = computeSelectionArea(
-			this.pianoRoll.noLoopKeys,
+			this.pianoRoll.loopKeys,
 			this.songStore.state,
 			this.editor.state,
 		);

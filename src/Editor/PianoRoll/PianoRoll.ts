@@ -96,18 +96,18 @@ export class PianoRoll extends Stateful<PianoRollState> {
 		});
 	}
 
-	get noLoopKeys(): ReadonlySet<number> {
+	get loopKeys(): ReadonlySet<number> {
 		const activeChannel = getActiveChannel(
 			this.songStore.state,
 			this.editor.state,
 		);
 		if (activeChannel === null) return EmptySet;
 
-		return getNoLoopKeys(activeChannel, this.soundFontStore.state);
+		return getLoopKeys(activeChannel, this.soundFontStore.state);
 	}
 }
 
-export function getNoLoopKeys(
+export function getLoopKeys(
 	channel: Channel,
 	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
@@ -121,5 +121,5 @@ export function getNoLoopKeys(
 	);
 	if (preset === null) return EmptySet;
 
-	return preset.getNoLoopKeys();
+	return preset.loopKeys;
 }

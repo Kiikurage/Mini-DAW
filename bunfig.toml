@@ -1,2 +1,3 @@
 [test]
 preload = ["./setup-happy-dom.ts", "./setup-testing-library.ts"]
+onlyFailures = true
