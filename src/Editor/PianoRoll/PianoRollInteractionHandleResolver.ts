@@ -174,23 +174,27 @@ export class PianoRollInteractionHandleResolver
 			}),
 			{
 				handlePointerDown: (ev) => {
-					const tick = quantize(
-						toPianoRollPosition(
-							ev.position,
-							this.editor.state,
-							this.pianoRoll.state,
-						).tick,
-						this.editor.state.quantizeUnitInTick,
-					);
-					this.player.setCurrentTick(tick);
-
-					ev.sessionEvents.on("dragMove", (ev) => {
-						this.player.setCurrentTick(
+					this.player.setCurrentTick(
+						quantize(
 							toPianoRollPosition(
 								ev.position,
 								this.editor.state,
 								this.pianoRoll.state,
 							).tick,
+							this.editor.state.quantizeUnitInTick,
+						),
+					);
+
+					ev.sessionEvents.on("dragMove", (ev) => {
+						this.player.setCurrentTick(
+							quantize(
+								toPianoRollPosition(
+									ev.position,
+									this.editor.state,
+									this.pianoRoll.state,
+								).tick,
+								this.editor.state.quantizeUnitInTick,
+							),
 						);
 					});
 				},
