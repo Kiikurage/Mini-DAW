@@ -134,6 +134,26 @@ export function ChannelListView({
 					>
 						<MdAdd />
 					</IconButton>
+					<IconButton
+						size="sm"
+						variant="normalInline"
+						title="全てのチャンネルのミュート状態を切り替え"
+						onClick={() => {
+							player.toggleMuteAllChannels();
+						}}
+					>
+						<IoVolumeMute />
+					</IconButton>
+					<IconButton
+						size="sm"
+						variant="normalInline"
+						title="全てのチャンネルのプレビュー状態を切り替え"
+						onClick={() => {
+							editor.togglePreviewAllChannels();
+						}}
+					>
+						<IoMdEye />
+					</IconButton>
 				</div>
 			</header>
 			<ul

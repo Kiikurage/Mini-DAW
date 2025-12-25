@@ -62,7 +62,7 @@ export class Player extends Stateful<PlayerState> {
 			this.syncChannelFromSongStore(channelId);
 		});
 		bus.on("channel.remove.before", (channelId: number) => {
-			this.removeChannelFromMute(channelId);
+			this.unmuteChannels([channelId]);
 		});
 	}
 
@@ -119,32 +119,56 @@ export class Player extends Stateful<PlayerState> {
 	}
 
 	clearMutedChannels() {
-		this.updateState((state) => ({ ...state, mutedChannelIds: EmptySet }));
+		this.unmuteChannels([]);
 	}
 
 	toggleMuteChannel(channelId: number) {
 		if (this.state.mutedChannelIds.has(channelId)) {
-			this.removeChannelFromMute(channelId);
+			this.unmuteChannels([channelId]);
 		} else {
-			this.addChannelToMute(channelId);
+			this.muteChannels([channelId]);
 		}
 	}
 
-	addChannelToMute(channelId: number) {
-		if (this.state.mutedChannelIds.has(channelId)) return;
-
-		this.updateState((state) => {
-			const mutedChannelIds = new Set(state.mutedChannelIds);
-			mutedChannelIds.add(channelId);
-			return { ...state, mutedChannelIds };
-		});
-		this.synthesizer.channelNoteOffAll(channelId);
+	toggleMuteAllChannels() {
+		const allChannelIds = new Set(
+			this.songStore.state.channels.map((ch) => ch.id),
+		);
+		const areAllMuted = [...allChannelIds].every((id) =>
+			this.state.mutedChannelIds.has(id),
+		);
+		if (areAllMuted) {
+			this.unmuteChannels(allChannelIds);
+		} else {
+			this.muteChannels(allChannelIds);
+		}
 	}
 
-	removeChannelFromMute(channelId: number) {
+	muteChannels(channelIds: Iterable<number>) {
+		const mutedChannelIds = new Set(this.state.mutedChannelIds);
+
+		for (const channelId of channelIds) {
+			if (this.state.mutedChannelIds.has(channelId)) continue;
+
+			mutedChannelIds.add(channelId);
+			this.synthesizer.channelNoteOffAll(channelId);
+		}
+
+		this.updateState((state) => {
+			if (state.mutedChannelIds.size === mutedChannelIds.size) return state;
+			return { ...state, mutedChannelIds };
+		});
+	}
+
+	unmuteChannels(channelIds: Iterable<number>) {
 		this.updateState((state) => {
 			const mutedChannelIds = new Set(state.mutedChannelIds);
-			mutedChannelIds.delete(channelId);
+
+			for (const channelId of channelIds) {
+				mutedChannelIds.delete(channelId);
+			}
+
+			if (state.mutedChannelIds.size === mutedChannelIds.size) return state;
 			return { ...state, mutedChannelIds };
 		});
 	}

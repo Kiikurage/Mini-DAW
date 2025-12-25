@@ -250,6 +250,11 @@ export class Editor extends Stateful<EditorState> {
 				this.setActiveChannel(null);
 			})
 			.on("song.put.after", (song) => {
+				this.setState({
+					...this.state,
+					previewChannelIds: EmptySet,
+				});
+
 				const firstChannel = song.channels[0];
 				if (firstChannel !== undefined) {
 					this.setActiveChannel(firstChannel.id);
@@ -291,6 +296,22 @@ export class Editor extends Stateful<EditorState> {
 				previewChannelIds.add(channelId);
 			}
 			return { ...state, previewChannelIds };
+		});
+	}
+
+	togglePreviewAllChannels() {
+		this.updateState((state) => {
+			const allChannelIds = new Set(
+				this.songStore.state.channels.map((ch) => ch.id),
+			);
+			const areAllPreviewed = [...allChannelIds].every((id) =>
+				state.previewChannelIds.has(id),
+			);
+			if (areAllPreviewed) {
+				return { ...state, previewChannelIds: new Set() };
+			} else {
+				return { ...state, previewChannelIds: allChannelIds };
+			}
 		});
 	}
 
