@@ -197,7 +197,6 @@ function FolderChildrenView({
 	return (
 		<ul
 			css={[
-				ListBoxStyleBase,
 				{
 					padding: 0,
 					margin: 0,

@@ -223,14 +223,13 @@ class ChannelSynthesizer {
 		const { key } = message;
 		if (!this.preset?.loopKeys?.has(key)) return;
 
-		for (const synthesizer of this.instrumentZoneSynthesizerCache.values()) {
-			const keyRange = synthesizer.instrumentZone.keyRange;
+		for (const instrumentZone of this.instrumentZoneSynthesizerCache.values()) {
+			const keyRange = instrumentZone.instrumentZone.keyRange;
 			if (key < keyRange.min || keyRange.max < key) {
 				continue;
 			}
 
-			synthesizer.noteOff(message);
-			break;
+			instrumentZone.noteOff(message);
 		}
 	}
 
