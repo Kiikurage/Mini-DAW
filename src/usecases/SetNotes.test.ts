@@ -1,15 +1,12 @@
 import { describe, it } from "bun:test";
-import { Song } from "../models/Song.ts";
-import { Channel } from "../models/Channel.ts";
-import { Note } from "../models/Note.ts";
-import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Color } from "../Color.ts";
+import { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
+import type { Note } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
 
 describe("SetNotes", () => {
-	const createChannel = (
-		id: number,
-		notes: Note[],
-	): Channel => {
+	const createChannel = (id: number, notes: Note[]): Channel => {
 		const notesMap = new Map(notes.map((note) => [note.id, note]));
 		return new Channel({
 			id,

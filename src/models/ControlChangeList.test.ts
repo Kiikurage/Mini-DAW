@@ -120,7 +120,9 @@ describe("ControlChangeList", () => {
 		});
 
 		it("should be able to remove the message resulting to be empty", () => {
-			const list = ControlChangeList.create().put([{ tick: 0, value: 0 }]).remove([0]);
+			const list = ControlChangeList.create()
+				.put([{ tick: 0, value: 0 }])
+				.remove([0]);
 
 			expect(list.messages).toEqual([]);
 		});

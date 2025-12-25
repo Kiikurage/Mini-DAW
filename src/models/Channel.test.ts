@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { Channel } from "./Channel.ts";
-import { Note } from "./Note.ts";
-import { InstrumentKey } from "./InstrumentKey.ts";
 import { Color } from "../Color.ts";
+import { Channel } from "./Channel.ts";
+import { InstrumentKey } from "./InstrumentKey.ts";
+import { Note } from "./Note.ts";
 
 describe("Channel", () => {
 	const createTestChannel = (props: { notes?: Map<number, Note> } = {}) => {
@@ -34,9 +34,36 @@ describe("Channel", () => {
 
 		it("should return the maximum tickFrom among notes", () => {
 			const notes = new Map([
-				[1, Note.create({ id: 1, key: 60, tickFrom: 100, tickTo: 200, velocity: 80 })],
-				[2, Note.create({ id: 2, key: 60, tickFrom: 500, tickTo: 600, velocity: 80 })],
-				[3, Note.create({ id: 3, key: 60, tickFrom: 300, tickTo: 400, velocity: 80 })],
+				[
+					1,
+					Note.create({
+						id: 1,
+						key: 60,
+						tickFrom: 100,
+						tickTo: 200,
+						velocity: 80,
+					}),
+				],
+				[
+					2,
+					Note.create({
+						id: 2,
+						key: 60,
+						tickFrom: 500,
+						tickTo: 600,
+						velocity: 80,
+					}),
+				],
+				[
+					3,
+					Note.create({
+						id: 3,
+						key: 60,
+						tickFrom: 300,
+						tickTo: 400,
+						velocity: 80,
+					}),
+				],
 			]);
 
 			const channel = createTestChannel({ notes });
@@ -52,9 +79,36 @@ describe("Channel", () => {
 
 		it("should return the maximum tickTo among notes", () => {
 			const notes = new Map([
-				[1, Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 200, velocity: 80 })],
-				[2, Note.create({ id: 2, key: 60, tickFrom: 100, tickTo: 600, velocity: 80 })],
-				[3, Note.create({ id: 3, key: 60, tickFrom: 200, tickTo: 400, velocity: 80 })],
+				[
+					1,
+					Note.create({
+						id: 1,
+						key: 60,
+						tickFrom: 0,
+						tickTo: 200,
+						velocity: 80,
+					}),
+				],
+				[
+					2,
+					Note.create({
+						id: 2,
+						key: 60,
+						tickFrom: 100,
+						tickTo: 600,
+						velocity: 80,
+					}),
+				],
+				[
+					3,
+					Note.create({
+						id: 3,
+						key: 60,
+						tickFrom: 200,
+						tickTo: 400,
+						velocity: 80,
+					}),
+				],
 			]);
 
 			const channel = createTestChannel({ notes });
@@ -98,8 +152,26 @@ describe("Channel", () => {
 	describe("removeNotes", () => {
 		it("should return a new instance when notes are removed", () => {
 			const notes = new Map([
-				[1, Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 })],
-				[2, Note.create({ id: 2, key: 60, tickFrom: 100, tickTo: 200, velocity: 80 })],
+				[
+					1,
+					Note.create({
+						id: 1,
+						key: 60,
+						tickFrom: 0,
+						tickTo: 100,
+						velocity: 80,
+					}),
+				],
+				[
+					2,
+					Note.create({
+						id: 2,
+						key: 60,
+						tickFrom: 100,
+						tickTo: 200,
+						velocity: 80,
+					}),
+				],
 			]);
 			const channel1 = createTestChannel({ notes });
 			const channel2 = channel1.removeNotes([1]);
@@ -113,7 +185,16 @@ describe("Channel", () => {
 
 		it("should return the same instance if no notes match", () => {
 			const notes = new Map([
-				[1, Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 })],
+				[
+					1,
+					Note.create({
+						id: 1,
+						key: 60,
+						tickFrom: 0,
+						tickTo: 100,
+						velocity: 80,
+					}),
+				],
 			]);
 			const channel1 = createTestChannel({ notes });
 			const channel2 = channel1.removeNotes([999]);
@@ -123,9 +204,36 @@ describe("Channel", () => {
 
 		it("should remove multiple notes", () => {
 			const notes = new Map([
-				[1, Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 })],
-				[2, Note.create({ id: 2, key: 60, tickFrom: 100, tickTo: 200, velocity: 80 })],
-				[3, Note.create({ id: 3, key: 60, tickFrom: 200, tickTo: 300, velocity: 80 })],
+				[
+					1,
+					Note.create({
+						id: 1,
+						key: 60,
+						tickFrom: 0,
+						tickTo: 100,
+						velocity: 80,
+					}),
+				],
+				[
+					2,
+					Note.create({
+						id: 2,
+						key: 60,
+						tickFrom: 100,
+						tickTo: 200,
+						velocity: 80,
+					}),
+				],
+				[
+					3,
+					Note.create({
+						id: 3,
+						key: 60,
+						tickFrom: 200,
+						tickTo: 300,
+						velocity: 80,
+					}),
+				],
 			]);
 			const channel = createTestChannel({ notes });
 			const updated = channel.removeNotes([1, 3]);
@@ -138,7 +246,13 @@ describe("Channel", () => {
 	describe("putNotes", () => {
 		it("should add new notes", () => {
 			const channel = createTestChannel();
-			const newNote = Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 });
+			const newNote = Note.create({
+				id: 1,
+				key: 60,
+				tickFrom: 0,
+				tickTo: 100,
+				velocity: 80,
+			});
 			const updated = channel.putNotes([newNote]);
 
 			// イミュータビリティパターン
@@ -149,11 +263,23 @@ describe("Channel", () => {
 		});
 
 		it("should update existing notes", () => {
-			const originalNote = Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 });
+			const originalNote = Note.create({
+				id: 1,
+				key: 60,
+				tickFrom: 0,
+				tickTo: 100,
+				velocity: 80,
+			});
 			const notes = new Map([[1, originalNote]]);
 			const channel = createTestChannel({ notes });
 
-			const updatedNote = Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 150, velocity: 100 });
+			const updatedNote = Note.create({
+				id: 1,
+				key: 60,
+				tickFrom: 0,
+				tickTo: 150,
+				velocity: 100,
+			});
 			const result = channel.putNotes([updatedNote]);
 
 			expect(result.notes.get(1)?.tickTo).toBe(150);
@@ -161,7 +287,13 @@ describe("Channel", () => {
 		});
 
 		it("should return the same instance if notes are unchanged", () => {
-			const originalNote = Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 });
+			const originalNote = Note.create({
+				id: 1,
+				key: 60,
+				tickFrom: 0,
+				tickTo: 100,
+				velocity: 80,
+			});
 			const notes = new Map([[1, originalNote]]);
 			const channel = createTestChannel({ notes });
 
@@ -171,8 +303,20 @@ describe("Channel", () => {
 
 		it("should handle multiple notes", () => {
 			const channel = createTestChannel();
-			const note1 = Note.create({ id: 1, key: 60, tickFrom: 0, tickTo: 100, velocity: 80 });
-			const note2 = Note.create({ id: 2, key: 61, tickFrom: 100, tickTo: 200, velocity: 80 });
+			const note1 = Note.create({
+				id: 1,
+				key: 60,
+				tickFrom: 0,
+				tickTo: 100,
+				velocity: 80,
+			});
+			const note2 = Note.create({
+				id: 2,
+				key: 61,
+				tickFrom: 100,
+				tickTo: 200,
+				velocity: 80,
+			});
 
 			const updated = channel.putNotes([note1, note2]);
 			expect(updated.notes.size).toBe(2);

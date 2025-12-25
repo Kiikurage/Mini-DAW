@@ -123,24 +123,38 @@ describe("PromiseState", () => {
 			const pending = PromiseState.pending();
 			const fulfilled = { data: "value" };
 
-			expect(PromiseState.isPending(pending) && PromiseState.isFulfilled(pending)).toBe(false);
-			expect(PromiseState.isPending(fulfilled) && PromiseState.isFulfilled(fulfilled)).toBe(false);
+			expect(
+				PromiseState.isPending(pending) && PromiseState.isFulfilled(pending),
+			).toBe(false);
+			expect(
+				PromiseState.isPending(fulfilled) &&
+					PromiseState.isFulfilled(fulfilled),
+			).toBe(false);
 		});
 
 		it("pending and rejected are mutually exclusive", () => {
 			const pending = PromiseState.pending();
 			const rejected = PromiseState.rejected("error");
 
-			expect(PromiseState.isPending(pending) && PromiseState.isRejected(pending)).toBe(false);
-			expect(PromiseState.isPending(rejected) && PromiseState.isRejected(rejected)).toBe(false);
+			expect(
+				PromiseState.isPending(pending) && PromiseState.isRejected(pending),
+			).toBe(false);
+			expect(
+				PromiseState.isPending(rejected) && PromiseState.isRejected(rejected),
+			).toBe(false);
 		});
 
 		it("fulfilled and rejected are mutually exclusive", () => {
 			const fulfilled = { data: "value" };
 			const rejected = PromiseState.rejected("error");
 
-			expect(PromiseState.isFulfilled(fulfilled) && PromiseState.isRejected(fulfilled)).toBe(false);
-			expect(PromiseState.isFulfilled(rejected) && PromiseState.isRejected(rejected)).toBe(false);
+			expect(
+				PromiseState.isFulfilled(fulfilled) &&
+					PromiseState.isRejected(fulfilled),
+			).toBe(false);
+			expect(
+				PromiseState.isFulfilled(rejected) && PromiseState.isRejected(rejected),
+			).toBe(false);
 		});
 	});
 });

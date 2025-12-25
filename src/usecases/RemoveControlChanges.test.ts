@@ -3,12 +3,12 @@
 // Unit testing with mocks provides false confidence.
 
 import { describe } from "bun:test";
-import { RemoveControlChanges } from "./RemoveControlChanges.ts";
-import { Song } from "../models/Song.ts";
-import { Channel } from "../models/Channel.ts";
-import { ControlChangeList } from "../models/ControlChangeList.ts";
-import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Color } from "../Color.ts";
+import { Channel } from "../models/Channel.ts";
+import type { ControlChangeList } from "../models/ControlChangeList.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
+import { Song } from "../models/Song.ts";
+import { RemoveControlChanges } from "./RemoveControlChanges.ts";
 
 describe("RemoveControlChanges", () => {
 	const createChannel = (

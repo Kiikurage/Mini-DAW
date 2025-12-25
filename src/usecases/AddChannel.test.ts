@@ -3,10 +3,10 @@
 // Unit testing with mocks provides false confidence.
 
 import { describe } from "bun:test";
-import { AddChannel } from "./AddChannel.ts";
+import { Color } from "../Color.ts";
 import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
-import { Color } from "../Color.ts";
+import { AddChannel } from "./AddChannel.ts";
 
 describe("AddChannel", () => {
 	const createChannel = (id: number): Channel => {

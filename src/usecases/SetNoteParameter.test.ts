@@ -1,16 +1,13 @@
 import { describe, expect, it, mock } from "bun:test";
-import { SetNoteParameter } from "./SetNoteParameter.ts";
-import { Song } from "../models/Song.ts";
-import { Channel } from "../models/Channel.ts";
-import { Note } from "../models/Note.ts";
-import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Color } from "../Color.ts";
+import { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
+import { Note } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
+import { SetNoteParameter } from "./SetNoteParameter.ts";
 
 describe("SetNoteParameter", () => {
-	const createChannel = (
-		id: number,
-		notes: Note[],
-	): Channel => {
+	const createChannel = (id: number, notes: Note[]): Channel => {
 		const notesMap = new Map(notes.map((note) => [note.id, note]));
 		return new Channel({
 			id,
@@ -39,10 +36,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.velocity).toBe(100);
@@ -89,10 +83,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(2);
 				expect(noteArray[0]?.velocity).toBe(90);
@@ -129,10 +120,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray[0]?.velocity).toBe(0);
 			});
@@ -167,10 +155,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray[0]?.velocity).toBe(127);
 			});
@@ -205,10 +190,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.id).toBe(1);
@@ -277,10 +259,7 @@ describe("SetNoteParameter", () => {
 				bpm: 120,
 			});
 
-			const setNotes = mock((
-				channelId: number,
-				notes: Iterable<Note>,
-			) => {
+			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
 				const noteArray = [...notes];
 				expect(noteArray[0]?.key).toBe(60);
 				expect(noteArray[0]?.tickFrom).toBe(100);

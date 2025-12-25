@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { DIContainer, ComponentKey, singleton } from "./DIContainer.ts";
+import { ComponentKey, DIContainer, singleton } from "./DIContainer.ts";
 
 describe("DIContainer", () => {
 	describe("ComponentKey", () => {
@@ -76,9 +76,7 @@ describe("DIContainer", () => {
 			const key1 = ComponentKey<string>("key1");
 			const key2 = ComponentKey<number>("key2");
 
-			const result = container
-				.set(key1, () => "value1")
-				.set(key2, () => 42);
+			const result = container.set(key1, () => "value1").set(key2, () => 42);
 
 			expect(result).toBe(container);
 			expect(container.get(key1)).toBe("value1");

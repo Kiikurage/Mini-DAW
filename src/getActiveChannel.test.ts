@@ -17,9 +17,7 @@ describe("getActiveChannel", () => {
 		color: Color.hsl(0, 0, 0),
 	});
 
-	const createEditorState = (
-		activeChannelId: number | null,
-	): EditorState => ({
+	const createEditorState = (activeChannelId: number | null): EditorState => ({
 		newNoteDurationInTick: 480,
 		previewChannelIds: new Set(),
 		activeChannelId,

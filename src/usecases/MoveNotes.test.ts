@@ -1,16 +1,13 @@
 import { describe, expect, it, mock } from "bun:test";
-import { MoveNotes } from "./MoveNotes.ts";
-import { Song } from "../models/Song.ts";
-import { Channel } from "../models/Channel.ts";
-import { Note } from "../models/Note.ts";
-import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Color } from "../Color.ts";
+import { Channel } from "../models/Channel.ts";
+import { InstrumentKey } from "../models/InstrumentKey.ts";
+import { Note } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
+import { MoveNotes } from "./MoveNotes.ts";
 
 describe("MoveNotes", () => {
-	const createChannel = (
-		id: number,
-		notes: Note[],
-	): Channel => {
+	const createChannel = (id: number, notes: Note[]): Channel => {
 		const notesMap = new Map(notes.map((note) => [note.id, note]));
 		return new Channel({
 			id,
@@ -78,7 +75,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.key).toBe(60);
 				expect(noteArray[0]?.tickFrom).toBe(480);
@@ -116,7 +113,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.key).toBe(67);
 				expect(noteArray[0]?.tickFrom).toBe(240);
@@ -161,7 +158,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(2);
 				expect(noteArray[0]?.key).toBe(62);
 				expect(noteArray[1]?.key).toBe(66);
@@ -198,7 +195,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.key).toBe(60);
 				expect(noteArray[0]?.tickFrom).toBe(0);
@@ -235,7 +232,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.key).toBe(64);
 				expect(noteArray[0]?.tickFrom).toBe(480);
@@ -273,7 +270,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(1);
 				expect(noteArray[0]?.id).toBe(1);
 			});
@@ -328,7 +325,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(0);
 			});
 
@@ -370,7 +367,7 @@ describe("MoveNotes", () => {
 			});
 
 			const setNotes = mock((channelId: number, notes: Iterable<Note>) => {
-			const noteArray = [...notes];
+				const noteArray = [...notes];
 				expect(noteArray).toHaveLength(2);
 			});
 
