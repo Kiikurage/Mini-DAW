@@ -1,15 +1,19 @@
-import type { InstrumentEntry } from "./InstrumentEntry.ts";
+import type { InstrumentZone } from "./InstrumentZone.ts";
 
+/**
+ * パース済みのSoundFont2のPresetを表すデータクラス。
+ * 各種プロパティや波形データはアクセスしやすい形に変換されている。
+ */
 export class Preset {
 	readonly name: string;
-	readonly entries: readonly InstrumentEntry[];
+	readonly entries: readonly InstrumentZone[];
 	readonly presetNumber: number;
 	readonly bankNumber: number;
 	readonly loopKeys: ReadonlySet<number>;
 
 	constructor(props: {
 		name: string;
-		entires: InstrumentEntry[];
+		entires: InstrumentZone[];
 		presetNumber: number;
 		bankNumber: number;
 	}) {
@@ -28,8 +32,8 @@ export class Preset {
 		this.loopKeys = loopKeys;
 	}
 
-	getInstrumentEntry(key: number, velocity: number): InstrumentEntry[] {
-		const entries: InstrumentEntry[] = [];
+	getInstrumentZones(key: number, velocity: number): InstrumentZone[] {
+		const entries: InstrumentZone[] = [];
 
 		for (const entry of this.entries) {
 			if (!entry.keyRange.includes(key)) continue;

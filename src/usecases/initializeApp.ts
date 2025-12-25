@@ -1,12 +1,8 @@
-import { createRoot } from "react-dom/client";
-import { AppView } from "../App/AppView.tsx";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
-import { DIContainerProvider } from "../Dependency/DIContainerProvider.tsx";
 import type { Editor } from "../Editor/Editor.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import type { SongStore } from "../SongStore.ts";
 import type { SoundFontStore } from "../SoundFontStore.ts";
-import type { SoundFontSynthesizer } from "../SoundFontSynthesizer.ts";
 import type { Synthesizer } from "../Synthesizer.ts";
 import type { NewFile } from "./NewFile.ts";
 
@@ -30,7 +26,7 @@ export function InitializeApp({
 			const sf = await soundFontStore.load(
 				PreInstalledSouindFonts[0]!.soundFontUrl,
 			);
-			(synthesizer as SoundFontSynthesizer).setSoundFont(sf);
+			synthesizer.setSoundFont(sf);
 		})();
 
 		newFile(false);

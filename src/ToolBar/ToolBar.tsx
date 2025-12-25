@@ -13,7 +13,7 @@ import { SongStore } from "../SongStore.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
-import { type Synthesizer, SynthesizerKey } from "../Synthesizer.ts";
+import { Synthesizer } from "../Synthesizer.ts";
 import {
 	type UpdateChannel,
 	UpdateChannelKey,
@@ -48,7 +48,7 @@ export function ToolBar({
 	editor = useComponent(Editor.Key, editor);
 	updateChannel = useComponent(UpdateChannelKey, updateChannel);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
-	synthesizer = useComponent(SynthesizerKey, synthesizer);
+	synthesizer = useComponent(Synthesizer.Key, synthesizer);
 
 	const playHeadTick = useStateful(player, (state) => state.currentTick);
 	const isPlaying = useStateful(player, (state) => state.isPlaying);

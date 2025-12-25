@@ -14,4 +14,11 @@ export class Range {
 	copy(): Range {
 		return new Range(this.min, this.max);
 	}
+
+	intersect(other: Range): Range {
+		return new Range(
+			Math.max(this.min, other.min),
+			Math.min(this.max, other.max),
+		);
+	}
 }

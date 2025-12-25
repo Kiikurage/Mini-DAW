@@ -11,9 +11,8 @@ import { Player } from "./Player/Player.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { SongStore } from "./SongStore.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
-import { SoundFontSynthesizer } from "./SoundFontSynthesizer.ts";
 import { StatusBar } from "./StatusBar/StatusBar.tsx";
-import { SynthesizerKey } from "./Synthesizer.ts";
+import { Synthesizer } from "./Synthesizer.ts";
 import { AddChannel, AddChannelKey } from "./usecases/AddChannel.ts";
 import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
@@ -70,14 +69,14 @@ export function configureDeps() {
 			.set(StatusBar.Key, () => {
 				return new StatusBar();
 			})
-			.set(SynthesizerKey, (deps) => {
-				return new SoundFontSynthesizer(deps.get(AudioContextKey));
+			.set(Synthesizer.Key, (deps) => {
+				return new Synthesizer(deps.get(AudioContextKey));
 			})
 			.set(Player.Key, (deps) => {
 				return new Player(
 					deps.get(AudioContextKey),
 					deps.get(SongStore.Key),
-					deps.get(SynthesizerKey),
+					deps.get(Synthesizer.Key),
 					deps.get(EventBus.Key),
 				);
 			})
@@ -207,7 +206,7 @@ export function configureDeps() {
 					songStore: deps.get(SongStore.Key),
 					editor: deps.get(Editor.Key),
 					soundFontStore: deps.get(SoundFontStore.Key),
-					synthesizer: deps.get(SynthesizerKey),
+					synthesizer: deps.get(Synthesizer.Key),
 				});
 			})
 	);

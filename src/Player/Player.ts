@@ -36,6 +36,7 @@ const InitialProps: PlayerState = {
 	mutedChannelIds: EmptySet,
 	isAutoScrollEnabled: false,
 };
+
 export class Player extends Stateful<PlayerState> {
 	static readonly Key = ComponentKey.of(Player);
 
@@ -96,6 +97,7 @@ export class Player extends Stateful<PlayerState> {
 
 		const isPlaying = this.state.isPlaying;
 		this.pause();
+		this.synthesizer.resetAll();
 		this.updateState((state) => ({ ...state, currentTick }));
 		if (isPlaying) this.play();
 	}
@@ -150,7 +152,7 @@ export class Player extends Stateful<PlayerState> {
 	pause() {
 		if (!this.state.isPlaying) return;
 		if (this.updateCallbackId !== null) {
-			cancelAnimationFrame(this.updateCallbackId);
+			clearInterval(this.updateCallbackId);
 			this.updateCallbackId = null;
 		}
 
@@ -174,7 +176,10 @@ export class Player extends Stateful<PlayerState> {
 			...this.songStore.state.channels.map((ch) => ch.lastTickFrom),
 		);
 		if (this.state.currentTick > audioLastTickFrom) {
+			this.pause();
 			this.setCurrentTick(0);
+			this.play();
+			return;
 		}
 
 		for (const channel of this.songStore.state.channels) {
@@ -194,7 +199,6 @@ export class Player extends Stateful<PlayerState> {
 
 		let lastEnqueuedTick = this.startedFromInTick;
 		const update = () => {
-			this.updateCallbackId = null;
 			if (tickEnd <= this.currentTick || !this.state.isPlaying) {
 				this.pause();
 				return;
@@ -243,7 +247,6 @@ export class Player extends Stateful<PlayerState> {
 							lastEnqueuedTick <= message.tick &&
 							message.tick < nextEnqueueTick
 						) {
-							console.log(message);
 							this.synthesizer.setPitchBend(
 								channel.id,
 								message.value,
@@ -254,13 +257,12 @@ export class Player extends Stateful<PlayerState> {
 				}
 			}
 			lastEnqueuedTick = nextEnqueueTick;
-
-			this.updateCallbackId = requestAnimationFrame(update);
 		};
 		update();
+		this.updateCallbackId = setInterval(update, 16);
 	}
 
-	private updateCallbackId: number | null = null;
+	private updateCallbackId: ReturnType<typeof setInterval> | null = null;
 
 	/**
 	 * 再生開始時のtick位置[tick]

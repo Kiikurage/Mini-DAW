@@ -87,6 +87,7 @@ export function run<T>(fn: () => T): T {
 }
 
 export const EmptySet: ReadonlySet<never> = new Set<never>();
+export const EmptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
 	if (iterable instanceof Set) {

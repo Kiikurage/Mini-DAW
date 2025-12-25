@@ -27,16 +27,16 @@ export function PresetSelect({
 			}}
 			renderValue={() => {
 				const presetName = presetNames.find(
-					(preset) => preset.number === value,
+					(preset) => preset.presetNumber === value,
 				);
 				if (presetName === undefined) return "#N/A";
 
-				return `${presetName.number}: ${presetName.name}`;
+				return `${presetName.presetNumber}: ${presetName.name}`;
 			}}
 		>
 			{presetNames.map((preset) => (
-				<Select.Option key={preset.number} value={preset.number}>
-					{preset.number}: {preset.name}
+				<Select.Option key={preset.presetNumber} value={preset.presetNumber}>
+					{preset.presetNumber}: {preset.name}
 				</Select.Option>
 			))}
 		</Select>

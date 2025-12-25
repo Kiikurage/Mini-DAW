@@ -17,7 +17,7 @@ import { SongStore } from "../SongStore.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
-import { type Synthesizer, SynthesizerKey } from "../Synthesizer.ts";
+import { Synthesizer } from "../Synthesizer.ts";
 import { type AddChannel, AddChannelKey } from "../usecases/AddChannel.ts";
 import {
 	type RemoveChannel,
@@ -58,7 +58,7 @@ export function ChannelListView({
 	contextMenu = useComponent(ContextMenuManager.Key, contextMenu);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
-	synthesizer = useComponent(SynthesizerKey, synthesizer);
+	synthesizer = useComponent(Synthesizer.Key, synthesizer);
 	editor = useComponent(Editor.Key, editor);
 	player = useComponent(Player.Key, player);
 

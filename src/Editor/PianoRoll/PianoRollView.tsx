@@ -8,26 +8,19 @@ import { addListener, EmptySet } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { IconButton } from "../../react/IconButton.ts";
-import {
-	BoxShadowStyleBase,
-	ListBoxStyleBase,
-	UIControlStyleBase,
-} from "../../react/Styles.ts";
+import { BoxShadowStyleBase, UIControlStyleBase } from "../../react/Styles.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import { type Synthesizer, SynthesizerKey } from "../../Synthesizer.ts";
+import { Synthesizer } from "../../Synthesizer.ts";
 import {
 	type RemoveNotes,
 	RemoveNotesKey,
 } from "../../usecases/RemoveNotes.ts";
 import { type SetNotes, SetNotesKey } from "../../usecases/SetNotes.ts";
 import { Editor } from "../Editor.ts";
-import {
-	widthPerMeasure,
-	widthPerTick,
-} from "../ParameterEditor/ParameterEditorViewRenderer.ts";
+import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import { PianoRoll } from "./PianoRoll.ts";
 import { PianoRollInteractionHandleResolver } from "./PianoRollInteractionHandleResolver.ts";
 import {
@@ -56,7 +49,7 @@ export function PianoRollView({
 	soundFontStore?: SoundFontStore;
 	clipboard?: ClipboardManager;
 }) {
-	synthesizer = useComponent(SynthesizerKey, synthesizer);
+	synthesizer = useComponent(Synthesizer.Key, synthesizer);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
 	songStore = useComponent(SongStore.Key, songStore);
 	player = useComponent(Player.Key, player);

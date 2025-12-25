@@ -197,10 +197,10 @@ function SoundFontDialogView({
 										<ListBox.OptionList>
 											{soundFont.getPresetNames().map((preset) => (
 												<ListBox.Option
-													key={preset.number}
-													value={preset.number}
+													key={preset.presetNumber}
+													value={preset.presetNumber}
 												>
-													{preset.number}: {preset.name}
+													{preset.presetNumber}: {preset.name}
 												</ListBox.Option>
 											))}
 										</ListBox.OptionList>
