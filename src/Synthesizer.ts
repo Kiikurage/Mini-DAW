@@ -38,6 +38,17 @@ export class Synthesizer {
 	}
 
 	/**
+	 * マスターボリューム[0.0, 1.0]
+	 */
+	get volume(): number {
+		return this.masterVolumeNode.gain.value;
+	}
+
+	setVolume(value: number) {
+		this.masterVolumeNode.gain.value = value;
+	}
+
+	/**
 	 * 音を鳴らす
 	 */
 	noteOn(message: NoteOnMessage): void {

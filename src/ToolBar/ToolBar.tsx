@@ -9,6 +9,7 @@ import { PromiseState } from "../PromiseState.ts";
 import { Form } from "../react/Form.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { Slider } from "../react/Slider.tsx";
 import { SongStore } from "../SongStore.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
@@ -148,6 +149,20 @@ export function ToolBar({
 					gap: 8,
 				}}
 			>
+				<Form.Field label="マスターボリューム">
+					<Slider
+						min={0}
+						max={1}
+						step={0.01}
+						title="マスターボリューム"
+						defaultValue={synthesizer.volume}
+						onChange={(ev) => {
+							const value = Number.parseFloat(ev.target.value);
+							if (Number.isNaN(value)) return;
+							synthesizer.setVolume(value);
+						}}
+					/>
+				</Form.Field>
 				<IconButton variant="normalInline" onClick={() => player.togglePlay()}>
 					{isPlaying ? <MdPause /> : <MdPlayArrow />}
 				</IconButton>

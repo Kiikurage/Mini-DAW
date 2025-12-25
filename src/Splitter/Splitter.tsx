@@ -343,13 +343,12 @@ export const Splitter = Object.assign(
 							}}
 							width={direction === "row" ? RESIZE_HANDLE_SIZE : "100%"}
 							height={direction === "column" ? RESIZE_HANDLE_SIZE : "100%"}
-							css={[
-								{
-									position: "absolute",
-									background: "transparent",
-									zIndex: 1,
-								},
-							]}
+							css={{
+								position: "absolute",
+								background: "transparent",
+								zIndex: 1,
+								touchAction: "none",
+							}}
 							onPointerDown={(ev) => {
 								if (dragState.isDragging) return;
 								vibrateFeedback();

@@ -134,7 +134,7 @@ export const Button = styled.button<{
 			pointerEvents: "none",
 		},
 		"&:focus-visible": {
-			outline: "auto",
+			outline: "2px solid var(--color-primary-500)",
 		},
 		"&[aria-pressed='false']": {
 			opacity: 0.3,
