@@ -6,6 +6,7 @@ import { Editor } from "../Editor/Editor.ts";
 import { formatDuration } from "../lib.ts";
 import { Player } from "../Player/Player.ts";
 import { Button } from "../react/Button.ts";
+import { FlexLayout } from "../react/Styles.ts";
 import { SongStore } from "../SongStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import { type UpdateSong, UpdateSongKey } from "../usecases/UpdateSong.ts";
@@ -58,36 +59,20 @@ export function StatusBarView({
 
 	return (
 		<div
-			css={{
-				height: 24,
-				borderTop: "1px solid var(--color-StatusBar-border)",
-				background: "var(--color-StatusBar-background)",
-				color: "var(--color-StatusBar-foreground)",
-				fontSize: "0.9em",
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "stretch",
-				justifyContent: "space-between",
-				padding: "0 12px",
-				gap: 16,
-			}}
+			css={[
+				FlexLayout.row.stretch.spaceBetween.gap(16),
+				{
+					height: 24,
+					borderTop: "1px solid var(--color-StatusBar-border)",
+					background: "var(--color-StatusBar-background)",
+					color: "var(--color-StatusBar-foreground)",
+					fontSize: "0.9em",
+					padding: "0 12px",
+				},
+			]}
 		>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-				}}
-			>
-				{statusMessage}
-			</div>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-				}}
-			>
+			<div css={FlexLayout.row.center}>{statusMessage}</div>
+			<div css={FlexLayout.row.center}>
 				<StatusBarButton
 					variant="normalInline"
 					onClick={() => {

@@ -8,7 +8,11 @@ import { addListener, EmptySet } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { IconButton } from "../../react/IconButton.ts";
-import { BoxShadowStyleBase, UIControlStyleBase } from "../../react/Styles.ts";
+import {
+	BoxShadowStyleBase,
+	FlexLayout,
+	UIControlStyleBase,
+} from "../../react/Styles.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SongStore } from "../../SongStore.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
@@ -226,17 +230,13 @@ function PianoRollSelectionActionPopup({
 			css={[
 				BoxShadowStyleBase,
 				UIControlStyleBase,
+				FlexLayout.row.center.center.gap(8),
 				{
 					position: "absolute",
 					bottom: selectionBottom,
 					right: selectionRight,
 					minHeight: "unset",
 					padding: "4px 8px",
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "center",
-					gap: 8,
 				},
 			]}
 		>

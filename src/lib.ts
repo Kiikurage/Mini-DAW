@@ -1,3 +1,5 @@
+import type { Interpolation } from "@emotion/react";
+import type { ClassAttributes, ComponentType, JSX, RefAttributes } from "react";
 import { TICK_PER_MEASURE } from "./constants.ts";
 
 export function isNullish(x: unknown): x is null | undefined {
@@ -15,6 +17,10 @@ export function assertNotNullish<T>(
 	if (value === null || value === undefined) {
 		throw new Error(message);
 	}
+}
+
+export function sleep(ms: number) {
+	return new Promise<void>((r) => setTimeout(r, ms));
 }
 
 export function assert(
@@ -57,6 +63,12 @@ export function formatDuration(durationInTick: number) {
 	}
 }
 
+export function addListener<K extends keyof WindowEventMap>(
+	target: Window,
+	type: K,
+	listener: (this: Window, ev: WindowEventMap[K]) => void,
+	options?: AddEventListenerOptions,
+): () => void;
 export function addListener<K extends keyof DocumentEventMap>(
 	target: Document,
 	type: K,
@@ -100,3 +112,18 @@ export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
 export function toMutableSet<T>(iterable: Iterable<T>): Set<T> {
 	return new Set(iterable);
 }
+
+export type ElementOf<T> = T extends keyof JSX.IntrinsicElements
+	? JSX.IntrinsicElements[T] extends ClassAttributes<infer E>
+		? E
+		: never
+	: never;
+
+export type PropsOf<T> =
+	T extends ComponentType<infer P>
+		? P & { css?: Interpolation } & RefAttributes<T>
+		: T extends keyof JSX.IntrinsicElements
+			? JSX.IntrinsicElements[T] & { css?: Interpolation } & RefAttributes<
+						ElementOf<T>
+					>
+			: never;

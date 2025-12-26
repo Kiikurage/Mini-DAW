@@ -51,6 +51,5 @@ export class Stateful<
 	}
 }
 
-export type StateOnly<T> = T extends Stateful<infer S, infer E>
-	? Stateful<S, E>
-	: never;
+export type StateOnly<T> =
+	T extends Stateful<infer S, infer E> ? Stateful<S, E> : never;

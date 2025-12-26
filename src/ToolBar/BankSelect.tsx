@@ -31,23 +31,15 @@ export function BankSelect({
 
 	return (
 		<Select
-			value={value}
-			onChange={(value) => {
-				setUncontrolledValue(value as number);
-				onChange?.(value as number);
+			value={value.toString()}
+			onChange={(option) => {
+				setUncontrolledValue(Number.parseInt(option.id, 10));
+				onChange?.(Number.parseInt(option.id, 10));
 			}}
-			renderValue={(value) => {
-				const preset = bankMap.get(value as number);
-				if (preset === undefined) return "#N/A";
-
-				return `${preset.bankNumber}: ${preset.name}`;
-			}}
-		>
-			{presets.map((preset) => (
-				<Select.Option key={preset.bankNumber} value={preset.bankNumber}>
-					{preset.bankNumber}: {preset.name}
-				</Select.Option>
-			))}
-		</Select>
+			options={presets.map((preset) => ({
+				label: `${preset.bankNumber}: ${preset.name}`,
+				id: preset.bankNumber.toString(),
+			}))}
+		/>
 	);
 }

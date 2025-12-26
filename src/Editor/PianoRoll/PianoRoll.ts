@@ -112,6 +112,7 @@ export function getLoopKeys(
 	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
 	const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+	if (soundFontPromise === undefined) return EmptySet;
 	if (!PromiseState.isFulfilled(soundFontPromise?.state)) return EmptySet;
 
 	const soundFont = soundFontPromise.state;

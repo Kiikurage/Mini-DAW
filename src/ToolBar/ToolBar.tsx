@@ -6,10 +6,11 @@ import { getActiveChannel } from "../getActiveChannel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PromiseState } from "../PromiseState.ts";
-import { Form } from "../react/Form.tsx";
+import { Field } from "../react/Field.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
-import { Slider } from "../react/Slider.tsx";
+import { SliderField } from "../react/Slider.tsx";
+import { FlexLayout } from "../react/Styles.ts";
 import { SongStore } from "../SongStore.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
@@ -65,64 +66,67 @@ export function ToolBar({
 		if (activeChannel === null) return null;
 		const instrumentKey = activeChannel.instrumentKey;
 		const soundFont = soundFontStoreState.get(instrumentKey.url);
-		if (!PromiseState.isFulfilled(soundFont?.state)) return null;
+		if (soundFont === undefined) return null;
+		if (!PromiseState.isFulfilled(soundFont.state)) return null;
 		return soundFont.state;
 	})();
 
 	return (
 		<div
-			css={{
-				background: "var(--color-toolbar-background)",
-				color: "var(--color-toolbar-foreground)",
-				borderBottom: "1px solid var(--color-toolbar-border)",
-				height: 64,
-				display: "flex",
-				alignItems: "flex-end",
-				justifyContent: "center",
-				padding: "8px 8px",
-				boxSizing: "border-box",
-			}}
+			css={[
+				FlexLayout.row.end.center,
+				{
+					background: "var(--color-toolbar-background)",
+					color: "var(--color-toolbar-foreground)",
+					borderBottom: "1px solid var(--color-toolbar-border)",
+					height: 64,
+					padding: "8px 8px",
+					boxSizing: "border-box",
+				},
+			]}
 		>
 			<div
-				css={{
-					flex: "1 1 0",
-					display: "flex",
-					flexDirection: "row",
-					gap: 8,
-					alignItems: "flex-end",
-					justifyContent: "flex-start",
-				}}
+				css={[
+					FlexLayout.row.end.start.gap(8),
+					{
+						flex: "1 1 0",
+					},
+				]}
 			>
 				{activeChannel !== null && soundFont !== null && (
 					<>
-						<Form.Field label="プリセット">
-							<PresetSelect
-								soundFont={soundFont}
-								value={activeChannel.instrumentKey.presetNumber}
-								onChange={(presetNumber) => {
-									const instrumentKey = new InstrumentKey(
-										activeChannel.instrumentKey.name,
-										presetNumber,
-										0,
-									);
-									updateChannel(activeChannel.id, { instrumentKey });
-								}}
-							/>
-						</Form.Field>
-						<Form.Field label="バンク">
-							<BankSelect
-								presetNumber={activeChannel.instrumentKey.presetNumber}
-								soundFont={soundFont}
-								onChange={(bankNumber) => {
-									const instrumentKey = new InstrumentKey(
-										activeChannel.instrumentKey.name,
-										activeChannel.instrumentKey.presetNumber,
-										bankNumber,
-									);
-									updateChannel(activeChannel.id, { instrumentKey });
-								}}
-							/>
-						</Form.Field>
+						<div>
+							<Field label="プリセット">
+								<PresetSelect
+									soundFont={soundFont}
+									value={activeChannel.instrumentKey.presetNumber}
+									onChange={(presetNumber) => {
+										const instrumentKey = new InstrumentKey(
+											activeChannel.instrumentKey.name,
+											presetNumber,
+											0,
+										);
+										updateChannel(activeChannel.id, { instrumentKey });
+									}}
+								/>
+							</Field>
+						</div>
+						<div>
+							<Field label="バンク">
+								<BankSelect
+									presetNumber={activeChannel.instrumentKey.presetNumber}
+									soundFont={soundFont}
+									onChange={(bankNumber) => {
+										const instrumentKey = new InstrumentKey(
+											activeChannel.instrumentKey.name,
+											activeChannel.instrumentKey.presetNumber,
+											bankNumber,
+										);
+										updateChannel(activeChannel.id, { instrumentKey });
+									}}
+								/>
+							</Field>
+						</div>
 						<IconButton
 							size="sm"
 							onClick={() => {
@@ -141,48 +145,48 @@ export function ToolBar({
 				)}
 			</div>
 			<div
-				css={{
-					flex: "0 0 auto",
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					gap: 8,
-				}}
+				css={[
+					FlexLayout.row.center.stretch.gap(8),
+					{
+						flex: "0 0 auto",
+					},
+				]}
 			>
-				<Form.Field label="マスターボリューム">
-					<Slider
-						min={0}
-						max={1}
-						step={0.01}
-						title="マスターボリューム"
-						defaultValue={synthesizer.volume}
-						onChange={(ev) => {
-							const value = Number.parseFloat(ev.target.value);
-							if (Number.isNaN(value)) return;
-							synthesizer.setVolume(value);
+				<div>
+					<SliderField
+						label="マスターボリューム"
+						sliderProps={{
+							min: 0,
+							max: 1,
+							step: 0.01,
+							defaultValue: synthesizer.volume,
+							onChange: (ev) => {
+								const value = Number.parseFloat(ev.target.value);
+								if (Number.isNaN(value)) return;
+								synthesizer.setVolume(value);
+							},
 						}}
 					/>
-				</Form.Field>
+				</div>
 				<IconButton variant="normalInline" onClick={() => player.togglePlay()}>
 					{isPlaying ? <MdPause /> : <MdPlayArrow />}
 				</IconButton>
 				<div
-					css={{
-						position: "relative",
-						width: 200,
-						height: 48,
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						justifyContent: "center",
-						borderRadius: 4,
-						background: "var(--color-gray-200)",
-						color: "var(--color-foreground-weak)",
-						padding: "4px 12px",
-						boxSizing: "border-box",
-						userSelect: "none",
-						border: "1px solid var(--color-border)",
-					}}
+					css={[
+						FlexLayout.column.center.center,
+						{
+							position: "relative",
+							width: 200,
+							height: 48,
+							borderRadius: 4,
+							background: "var(--color-gray-200)",
+							color: "var(--color-foreground-weak)",
+							padding: "4px 12px",
+							boxSizing: "border-box",
+							userSelect: "none",
+							border: "1px solid var(--color-border)",
+						},
+					]}
 				>
 					{/** biome-ignore lint/a11y/noStaticElementInteractions: <explanation> */}
 					{/** biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}

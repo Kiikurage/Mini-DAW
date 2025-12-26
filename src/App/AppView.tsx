@@ -3,7 +3,8 @@ import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { EditorView } from "../Editor/EditorView.tsx";
 import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
-import { KeyboardHandler } from "../KeyboardHandler.ts";
+import { KeyboardHandler } from "../KeyboardHandler.tsx";
+import { addListener } from "../lib.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
 import { Splitter } from "../Splitter/Splitter.tsx";
 import { StatusBarView } from "../StatusBar/StatusBarView.tsx";
@@ -31,6 +32,13 @@ export function AppView({
 	}, [initializeApp]);
 
 	useEffect(() => {
+		const handleKeyDownCapture = (ev: KeyboardEvent) => {
+			const handled = keyboard.handleKeyDownCapture(ev);
+			if (handled) {
+				ev.preventDefault();
+				ev.stopPropagation();
+			}
+		};
 		const handleKeyDown = (ev: KeyboardEvent) => {
 			const handled = keyboard.handleKeyDown(ev);
 			if (handled) {
@@ -39,9 +47,14 @@ export function AppView({
 			}
 		};
 
-		window.addEventListener("keydown", handleKeyDown, { capture: true });
+		const cleanUps = [
+			addListener(window, "keydown", handleKeyDownCapture, { capture: true }),
+			addListener(window, "keydown", handleKeyDown, { capture: false }),
+		];
 		return () => {
-			window.removeEventListener("keydown", handleKeyDown, { capture: true });
+			for (const cleanUp of cleanUps) {
+				cleanUp();
+			}
 		};
 	}, [keyboard]);
 

@@ -1,5 +1,6 @@
-import { FaGithub, FaGoogleDrive, FaRedo, FaUndo } from "react-icons/fa";
-import { MdContentPaste, MdFullscreen, MdRedo, MdUndo } from "react-icons/md";
+import { FaGithub, FaRedo, FaUndo } from "react-icons/fa";
+import { MdContentPaste, MdFullscreen } from "react-icons/md";
+import { SaveDialog } from "./AutoSaveConfigDialog/SaveDialog.tsx";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
@@ -7,15 +8,20 @@ import { Button } from "./react/Button.ts";
 import { IconButton } from "./react/IconButton.ts";
 import { Link } from "./react/Link.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
-import { FolderSelectDialog } from "./SaveDialog/FolderSelectDialog.tsx";
+import { FlexLayout } from "./react/Styles.ts";
 import { useStateful } from "./Stateful/useStateful.tsx";
 import { type LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { type SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
+import {
+	type SaveToGoogleDrive,
+	SaveToGoogleDriveKey,
+} from "./usecases/SaveToGoogleDrive.ts";
 
 export function GlobalMenuBar({
 	newFile,
 	saveFile,
+	saveToGoogleDrive,
 	loadFile,
 	overlayPortal,
 	history,
@@ -23,6 +29,7 @@ export function GlobalMenuBar({
 }: {
 	newFile?: NewFile;
 	saveFile?: SaveFile;
+	saveToGoogleDrive?: SaveToGoogleDrive;
 	loadFile?: LoadFile;
 	overlayPortal?: OverlayPortal;
 	history?: EditHistoryManager;
@@ -30,6 +37,7 @@ export function GlobalMenuBar({
 }) {
 	newFile = useComponent(NewFileKey, newFile);
 	saveFile = useComponent(SaveFileKey, saveFile);
+	saveToGoogleDrive = useComponent(SaveToGoogleDriveKey, saveToGoogleDrive);
 	loadFile = useComponent(LoadFileKey, loadFile);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	history = useComponent(EditHistoryManager.Key, history);
@@ -40,28 +48,18 @@ export function GlobalMenuBar({
 
 	return (
 		<div
-			css={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "space-between",
-				gap: 16,
-				width: "100%",
-				inset: 0,
-				padding: "48px 16px 8px",
-				boxSizing: "border-box",
-				background: "var(--color-gray-100)",
-			}}
+			css={[
+				FlexLayout.row.center.spaceBetween.gap(16),
+				{
+					width: "100%",
+					inset: 0,
+					padding: "48px 16px 8px",
+					boxSizing: "border-box",
+					background: "var(--color-gray-100)",
+				},
+			]}
 		>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "flex-start",
-					gap: 16,
-				}}
-			>
+			<div css={[FlexLayout.row.center.start.gap(16)]}>
 				<Button
 					size="sm"
 					variant="normalInline"
@@ -73,7 +71,9 @@ export function GlobalMenuBar({
 				<Button
 					size="sm"
 					variant="normalInline"
-					onClick={() => saveFile()}
+					onClick={() => {
+						overlayPortal.show(({ close }) => <SaveDialog onClose={close} />);
+					}}
 					title="保存"
 				>
 					保存
@@ -87,15 +87,7 @@ export function GlobalMenuBar({
 					読み込み
 				</Button>
 			</div>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "flex-start",
-					gap: 16,
-				}}
-			>
+			<div css={[FlexLayout.row.center.start.gap(16)]}>
 				<IconButton
 					variant="normalInline"
 					title="貼り付け"
@@ -137,17 +129,6 @@ export function GlobalMenuBar({
 					}}
 				>
 					<MdFullscreen size="24" />
-				</IconButton>
-				<IconButton
-					variant="normalInline"
-					title="Google Driveへ接続"
-					onClick={async (ev) => {
-						ev.preventDefault();
-						ev.stopPropagation();
-						new FolderSelectDialog(overlayPortal).open();
-					}}
-				>
-					<FaGoogleDrive size="24" />
 				</IconButton>
 				<Link
 					href="https://github.com/Kiikurage/Mini-DAW"

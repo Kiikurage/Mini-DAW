@@ -8,6 +8,7 @@ const GoogleAPIScope = {
 	DRIVE_METADATA_READONLY:
 		"https://www.googleapis.com/auth/drive.metadata.readonly",
 	DRIVE_METADATA: "https://www.googleapis.com/auth/drive.metadata",
+	DRIVE_FILE: "https://www.googleapis.com/auth/drive.file",
 };
 type GoogleAPIScope = (typeof GoogleAPIScope)[keyof typeof GoogleAPIScope];
 
@@ -16,7 +17,6 @@ export namespace GoogleDrive {
 		readonly id: string;
 		readonly kind: string;
 		readonly mimeType: MimeType;
-		readonly resourceKey: string;
 		readonly name: string;
 	}
 
@@ -83,7 +83,43 @@ export class GoogleAPIClient {
 		return (await this.fetchJSON(url.toString())) as ListFilesResponse;
 	}
 
-	async getAbout() {
+	async uploadFile(options: {
+		parentId: string;
+		file: File;
+	}): Promise<GoogleDrive.File> {
+		await this.ensureScope([GoogleAPIScope.DRIVE_FILE]);
+
+		const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
+		url.searchParams.set("uploadType", "multipart");
+
+		const formData = new FormData();
+		formData.append(
+			"metadata",
+			new Blob(
+				[
+					JSON.stringify({
+						parents: [options.parentId],
+						mimeType: options.file.type,
+						name: options.file.name,
+					}),
+				],
+				{ type: "application/json; charset=UTF-8" },
+			),
+		);
+		formData.append("file", options.file);
+
+		return await this.fetchJSON(url.toString(), {
+			method: "POST",
+			body: formData,
+		});
+	}
+
+	async getAbout(): Promise<{
+		user: {
+			photoLink: string;
+			emailAddress: string;
+		};
+	}> {
 		await this.ensureScope([
 			GoogleAPIScope.DRIVE_METADATA_READONLY,
 			GoogleAPIScope.DRIVE_METADATA,

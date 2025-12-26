@@ -1,14 +1,13 @@
 import styled, { type CSSObject } from "@emotion/styled";
 import type { ReactNode } from "react";
+import { FlexLayout } from "./Styles.ts";
 
-const FormRow = styled.div({
-	display: "flex",
-	flexDirection: "row",
-	gap: "8px",
-	alignItems: "center",
-	justifyContent: "flex-start",
-	margin: 0,
-});
+const FormRow = styled.div([
+	FlexLayout.row.center.start.gap(8),
+	{
+		margin: 0,
+	},
+]);
 
 function FormField({
 	label,
@@ -24,12 +23,9 @@ function FormField({
 	return (
 		<div
 			css={[
+				FlexLayout.column.stretch.start,
 				{
 					position: "relative",
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "stretch",
-					justifyContent: "flex-start",
 					maxWidth: "100%",
 				},
 				flex && {
@@ -48,13 +44,7 @@ function FormField({
 }
 
 export const Form = Object.assign(
-	styled.form({
-		display: "flex",
-		flexDirection: "column",
-		alignItems: "stretch",
-		justifyContent: "flex-start",
-		gap: "16px",
-	}),
+	styled.form([FlexLayout.column.stretch.start.gap(16)]),
 	{
 		Row: FormRow,
 		Field: FormField,

@@ -1,179 +1,226 @@
 import {
+	type ComponentProps,
 	createContext,
-	type KeyboardEventHandler,
-	type MouseEventHandler,
 	type ReactNode,
-	useCallback,
 	useContext,
 	useEffect,
 	useEffectEvent,
+	useId,
+	useRef,
 	useState,
 } from "react";
+import type { PropsOf } from "../../lib.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
+import { Field } from "../Field.tsx";
 import {
 	ListBoxItemStyleBase,
 	ListBoxStyleBase,
 	UIControlStyleBase,
 } from "../Styles.ts";
-import { ListBoxController } from "./ListBoxController.tsx";
-import { ListBoxState } from "./ListBoxState.tsx";
+import { ListBoxController, type ListBoxState } from "./ListBoxController.tsx";
 
 const context = createContext<ListBoxController>(null as never);
 
-function ListBoxOption({
-	children,
+export interface ListBoxOption {
+	readonly label: string;
+	readonly id: string;
+}
+
+export function ListBox({
+	id,
+	options,
 	value,
+	defaultValue,
+	onChange,
 }: {
-	children?: ReactNode;
-	value: string | number;
+	id?: string;
+	options: readonly ListBoxOption[];
+	value?: string;
+	defaultValue?: string;
+	onChange?: (value: string) => void;
 }) {
-	const controller = useContext(context);
-	const state = useStateful(controller);
+	const [controller] = useState(() => {
+		return new ListBoxController({
+			selectedId: value ?? defaultValue ?? "",
+		});
+	});
+	useEffect(() => {
+		if (value !== undefined) {
+			controller.setSelectedOptionId(value);
+		}
+	}, [value, controller]);
 
-	const id = value.toString(); // useId()
-	const selected = state.selectedOption?.id === id;
+	const onChangeListener = useEffectEvent((state: ListBoxState) =>
+		onChange?.(state.selectedId),
+	);
+	useEffect(() => {
+		controller.on("change", onChangeListener);
+		return () => {
+			controller.off("change", onChangeListener);
+		};
+	}, [controller]);
 
-	const refCallback = useCallback(
-		(element: HTMLLIElement) => {
+	return (
+		<ListBox.Provider controller={controller}>
+			<ListBox.OptionList id={id}>
+				{options.map((option) => (
+					<ListBox.Option key={option.id} id={option.id}>
+						{option.label}
+					</ListBox.Option>
+				))}
+			</ListBox.OptionList>
+		</ListBox.Provider>
+	);
+}
+
+export namespace ListBox {
+	export function useOptionProps(id: string): PropsOf<"li"> {
+		const controller = useContext(context);
+
+		const focused = useStateful(controller, (state) => state.focusedId === id);
+		const selected = useStateful(
+			controller,
+			(state) => state.selectedId === id,
+		);
+
+		const ref = useRef<HTMLLIElement>(null);
+
+		useEffect(() => {
+			const element = ref.current;
 			if (element === null) return;
 
-			controller.registerOption({ id, value, element });
-			return () => controller.unregisterOption(id);
-		},
-		[controller, id, value],
-	);
+			return controller.registerOption({ id, element });
+		}, [id, controller]);
 
-	return (
-		// biome-ignore lint/a11y/useFocusableInteractive: <explanation>
-		<li
-			id={id}
-			ref={refCallback}
-			// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-			role="option"
-			aria-selected={selected}
-			data-focused={state.focusedOptionId === id}
-			css={[ListBoxItemStyleBase]}
-		>
-			{children}
-		</li>
-	);
-}
+		useEffect(() => {
+			const element = ref.current;
+			if (element === null) return;
 
-function ListBoxOptionList({ children }: { children?: ReactNode }) {
-	const controller = useContext(context);
-	const state = useStateful(controller);
-
-	const handleKeyDown: KeyboardEventHandler = (ev) => {
-		switch (ev.key) {
-			case "ArrowUp": {
-				controller.moveFocusToPrevious();
-				ev.preventDefault();
-				ev.stopPropagation();
-				break;
+			if (focused) {
+				element.scrollIntoView({ block: "nearest" });
+				element.focus();
 			}
-			case "ArrowDown": {
-				controller.moveFocusToNext();
-				ev.preventDefault();
+		}, [focused]);
+
+		return {
+			id,
+			ref,
+			role: "option",
+			"aria-selected": selected,
+			tabIndex: focused ? 0 : -1,
+			css: [ListBoxItemStyleBase],
+			onFocus: (ev) => {
+				controller.setFocusedOptionId(id);
 				ev.stopPropagation();
-				break;
-			}
-			case "Enter":
-			case "Space": {
-				if (state.focusedOptionId !== null) {
-					controller.setSelectedOptionId(state.focusedOptionId);
-					ev.preventDefault();
-					ev.stopPropagation();
+				ev.preventDefault();
+			},
+			onClick: (ev) => {
+				controller.setSelectedOptionId(id);
+				ev.stopPropagation();
+				ev.preventDefault();
+			},
+			onKeyDown: (ev) => {
+				switch (ev.key) {
+					case "Enter":
+					case "Space": {
+						controller.setSelectedOptionId(id);
+						ev.preventDefault();
+						ev.stopPropagation();
+						break;
+					}
 				}
-				break;
-			}
-		}
-	};
+			},
+		};
+	}
 
-	const handleClick: MouseEventHandler<HTMLUListElement> = (ev) => {
-		ev.stopPropagation();
-		ev.preventDefault();
+	export function useOptionListProps(): PropsOf<"ul"> {
+		const controller = useContext(context);
+		const focusedOptionId = useStateful(controller, (state) => state.focusedId);
+		const isFocusedNothing = focusedOptionId === null;
 
-		const option = controller.state.resolveOptionByElement(
-			ev.target as HTMLElement,
-		);
-		if (option === null) return;
+		return {
+			role: "listbox",
+			"aria-activedescendant": focusedOptionId ?? undefined,
+			tabIndex: isFocusedNothing ? 0 : -1,
+			onKeyDown: (ev) => {
+				switch (ev.key) {
+					case "ArrowUp": {
+						controller.moveFocusToPrevious();
+						ev.preventDefault();
+						ev.stopPropagation();
+						break;
+					}
+					case "ArrowDown": {
+						controller.moveFocusToNext();
+						ev.preventDefault();
+						ev.stopPropagation();
+						break;
+					}
+				}
+			},
+			onBlur: (ev) => {
+				if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) {
+					controller.setFocusedOptionId(null);
+				}
+			},
+		};
+	}
 
-		controller.setSelectedOptionId(option.id);
-		controller.setFocusedOptionId(option.id);
-	};
-
-	useEffect(() => {
-		const option = state.focusedOption;
-		if (option === null) return;
-
-		option.element.scrollIntoView({ block: "nearest" });
-	}, [state]);
-
-	return (
-		// biome-ignore lint/a11y/useAriaActivedescendantWithTabindex: <explanation>
-		<ul
-			css={[UIControlStyleBase, ListBoxStyleBase]}
-			aria-activedescendant={state.focusedOptionId ?? undefined}
-			// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-			role="listbox"
-			onKeyDown={handleKeyDown}
-			onClick={handleClick}
-			onBlur={() => controller.setFocusedOptionId(null)}
-		>
-			{children}
-		</ul>
-	);
-}
-
-function ListBoxProvider({
-	children,
-	controller,
-}: {
-	children?: ReactNode;
-	controller: ListBoxController;
-}) {
-	return <context.Provider value={controller}>{children}</context.Provider>;
-}
-
-export const ListBox = Object.assign(
-	function ListBox({
+	export function Option({
 		children,
-		value: controlledValue,
-		defaultValue,
-		onChange,
+		id,
 	}: {
 		children?: ReactNode;
-		value?: string | number | null;
-		defaultValue?: string | number;
-		onChange?: (value: string | number | null) => void;
+		id: string;
 	}) {
-		const [controller] = useState(() => {
-			return new ListBoxController(
-				new ListBoxState({
-					value: controlledValue ?? defaultValue ?? null,
-					options: [],
-					focusedOptionId: null,
-				}),
-			);
-		});
-
-		const onChangeListener = useEffectEvent((state: ListBoxState) =>
-			onChange?.(state.value),
-		);
-		useEffect(() => {
-			controller.on("change", onChangeListener);
-			return () => {
-				controller.off("change", onChangeListener);
-			};
-		}, [controller]);
+		const props = useOptionProps(id);
 
 		return (
-			<ListBoxProvider controller={controller}>{children}</ListBoxProvider>
+			<li {...props} css={[ListBoxItemStyleBase]}>
+				{children}
+			</li>
 		);
-	},
-	{
-		Provider: ListBoxProvider,
-		OptionList: ListBoxOptionList,
-		Option: ListBoxOption,
-	},
-);
+	}
+
+	export function OptionList({
+		children,
+		id,
+	}: {
+		children?: ReactNode;
+		id?: string;
+	}) {
+		const props = useOptionListProps();
+
+		return (
+			<ul {...props} id={id} css={[UIControlStyleBase, ListBoxStyleBase]}>
+				{children}
+			</ul>
+		);
+	}
+
+	export function Provider({
+		children,
+		controller,
+	}: {
+		children?: ReactNode;
+		controller: ListBoxController;
+	}) {
+		return <context.Provider value={controller}>{children}</context.Provider>;
+	}
+}
+
+export function ListBoxField({
+	label,
+	listBoxProps,
+}: {
+	label: ReactNode;
+	listBoxProps: ComponentProps<typeof ListBox>;
+}) {
+	const fieldId = useId();
+
+	return (
+		<Field label={label} htmlFor={fieldId}>
+			<ListBox {...listBoxProps} id={fieldId} />
+		</Field>
+	);
+}

@@ -1,5 +1,15 @@
 import { Stateful } from "../../Stateful/Stateful.ts";
-import { ListBoxState, type Option } from "./ListBoxState.tsx";
+
+interface Option {
+	id: string;
+	element: HTMLElement;
+}
+
+export interface ListBoxState {
+	readonly selectedId: string;
+	readonly focusedId: string | null;
+	readonly options: readonly Option[];
+}
 
 export class ListBoxController extends Stateful<
 	ListBoxState,
@@ -7,39 +17,77 @@ export class ListBoxController extends Stateful<
 		change: [state: ListBoxState];
 	}
 > {
-	constructor(initialState: ListBoxState = new ListBoxState()) {
-		super(initialState);
+	constructor(initialState?: Partial<ListBoxState>) {
+		super({
+			selectedId: "",
+			focusedId: null,
+			options: [],
+			...initialState,
+		});
 	}
 
 	setSelectedOptionId(optionId: string | null) {
-		this.updateState((state) => state.setSelectedOptionId(optionId));
+		this.updateState((state) => {
+			const option =
+				state.options.find((option) => option.id === optionId) ?? null;
+			if (option === null) return state;
+
+			return { ...state, selectedId: option.id };
+		});
 		this.emit("change", this.state);
 	}
 
 	setFocusedOptionId(optionId: string | null) {
-		this.updateState((state) => state.setFocusedOptionId(optionId));
+		this.updateState((state) => {
+			if (state.focusedId === optionId) return state;
+			return { ...state, focusedId: optionId };
+		});
 	}
 
 	registerOption(option: Option) {
-		this.updateState((state) => state.registerOption(option));
+		this.updateState((state) => ({
+			...state,
+			options: [...state.options, option],
+		}));
+		return () => this.unregisterOption(option.id);
 	}
 
 	unregisterOption(optionId: string) {
-		this.updateState((state) => state.unregisterOption(optionId));
+		this.updateState((state) => ({
+			...state,
+			options: state.options.filter((option) => option.id !== optionId),
+		}));
 	}
 
 	moveFocusToNext() {
-		this.updateState((state) => state.moveFocusToNext());
+		this.updateState((state) => {
+			const currentIndex = state.options.findIndex(
+				(option) => option.id === state.focusedId,
+			);
+			const nextIndex = (currentIndex + 1) % state.options.length;
+			return {
+				...state,
+				focusedId: state.options[nextIndex]?.id ?? null,
+			};
+		});
 	}
 
 	moveFocusToPrevious() {
-		this.updateState((state) => state.moveFocusToPrevious());
+		this.updateState((state) => {
+			const currentIndex = state.options.findIndex(
+				(option) => option.id === state.focusedId,
+			);
+			const nextIndex =
+				(currentIndex - 1 + state.options.length) % state.options.length;
+
+			return {
+				...state,
+				focusedId: state.options[nextIndex]?.id ?? null,
+			};
+		});
 	}
 
 	focusOnSelectedOption() {
-		const selectedOption = this.state.selectedOption;
-		if (selectedOption === null) return;
-
-		this.setFocusedOptionId(selectedOption.id);
+		this.setFocusedOptionId(this.state.selectedId);
 	}
 }

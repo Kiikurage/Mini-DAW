@@ -1,7 +1,7 @@
 import { type ReactNode, useRef, useState } from "react";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import { BoxShadowStyleBase } from "../Styles.ts";
+import { BoxShadowStyleBase, FlexLayout } from "../Styles.ts";
 import { useResizeObserver } from "../useResizeObserver.ts";
 
 export function PopUp({
@@ -36,17 +36,18 @@ export function PopUp({
 				height: state.height,
 				minWidth: state.width,
 			}}
-			css={{
-				position: "fixed",
-				inset: "unset",
-				pointerEvents: "none",
-				display: "flex",
-				flexDirection: "column",
-				background: "transparent",
-				border: "none",
-				overflow: "visible",
-				padding: 0,
-			}}
+			css={[
+				FlexLayout.column,
+				{
+					position: "fixed",
+					inset: "unset",
+					pointerEvents: "none",
+					background: "transparent",
+					border: "none",
+					overflow: "visible",
+					padding: 0,
+				},
+			]}
 			ref={(e) => {
 				baseRef.current = e;
 				controller.setBaseElement(e);

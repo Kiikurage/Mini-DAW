@@ -8,6 +8,7 @@ import {
 	useState,
 } from "react";
 import { assertNotNullish } from "../lib.ts";
+import { FlexLayout } from "../react/Styles.ts";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -325,12 +326,14 @@ export const Splitter = Object.assign(
 					style={{
 						flexDirection: direction,
 					}}
-					css={{
-						position: "absolute",
-						inset: 0,
-						display: "flex",
-						overflow: "clip",
-					}}
+					css={[
+						FlexLayout.default,
+						{
+							position: "absolute",
+							inset: 0,
+							overflow: "clip",
+						},
+					]}
 				>
 					{children}
 					{state.handles.map((handle) => (

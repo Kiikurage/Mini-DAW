@@ -4,10 +4,13 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 
+type OverlayComponentType = ComponentType<{ close: () => void }>;
+
 export class OverlayPortal extends Stateful<
 	readonly {
 		id: number;
-		component: ComponentType<{ key: number }>;
+		component: OverlayComponentType;
+		close: () => void;
 	}[]
 > {
 	static readonly Key = ComponentKey.of(OverlayPortal);
@@ -15,7 +18,10 @@ export class OverlayPortal extends Stateful<
 	readonly Portal: ComponentType = () =>
 		createPortal(
 			useStateful(this).map((overlay) =>
-				createElement(overlay.component, { key: overlay.id }),
+				createElement(overlay.component, {
+					key: overlay.id,
+					close: overlay.close,
+				}),
 			),
 			document.body,
 		);
@@ -24,13 +30,14 @@ export class OverlayPortal extends Stateful<
 		super([]);
 	}
 
-	show(component: ComponentType<{ key: number }>) {
+	show(component: OverlayComponentType) {
 		const id = Math.random();
-
-		this.updateState((state) => [...state, { id, component }]);
-
-		return () => {
+		const close = () => {
 			this.updateState((state) => state.filter((o) => o.id !== id));
 		};
+
+		this.updateState((state) => [...state, { id, component, close }]);
+
+		return close;
 	}
 }

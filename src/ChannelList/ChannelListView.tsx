@@ -13,6 +13,7 @@ import { PromiseState } from "../PromiseState.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
 import { IconButton } from "../react/IconButton.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { FlexLayout } from "../react/Styles.ts";
 import { SongStore } from "../SongStore.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
@@ -67,29 +68,27 @@ export function ChannelListView({
 
 	return (
 		<div
-			css={{
-				position: "absolute",
-				inset: 0,
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "stretch",
-				justifyContent: "stretch",
-				backgroundColor: "var(--color-sidepanel-background)",
-				borderRight: "1px solid var(--color-sidepanel-border)",
-				color: "var(--color-sidepanel-foreground)",
-				boxSizing: "border-box",
-			}}
+			css={[
+				FlexLayout.column.stretch.stretch,
+				{
+					position: "absolute",
+					inset: 0,
+					backgroundColor: "var(--color-sidepanel-background)",
+					borderRight: "1px solid var(--color-sidepanel-border)",
+					color: "var(--color-sidepanel-foreground)",
+					boxSizing: "border-box",
+				},
+			]}
 		>
 			<header
-				css={{
-					flex: "0 0 auto",
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "space-between",
-					padding: "2px 12px",
-					borderBottom: "1px solid var(--color-channelList-border)",
-				}}
+				css={[
+					FlexLayout.row.center.spaceBetween,
+					{
+						flex: "0 0 auto",
+						padding: "2px 12px",
+						borderBottom: "1px solid var(--color-channelList-border)",
+					},
+				]}
 			>
 				<span
 					css={{
@@ -99,14 +98,7 @@ export function ChannelListView({
 				>
 					Channels
 				</span>
-				<div
-					css={{
-						display: "flex",
-						flexDirection: "row",
-						alignItems: "center",
-						gap: 4,
-					}}
-				>
+				<div css={FlexLayout.row.center.center.gap(4)}>
 					<IconButton
 						variant="normalInline"
 						title="チャンネルを追加"
@@ -218,7 +210,8 @@ function ChannelListItem({
 
 	const instrumentName = (() => {
 		const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
-		if (!PromiseState.isFulfilled(soundFontPromise?.state)) return "#N/A";
+		if (soundFontPromise === undefined) return "#N/A";
+		if (!PromiseState.isFulfilled(soundFontPromise.state)) return "#N/A";
 
 		const sf = soundFontPromise.state;
 		const preset = sf.getPreset(
@@ -275,39 +268,30 @@ function ChannelListItem({
 					clientLeft: ev.clientX,
 				});
 			}}
-			css={{
-				padding: "0 12px",
-				gap: 12,
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "stretch",
-				width: "100%",
-				boxSizing: "border-box",
-				border: "none",
-				borderBottom: "1px solid var(--color-channelList-border)",
-				background: "var(--color-channelList-background)",
-				height: "48px",
-				font: "inherit",
-				color: "var(--color-channelList-foreground)",
-				cursor: "pointer",
-				userSelect: "none",
-				"&:hover": {
-					backgroundColor: "var(--color-channelList-background-hover)",
+			css={[
+				FlexLayout.row.center.stretch.gap(12),
+				{
+					padding: "0 12px",
+					width: "100%",
+					boxSizing: "border-box",
+					border: "none",
+					borderBottom: "1px solid var(--color-channelList-border)",
+					background: "var(--color-channelList-background)",
+					height: "48px",
+					font: "inherit",
+					color: "var(--color-channelList-foreground)",
+					cursor: "pointer",
+					userSelect: "none",
+					"&:hover": {
+						backgroundColor: "var(--color-channelList-background-hover)",
+					},
+					"&[aria-selected='true']": {
+						backgroundColor: "var(--color-channelList-background-active)",
+					},
 				},
-				"&[aria-selected='true']": {
-					backgroundColor: "var(--color-channelList-background-active)",
-				},
-			}}
+			]}
 		>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
+			<div css={FlexLayout.row.center.center}>
 				<i
 					style={{
 						background: channel.color.cssString,
@@ -318,13 +302,13 @@ function ChannelListItem({
 				/>
 			</div>
 			<div
-				css={{
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "flex-start",
-					flex: "1 1 0",
-					minWidth: "0",
-				}}
+				css={[
+					FlexLayout.column.start.center,
+					{
+						flex: "1 1 0",
+						minWidth: "0",
+					},
+				]}
 			>
 				<EditableLabel
 					value={channel.labelOrDefault}
@@ -350,13 +334,12 @@ function ChannelListItem({
 				</div>
 			</div>
 			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "flex-start",
-					flex: "0 0 auto",
-					gap: 4,
-				}}
+				css={[
+					FlexLayout.row.start.center.gap(4),
+					{
+						flex: "0 0 auto",
+					},
+				]}
 			>
 				<IconButton
 					title="ミュート"

@@ -6,7 +6,7 @@ import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Editor } from "./Editor/Editor.ts";
 import { EventBus } from "./EventBus.ts";
 import { GoogleAPIClient } from "./GoogleDriveAPI/GoogleAPIClient.ts";
-import { KeyboardHandler } from "./KeyboardHandler.ts";
+import { KeyboardHandler } from "./KeyboardHandler.tsx";
 import { Player } from "./Player/Player.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { SongStore } from "./SongStore.ts";
@@ -29,6 +29,10 @@ import {
 } from "./usecases/RemoveControlChanges.ts";
 import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
+import {
+	SaveToGoogleDrive,
+	SaveToGoogleDriveKey,
+} from "./usecases/SaveToGoogleDrive.ts";
 import {
 	SetNoteParameter,
 	SetNoteParameterKey,
@@ -101,6 +105,7 @@ export function configureDeps() {
 					deps.get(ClipboardManager.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
+					deps.get(OverlayPortal.Key),
 					deps.get(SaveFileKey),
 					deps.get(LoadFileKey),
 				);
@@ -191,6 +196,12 @@ export function configureDeps() {
 			.set(SaveFileKey, (deps) => {
 				return SaveFile({
 					songStore: deps.get(SongStore.Key),
+				});
+			})
+			.set(SaveToGoogleDriveKey, (deps) => {
+				return SaveToGoogleDrive({
+					songStore: deps.get(SongStore.Key),
+					googleAPIClient: deps.get(GoogleAPIClient.Key),
 				});
 			})
 			.set(LoadFileKey, (deps) => {
