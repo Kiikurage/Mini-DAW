@@ -1,6 +1,7 @@
 import { FaGithub, FaRedo, FaUndo } from "react-icons/fa";
 import { MdContentPaste, MdFullscreen } from "react-icons/md";
-import { SaveDialog } from "./AutoSaveConfigDialog/SaveDialog.tsx";
+import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
+import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
@@ -72,7 +73,9 @@ export function GlobalMenuBar({
 					size="sm"
 					variant="normalInline"
 					onClick={() => {
-						overlayPortal.show(({ close }) => <SaveDialog onClose={close} />);
+						overlayPortal.show(({ close }) => (
+							<SaveFileDialog onClose={close} />
+						));
 					}}
 					title="保存"
 				>
@@ -81,10 +84,14 @@ export function GlobalMenuBar({
 				<Button
 					size="sm"
 					variant="normalInline"
-					onClick={() => loadFile()}
-					title="読み込み"
+					onClick={() => {
+						overlayPortal.show(({ close }) => (
+							<OpenFileDialog onClose={close} />
+						));
+					}}
+					title="開く"
 				>
-					読み込み
+					開く
 				</Button>
 			</div>
 			<div css={[FlexLayout.row.center.start.gap(16)]}>

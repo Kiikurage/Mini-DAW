@@ -1,4 +1,5 @@
-import { SaveDialog } from "./AutoSaveConfigDialog/SaveDialog.tsx";
+import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
+import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
 import type { ClipboardManager } from "./ClipboardManager.ts";
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
@@ -33,7 +34,7 @@ export class KeyboardHandler {
 			case "s": {
 				if (ev.ctrlKey || ev.metaKey) {
 					this.overlayPortal.show(({ close }) => (
-						<SaveDialog onClose={close} />
+						<SaveFileDialog onClose={close} />
 					));
 					return true;
 				}
@@ -41,7 +42,9 @@ export class KeyboardHandler {
 			}
 			case "o": {
 				if (ev.ctrlKey || ev.metaKey) {
-					this.loadFile();
+					this.overlayPortal.show(({ close }) => (
+						<OpenFileDialog onClose={close} />
+					));
 					return true;
 				}
 				break;

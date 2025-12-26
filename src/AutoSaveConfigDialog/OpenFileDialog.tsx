@@ -1,56 +1,57 @@
-import type { CSSObject } from "@emotion/styled";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { FaSpinner } from "react-icons/fa";
-import { MdCancel, MdCheckCircle, MdDownload } from "react-icons/md";
+import { MdUpload } from "react-icons/md";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
-import type { GoogleDrive } from "../GoogleDriveAPI/GoogleAPIClient.ts";
+import {
+	GoogleAPIClient,
+	type GoogleDrive,
+} from "../GoogleDriveAPI/GoogleAPIClient.ts";
+import { type SerializedSong, Song } from "../models/Song.ts";
 import { PromiseState } from "../PromiseState.ts";
+import { AlertMessage } from "../react/AlertMessage.tsx";
 import { Button } from "../react/Button.ts";
 import { Dialog } from "../react/Dialog.tsx";
 import { Form } from "../react/Form.tsx";
-import { InputField } from "../react/Input.tsx";
 import { SelectField } from "../react/Select/Select.tsx";
 import { FlexLayout } from "../react/Styles.ts";
-import { type SaveFile, SaveFileKey } from "../usecases/SaveFile.ts";
-import {
-	type SaveToGoogleDrive,
-	SaveToGoogleDriveKey,
-} from "../usecases/SaveToGoogleDrive.ts";
+import { StatusBar } from "../StatusBar/StatusBar.tsx";
+import { type LoadFile, LoadFileKey } from "../usecases/LoadFile.ts";
+import { type SetSong, SetSongKey } from "../usecases/SetSong.ts";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
 
 type Method = "" | "google-drive" | "local";
 
-export function SaveDialog({
+export function OpenFileDialog({
 	onClose,
-	saveFile,
+	loadFile,
 }: {
 	onClose: () => void;
-	saveFile?: SaveFile;
+	loadFile?: LoadFile;
 }) {
-	saveFile = useComponent(SaveFileKey, saveFile);
+	loadFile = useComponent(LoadFileKey, loadFile);
 
 	const [method, setMethod] = useState<Method>("");
 
 	return (
 		<Dialog open modal onClose={onClose}>
-			<Dialog.Header>保存</Dialog.Header>
+			<Dialog.Header>開く</Dialog.Header>
 			<Dialog.Body>
 				<div css={[FlexLayout.column.stretch.stretch.gap(8)]}>
 					<Form.Row>
 						<SelectField
-							label="保存方法"
+							label="読み込み元"
 							selectProps={{
 								value: method,
 								options: [
 									{
-										label: "ダウンロード",
+										label: "ローカルファイル",
 										id: "local" as const,
-										helperText: "作成したデータをこのPCにダウンロードします",
+										helperText: "このPCに保存したデータを読み込みます",
 									},
 									{
 										label: "Google ドライブ",
 										id: "google-drive" as const,
-										helperText: "作成したデータをGoogleドライブへ保存します",
+										helperText: "Googleドライブに保存したデータを読み込みます",
 									},
 								],
 								renderOption: (option) => (
@@ -76,7 +77,7 @@ export function SaveDialog({
 								variant="primary"
 								size="lg"
 								onClick={() => {
-									saveFile();
+									loadFile();
 									onClose();
 								}}
 								css={{
@@ -85,12 +86,12 @@ export function SaveDialog({
 									flex: "1 1 0",
 								}}
 							>
-								ダウンロード <MdDownload />
+								ファイルを選択 <MdUpload />
 							</Button>
 						</Form.Row>
 					)}
 					{method === "google-drive" && (
-						<SaveDialogGoogleDriveSection onComplete={() => onClose()} />
+						<GoogleDriveSection onComplete={() => onClose()} />
 					)}
 				</div>
 			</Dialog.Body>
@@ -98,28 +99,47 @@ export function SaveDialog({
 	);
 }
 
-function SaveDialogGoogleDriveSection({
+function GoogleDriveSection({
+	setSong,
 	onComplete,
-	saveToGoogleDrive,
+	googleAPIClient,
+	statusBar,
 }: {
+	setSong?: SetSong;
 	onComplete: () => void;
-	saveToGoogleDrive?: SaveToGoogleDrive;
+	googleAPIClient?: GoogleAPIClient;
+	statusBar?: StatusBar;
 }) {
+	googleAPIClient = useComponent(GoogleAPIClient.Key, googleAPIClient);
+	statusBar = useComponent(StatusBar.Key, statusBar);
+
+	setSong = useComponent(SetSongKey, setSong);
 	const [parentId, setParentIdId] = useState<string | null>(null);
-	const [fileName, setFileName] = useState("");
 	const [uploadPS, setUploadPS] = useState<PromiseState<GoogleDrive.File>>(
 		PromiseState.initial(),
 	);
 
-	saveToGoogleDrive = useComponent(SaveToGoogleDriveKey, saveToGoogleDrive);
-
-	const onSaveButtonClick = async () => {
+	const onOpenButtonClick = async () => {
 		if (parentId === null) return;
-		if (fileName.trim() === "") return;
 
 		setUploadPS(PromiseState.pending());
-		saveToGoogleDrive({ parentId, fileName })
-			.then((file) => setUploadPS(file))
+		googleAPIClient
+			.downloadFile(parentId)
+			.then(async (buffer) => {
+				const body = await new Promise<string>((resolve) => {
+					const reader = new FileReader();
+					reader.addEventListener("loadend", () => {
+						resolve(reader.result as string);
+					});
+					reader.readAsText(new Blob([buffer]));
+				});
+				const data = JSON.parse(body) as SerializedSong;
+				const song = Song.deserialize(data);
+
+				setSong(song);
+				onComplete();
+				statusBar.showMessage("Googleドライブから読み込みました");
+			})
 			.catch((e) => setUploadPS(e));
 	};
 
@@ -135,25 +155,17 @@ function SaveDialogGoogleDriveSection({
 			<Form.Row>
 				<GoogleDriveFileTree onSelect={(id) => setParentIdId(id)} />
 			</Form.Row>
-			<InputField
-				label="ファイル名"
-				inputProps={{
-					value: fileName,
-					onChange: (e) => setFileName(e.target.value),
-					disabled: PromiseState.isPending(uploadPS),
-				}}
-			/>
 			<Button
 				variant="primary"
 				size="lg"
-				onClick={onSaveButtonClick}
+				onClick={onOpenButtonClick}
 				css={{
 					marginTop: 32,
 					flex: "1 1 0",
 				}}
 				disabled={PromiseState.isPending(uploadPS)}
 			>
-				{!PromiseState.isPending(uploadPS) && <span>保存</span>}
+				{!PromiseState.isPending(uploadPS) && <span>ファイルを取得する</span>}
 				{PromiseState.isPending(uploadPS) && (
 					<div css={FlexLayout.row.center.center.gap(8)}>
 						<FaSpinner
@@ -165,58 +177,15 @@ function SaveDialogGoogleDriveSection({
 								},
 							}}
 						/>
-						保存中...
+						ファイルを取得中...
 					</div>
 				)}
 			</Button>
 			{PromiseState.isRejected(uploadPS) && (
 				<AlertMessage variant="error">
-					保存に失敗しました: {uploadPS.message}
+					ファイルを開けませんでした: {uploadPS.message}
 				</AlertMessage>
 			)}
-			{PromiseState.isFulfilled(uploadPS) && (
-				<AlertMessage variant="success">保存しました</AlertMessage>
-			)}
-		</div>
-	);
-}
-
-const StyleVariant = {
-	error: {
-		color: "var(--color-error-1000)",
-	},
-	success: {
-		color: "var(--color-success-1000)",
-	},
-} as const satisfies Record<string, CSSObject>;
-
-const IconVariant = {
-	error: MdCancel,
-	success: MdCheckCircle,
-} as const;
-
-export function AlertMessage({
-	variant,
-	children,
-}: {
-	variant: "error" | "success";
-	children?: ReactNode;
-}) {
-	const Icon = IconVariant[variant];
-
-	return (
-		<div
-			css={[
-				FlexLayout.row.center.center.gap(16),
-				{
-					opacity: 0.6,
-				},
-				StyleVariant[variant],
-			]}
-		>
-			<Icon css={{ width: 24, height: 24 }} />
-
-			<div css={{ flex: "1 1 0" }}>{children}</div>
 		</div>
 	);
 }

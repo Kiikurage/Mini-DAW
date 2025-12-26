@@ -38,8 +38,6 @@ export class GoogleAPIClient {
 	private token: string = "";
 	private expiresAt: number = 0;
 
-	constructor() {}
-
 	async listFilesByFolder(folderId: string) {
 		const files: GoogleDrive.File[] = [];
 
@@ -114,6 +112,15 @@ export class GoogleAPIClient {
 		});
 	}
 
+	async downloadFile(fileId: string): Promise<ArrayBuffer> {
+		await this.ensureScope([GoogleAPIScope.DRIVE_FILE]);
+
+		const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+		url.searchParams.set("alt", "media");
+
+		return await this.fetchBuffer(url.toString());
+	}
+
 	async getAbout(): Promise<{
 		user: {
 			photoLink: string;
@@ -133,6 +140,11 @@ export class GoogleAPIClient {
 	private async fetchJSON(url: string, req?: RequestInit) {
 		const res = await this.fetch(url, req);
 		return res.json();
+	}
+
+	private async fetchBuffer(url: string, req?: RequestInit) {
+		const res = await this.fetch(url, req);
+		return res.arrayBuffer();
 	}
 
 	private async fetch(url: string, req: RequestInit = {}) {
