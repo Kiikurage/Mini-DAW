@@ -98,7 +98,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 
 	get loopKeys(): ReadonlySet<number> {
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return EmptySet;

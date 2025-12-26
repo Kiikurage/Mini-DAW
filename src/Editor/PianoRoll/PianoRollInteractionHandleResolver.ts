@@ -275,7 +275,7 @@ export class PianoRollInteractionHandleResolver
 		);
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel !== null) {
@@ -380,7 +380,7 @@ export class PianoRollInteractionHandleResolver
 	): PointerEventManagerInteractionHandle | null {
 		const selectionArea = computeSelectionArea(
 			this.pianoRoll.loopKeys,
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (selectionArea === null) return null;

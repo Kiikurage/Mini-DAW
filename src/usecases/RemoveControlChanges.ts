@@ -25,7 +25,7 @@ export function RemoveControlChanges({
 		type: ControlType;
 		ticks: Iterable<number>;
 	}) => {
-		const channel = songStore.state.getChannel(args.channelId);
+		const channel = songStore.state.song.getChannel(args.channelId);
 		if (channel === null) return;
 
 		const changeList = channel.controlChanges.get(args.type);

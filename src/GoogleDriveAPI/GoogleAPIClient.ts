@@ -81,7 +81,7 @@ export class GoogleAPIClient {
 		return (await this.fetchJSON(url.toString())) as ListFilesResponse;
 	}
 
-	async uploadFile(options: {
+	async postFile(options: {
 		parentId: string;
 		file: File;
 	}): Promise<GoogleDrive.File> {
@@ -112,7 +112,27 @@ export class GoogleAPIClient {
 		});
 	}
 
-	async downloadFile(fileId: string): Promise<ArrayBuffer> {
+	async patchFile(options: {
+		fileId: string;
+		file: File;
+	}): Promise<GoogleDrive.File> {
+		await this.ensureScope([GoogleAPIScope.DRIVE_FILE]);
+
+		const url = new URL(
+			`https://www.googleapis.com/upload/drive/v3/files/${options.fileId}`,
+		);
+		url.searchParams.set("uploadType", "media");
+
+		return await this.fetchJSON(url.toString(), {
+			method: "PATCH",
+			headers: {
+				"Content-Type": options.file.type,
+			},
+			body: options.file,
+		});
+	}
+
+	async getFile(fileId: string): Promise<ArrayBuffer> {
 		await this.ensureScope([GoogleAPIScope.DRIVE_FILE]);
 
 		const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);

@@ -5,11 +5,37 @@ import type { Note } from "./models/Note.ts";
 import { Song, type SongPatch } from "./models/Song.ts";
 import { Stateful } from "./Stateful/Stateful.ts";
 
-export class SongStore extends Stateful<Song> {
+export interface GoogleDriveSongLocation {
+	type: "googleDrive";
+	fileId: string;
+}
+
+export interface LocalSongLocation {
+	type: "local";
+}
+
+export interface NewFileSongLocation {
+	type: "newFile";
+}
+
+export type SongLocation =
+	| GoogleDriveSongLocation
+	| LocalSongLocation
+	| NewFileSongLocation;
+
+export interface SongStoreState {
+	song: Song;
+	location: SongLocation;
+}
+
+export class SongStore extends Stateful<SongStoreState> {
 	static readonly Key = ComponentKey.of(SongStore);
 
 	constructor(bus: EventBus) {
-		super(new Song());
+		super({
+			song: new Song(),
+			location: { type: "newFile" },
+		});
 
 		bus
 			.on("channel.add", (channel) => {
@@ -42,19 +68,28 @@ export class SongStore extends Stateful<Song> {
 	}
 
 	putChannel(channel: Channel) {
-		this.updateState((state) => state.putChannel(channel));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.putChannel(channel),
+		}));
 	}
 
 	removeChannel(channelId: number) {
-		this.updateState((state) => state.removeChannel(channelId));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.removeChannel(channelId),
+		}));
 	}
 
 	updateChannel(channelId: number, updater: (channel: Channel) => Channel) {
 		this.updateState((state) => {
-			const channel = state.getChannel(channelId);
+			const channel = state.song.getChannel(channelId);
 			if (channel === null) return state;
 
-			return state.replaceChannel(updater(channel));
+			return {
+				...state,
+				song: state.song.replaceChannel(updater(channel)),
+			};
 		});
 	}
 
@@ -64,18 +99,58 @@ export class SongStore extends Stateful<Song> {
 	 * @param notes 追加・更新するノート
 	 */
 	putNotes(channelId: number, notes: Iterable<Note>) {
-		this.updateState((state) => state.putNotes(channelId, notes));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.putNotes(channelId, notes),
+		}));
 	}
 
 	removeNotes(channelId: number, noteIds: Iterable<number>) {
-		this.updateState((state) => state.removeNotes(channelId, noteIds));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.removeNotes(channelId, noteIds),
+		}));
 	}
 
 	setSong(song: Song) {
-		this.setState(song);
+		this.updateState((state) => ({
+			...state,
+			song,
+		}));
+	}
+
+	setLocation(location: SongLocation) {
+		this.updateState((state) => ({ ...state, location }));
+		saveLastFileLocation(location);
 	}
 
 	applySongPatch(patch: SongPatch) {
-		this.setSong(this.state.applyPatch(patch));
+		this.setSong(this.state.song.applyPatch(patch));
+	}
+}
+
+const LOCALSTORAGE_LAST_FILE_LOCATION_KEY = "lastFileLocation";
+export function saveLastFileLocation(location: SongLocation | null) {
+	if (location === null) {
+		localStorage.removeItem(LOCALSTORAGE_LAST_FILE_LOCATION_KEY);
+		return;
+	}
+	try {
+		localStorage.setItem(
+			LOCALSTORAGE_LAST_FILE_LOCATION_KEY,
+			JSON.stringify(location),
+		);
+	} catch {
+		// ignore
+	}
+}
+
+export function loadLastFileLocation(): SongLocation | null {
+	try {
+		const item = localStorage.getItem(LOCALSTORAGE_LAST_FILE_LOCATION_KEY);
+		if (item === null) return null;
+		return JSON.parse(item) as SongLocation;
+	} catch {
+		return null;
 	}
 }

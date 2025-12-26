@@ -42,7 +42,10 @@ export class ControlChangeDelegate extends ParameterEditorSampleDelegate {
 	}
 
 	getAllSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.songStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return (channel.controlChanges.get(this.controlType)?.toArray() ?? []).map(
@@ -52,7 +55,7 @@ export class ControlChangeDelegate extends ParameterEditorSampleDelegate {
 
 	getSelectedSamples(): Iterable<ParameterSample> {
 		return getSelectedControlChanges(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 			this.controlType,
 		).map(createSample);
@@ -273,7 +276,7 @@ function selectByRangeFeature(
 				if (marqueeArea !== null) {
 					const channelId = editor.state.activeChannelId;
 					if (channelId !== null) {
-						const channel = songStore.state.getChannel(channelId);
+						const channel = songStore.state.song.getChannel(channelId);
 						assertNotNullish(channel);
 
 						const controlChanges = channel.controlChanges.get(controlType);

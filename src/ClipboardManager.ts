@@ -31,7 +31,7 @@ export class ClipboardManager {
 
 	copy() {
 		const selectedNotes = [
-			...getSelectedNotes(this.songStore.state, this.editor.state),
+			...getSelectedNotes(this.songStore.state.song, this.editor.state),
 		];
 		if (selectedNotes.length === 0) return;
 

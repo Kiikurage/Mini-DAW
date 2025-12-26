@@ -20,11 +20,11 @@ export function SaveToGoogleDrive({
 		parentId: string;
 		fileName: string;
 	}) => {
-		const song = songStore.state;
+		const song = songStore.state.song;
 		const serializedSong = song.serialize();
 		const json = JSON.stringify(serializedSong);
 
-		return await googleAPIClient.uploadFile({
+		return await googleAPIClient.postFile({
 			parentId,
 			file: new File([json], fileName, {
 				type: "application/json",

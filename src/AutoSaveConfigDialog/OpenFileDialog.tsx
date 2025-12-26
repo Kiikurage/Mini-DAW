@@ -14,12 +14,13 @@ import { Dialog } from "../react/Dialog.tsx";
 import { Form } from "../react/Form.tsx";
 import { SelectField } from "../react/Select/Select.tsx";
 import { FlexLayout } from "../react/Styles.ts";
+import { SongStore } from "../SongStore.ts";
 import { StatusBar } from "../StatusBar/StatusBar.tsx";
 import { type LoadFile, LoadFileKey } from "../usecases/LoadFile.ts";
 import { type SetSong, SetSongKey } from "../usecases/SetSong.ts";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
 
-type Method = "" | "google-drive" | "local";
+type Method = "google-drive" | "local";
 
 export function OpenFileDialog({
 	onClose,
@@ -30,7 +31,7 @@ export function OpenFileDialog({
 }) {
 	loadFile = useComponent(LoadFileKey, loadFile);
 
-	const [method, setMethod] = useState<Method>("");
+	const [method, setMethod] = useState<Method>("local");
 
 	return (
 		<Dialog open modal onClose={onClose}>
@@ -104,27 +105,30 @@ function GoogleDriveSection({
 	onComplete,
 	googleAPIClient,
 	statusBar,
+	songStore,
 }: {
 	setSong?: SetSong;
 	onComplete: () => void;
 	googleAPIClient?: GoogleAPIClient;
 	statusBar?: StatusBar;
+	songStore?: SongStore;
 }) {
 	googleAPIClient = useComponent(GoogleAPIClient.Key, googleAPIClient);
 	statusBar = useComponent(StatusBar.Key, statusBar);
+	songStore = useComponent(SongStore.Key, songStore);
 
 	setSong = useComponent(SetSongKey, setSong);
-	const [parentId, setParentIdId] = useState<string | null>(null);
+	const [fileId, setFileId] = useState<string | null>(null);
 	const [uploadPS, setUploadPS] = useState<PromiseState<GoogleDrive.File>>(
 		PromiseState.initial(),
 	);
 
 	const onOpenButtonClick = async () => {
-		if (parentId === null) return;
+		if (fileId === null) return;
 
 		setUploadPS(PromiseState.pending());
 		googleAPIClient
-			.downloadFile(parentId)
+			.getFile(fileId)
 			.then(async (buffer) => {
 				const body = await new Promise<string>((resolve) => {
 					const reader = new FileReader();
@@ -139,6 +143,7 @@ function GoogleDriveSection({
 				setSong(song);
 				onComplete();
 				statusBar.showMessage("Googleドライブから読み込みました");
+				songStore.setLocation({ type: "googleDrive", fileId });
 			})
 			.catch((e) => setUploadPS(e));
 	};
@@ -153,7 +158,7 @@ function GoogleDriveSection({
 			]}
 		>
 			<Form.Row>
-				<GoogleDriveFileTree onSelect={(id) => setParentIdId(id)} />
+				<GoogleDriveFileTree onSelect={(id) => setFileId(id)} />
 			</Form.Row>
 			<Button
 				variant="primary"

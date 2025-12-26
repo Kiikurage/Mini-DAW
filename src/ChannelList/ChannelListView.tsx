@@ -63,7 +63,7 @@ export function ChannelListView({
 	editor = useComponent(Editor.Key, editor);
 	player = useComponent(Player.Key, player);
 
-	const channels = useStateful(songStore, (state) => state.channels);
+	const channels = useStateful(songStore, (state) => state.song.channels);
 	const activeChannelId = useStateful(editor, (state) => state.activeChannelId);
 
 	return (
@@ -111,8 +111,10 @@ export function ChannelListView({
 							);
 
 							const id =
-								Math.max(-1, ...songStore.state.channels.map((ch) => ch.id)) +
-								1;
+								Math.max(
+									-1,
+									...songStore.state.song.channels.map((ch) => ch.id),
+								) + 1;
 							const channel = new Channel({
 								id,
 								label: `Channel ${id + 1}`,

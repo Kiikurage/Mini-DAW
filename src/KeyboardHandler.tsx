@@ -1,25 +1,25 @@
 import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
 import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
+import type { AutoSaveService } from "./AutoSaveService/AutoSaveService.ts";
 import type { ClipboardManager } from "./ClipboardManager.ts";
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import type { Editor } from "./Editor/Editor.ts";
 import type { Player } from "./Player/Player.ts";
 import type { OverlayPortal } from "./react/OverlayPortal.ts";
-import type { LoadFile } from "./usecases/LoadFile.ts";
-import type { SaveFile } from "./usecases/SaveFile.ts";
+import type { SongStore } from "./SongStore.ts";
 
 export class KeyboardHandler {
 	static readonly Key = ComponentKey.of(KeyboardHandler);
 
 	constructor(
+		private readonly songStore: SongStore,
+		private readonly autoSaveService: AutoSaveService,
 		private readonly history: EditHistoryManager,
 		private readonly clipboard: ClipboardManager,
 		private readonly player: Player,
 		private readonly editor: Editor,
 		private readonly overlayPortal: OverlayPortal,
-		private readonly saveFile: SaveFile,
-		private readonly loadFile: LoadFile,
 	) {}
 
 	/**
@@ -33,9 +33,13 @@ export class KeyboardHandler {
 		switch (ev.key) {
 			case "s": {
 				if (ev.ctrlKey || ev.metaKey) {
-					this.overlayPortal.show(({ close }) => (
-						<SaveFileDialog onClose={close} />
-					));
+					if (ev.shiftKey || this.songStore.state.location.type === "newFile") {
+						this.overlayPortal.show(({ close }) => (
+							<SaveFileDialog onClose={close} />
+						));
+					} else {
+						this.autoSaveService.save();
+					}
 					return true;
 				}
 				break;

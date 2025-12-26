@@ -15,7 +15,7 @@ export function RemoveChannel({
 	bus: EventBus;
 }) {
 	return (channelId: number) => {
-		const channel = songStore.state.getChannel(channelId);
+		const channel = songStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		history.execute({

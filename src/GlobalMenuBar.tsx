@@ -11,35 +11,20 @@ import { Link } from "./react/Link.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { FlexLayout } from "./react/Styles.ts";
 import { useStateful } from "./Stateful/useStateful.tsx";
-import { type LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
-import { type SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
-import {
-	type SaveToGoogleDrive,
-	SaveToGoogleDriveKey,
-} from "./usecases/SaveToGoogleDrive.ts";
 
 export function GlobalMenuBar({
 	newFile,
-	saveFile,
-	saveToGoogleDrive,
-	loadFile,
 	overlayPortal,
 	history,
 	clipboard,
 }: {
 	newFile?: NewFile;
-	saveFile?: SaveFile;
-	saveToGoogleDrive?: SaveToGoogleDrive;
-	loadFile?: LoadFile;
 	overlayPortal?: OverlayPortal;
 	history?: EditHistoryManager;
 	clipboard?: ClipboardManager;
 }) {
 	newFile = useComponent(NewFileKey, newFile);
-	saveFile = useComponent(SaveFileKey, saveFile);
-	saveToGoogleDrive = useComponent(SaveToGoogleDriveKey, saveToGoogleDrive);
-	loadFile = useComponent(LoadFileKey, loadFile);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	history = useComponent(EditHistoryManager.Key, history);
 	clipboard = useComponent(ClipboardManager.Key, clipboard);

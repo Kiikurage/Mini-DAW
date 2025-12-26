@@ -1,4 +1,5 @@
 import { AudioContextKey } from "./AudioContextHolder.ts";
+import { AutoSaveService } from "./AutoSaveService/AutoSaveService.ts";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { ContextMenuManager } from "./ContextMenu/ContextMenuManager.tsx";
 import { DIContainer } from "./Dependency/DIContainer.ts";
@@ -101,17 +102,25 @@ export function configureDeps() {
 			})
 			.set(KeyboardHandler.Key, (deps) => {
 				return new KeyboardHandler(
+					deps.get(SongStore.Key),
+					deps.get(AutoSaveService.Key),
 					deps.get(EditHistoryManager.Key),
 					deps.get(ClipboardManager.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
 					deps.get(OverlayPortal.Key),
-					deps.get(SaveFileKey),
-					deps.get(LoadFileKey),
 				);
 			})
 			.set(GoogleAPIClient.Key, (deps) => {
 				return new GoogleAPIClient();
+			})
+			.set(AutoSaveService.Key, (deps) => {
+				return new AutoSaveService(
+					deps.get(SongStore.Key),
+					deps.get(StatusBar.Key),
+					deps.get(GoogleAPIClient.Key),
+					deps.get(EventBus.Key),
+				);
 			})
 
 			// UseCases - Song
@@ -191,6 +200,7 @@ export function configureDeps() {
 			.set(NewFileKey, (deps) => {
 				return NewFile({
 					bus: deps.get(EventBus.Key),
+					songStore: deps.get(SongStore.Key),
 				});
 			})
 			.set(SaveFileKey, (deps) => {
@@ -213,6 +223,7 @@ export function configureDeps() {
 
 			.set(InitializeAppKey, (deps) => {
 				return InitializeApp({
+					autoSaveService: deps.get(AutoSaveService.Key),
 					newFile: deps.get(NewFileKey),
 					songStore: deps.get(SongStore.Key),
 					editor: deps.get(Editor.Key),

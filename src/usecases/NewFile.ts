@@ -4,10 +4,17 @@ import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Song } from "../models/Song.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
+import type { SongStore } from "../SongStore.ts";
 
 export const NewFileKey = ComponentKey<NewFile>("NewFile");
 
-export function NewFile({ bus }: { bus: EventBus }) {
+export function NewFile({
+	bus,
+	songStore,
+}: {
+	bus: EventBus;
+	songStore: SongStore;
+}) {
 	return (withConfirmation: boolean) => {
 		if (withConfirmation) {
 			if (
@@ -62,6 +69,7 @@ export function NewFile({ bus }: { bus: EventBus }) {
 				],
 			}),
 		);
+		songStore.setLocation({ type: "newFile" });
 	};
 }
 

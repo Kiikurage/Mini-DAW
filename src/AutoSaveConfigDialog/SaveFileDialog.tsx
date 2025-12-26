@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { MdDownload } from "react-icons/md";
+import { AutoSaveService } from "../AutoSaveService/AutoSaveService.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
-import type { GoogleDrive } from "../GoogleDriveAPI/GoogleAPIClient.ts";
+import {
+	GoogleAPIClient,
+	type GoogleDrive,
+} from "../GoogleDriveAPI/GoogleAPIClient.ts";
 import { PromiseState } from "../PromiseState.ts";
 import { AlertMessage } from "../react/AlertMessage.tsx";
 import { Button } from "../react/Button.ts";
@@ -20,7 +24,7 @@ import {
 } from "../usecases/SaveToGoogleDrive.ts";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
 
-type Method = "" | "google-drive" | "local";
+type Method = "google-drive" | "local";
 
 export function SaveFileDialog({
 	onClose,
@@ -31,7 +35,7 @@ export function SaveFileDialog({
 }) {
 	saveFile = useComponent(SaveFileKey, saveFile);
 
-	const [method, setMethod] = useState<Method>("");
+	const [method, setMethod] = useState<Method>("local");
 
 	return (
 		<Dialog open modal onClose={onClose}>
@@ -105,17 +109,25 @@ function GoogleDriveSection({
 	saveToGoogleDrive,
 	songStore,
 	statusBar,
+	autoSaveService,
+	googleAPIClient,
 }: {
 	onComplete: () => void;
 	saveToGoogleDrive?: SaveToGoogleDrive;
 	songStore?: SongStore;
 	statusBar?: StatusBar;
+	autoSaveService?: AutoSaveService;
+	googleAPIClient?: GoogleAPIClient;
 }) {
 	songStore = useComponent(SongStore.Key, songStore);
 	statusBar = useComponent(StatusBar.Key, statusBar);
+	autoSaveService = useComponent(AutoSaveService.Key, autoSaveService);
+	googleAPIClient = useComponent(GoogleAPIClient.Key, googleAPIClient);
 
 	const [parentId, setParentIdId] = useState<string | null>(null);
-	const [fileName, setFileName] = useState(`${songStore.state.title}.json`);
+	const [fileName, setFileName] = useState(
+		`${songStore.state.song.title}.json`,
+	);
 	const [uploadPS, setUploadPS] = useState<PromiseState<GoogleDrive.File>>(
 		PromiseState.initial(),
 	);
@@ -128,9 +140,10 @@ function GoogleDriveSection({
 
 		setUploadPS(PromiseState.pending());
 		saveToGoogleDrive({ parentId, fileName })
-			.then(() => {
+			.then((file) => {
 				onComplete();
 				statusBar.showMessage("Googleドライブに保存しました");
+				songStore.setLocation({ type: "googleDrive", fileId: file.id });
 			})
 			.catch((e) => setUploadPS(e));
 	};
@@ -188,16 +201,4 @@ function GoogleDriveSection({
 			)}
 		</div>
 	);
-}
-
-function getTimestamp() {
-	const d = new Date();
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	const hours = String(d.getHours()).padStart(2, "0");
-	const minutes = String(d.getMinutes()).padStart(2, "0");
-	const seconds = String(d.getSeconds()).padStart(2, "0");
-
-	return `${year}${month}${day}-${hours}${minutes}${seconds}`;
 }

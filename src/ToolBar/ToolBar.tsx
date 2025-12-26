@@ -54,9 +54,9 @@ export function ToolBar({
 
 	const playHeadTick = useStateful(player, (state) => state.currentTick);
 	const isPlaying = useStateful(player, (state) => state.isPlaying);
-	const songTitle = useStateful(songStore, (state) => state.title);
+	const songTitle = useStateful(songStore, (state) => state.song.title);
 
-	const song = useStateful(songStore);
+	const song = useStateful(songStore, (state) => state.song);
 	const editorState = useStateful(editor);
 	const activeChannel = getActiveChannel(song, editorState);
 

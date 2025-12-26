@@ -61,7 +61,7 @@ export function moveNotesFeature(context: {
 			if (activeChannelId === null) return;
 
 			const originalNotes = [
-				...getSelectedNotes(songStore.state, editor.state),
+				...getSelectedNotes(songStore.state.song, editor.state),
 			];
 			previewManager.startPreviewNotes(originalNotes);
 
@@ -142,7 +142,9 @@ function resizeNotes(
 	const activeChannelId = editor.state.activeChannelId;
 	if (activeChannelId === null) return;
 
-	const originalNotes = [...getSelectedNotes(songStore.state, editor.state)];
+	const originalNotes = [
+		...getSelectedNotes(songStore.state.song, editor.state),
+	];
 	pianoRoll.hoverNotesManager.disableUpdate();
 
 	const startTick = toPianoRollPosition(

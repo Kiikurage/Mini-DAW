@@ -70,13 +70,13 @@ export class Player extends Stateful<PlayerState> {
 		this.synthesizer.resetAll();
 		this.clearMutedChannels();
 
-		for (const channel of this.songStore.state.channels) {
+		for (const channel of this.songStore.state.song.channels) {
 			this.syncChannelFromSongStore(channel.id);
 		}
 	}
 
 	private syncChannelFromSongStore(channelId: number) {
-		const channel = this.songStore.state.channels.find(
+		const channel = this.songStore.state.song.channels.find(
 			(ch) => ch.id === channelId,
 		);
 		if (channel === undefined) return;
@@ -132,7 +132,7 @@ export class Player extends Stateful<PlayerState> {
 
 	toggleMuteAllChannels() {
 		const allChannelIds = new Set(
-			this.songStore.state.channels.map((ch) => ch.id),
+			this.songStore.state.song.channels.map((ch) => ch.id),
 		);
 		const areAllMuted = [...allChannelIds].every((id) =>
 			this.state.mutedChannelIds.has(id),
@@ -197,7 +197,7 @@ export class Player extends Stateful<PlayerState> {
 		const PRE_ENQUEUE_SIZE_IN_SEC = 1 / 30;
 
 		const audioLastTickFrom = Math.max(
-			...this.songStore.state.channels.map((ch) => ch.lastTickFrom),
+			...this.songStore.state.song.channels.map((ch) => ch.lastTickFrom),
 		);
 		if (this.state.currentTick > audioLastTickFrom) {
 			this.pause();
@@ -206,7 +206,7 @@ export class Player extends Stateful<PlayerState> {
 			return;
 		}
 
-		for (const channel of this.songStore.state.channels) {
+		for (const channel of this.songStore.state.song.channels) {
 			this.synthesizer.setBank({
 				channel: channel.id,
 				bankNumber: channel.instrumentKey.bankNumber,
@@ -218,7 +218,7 @@ export class Player extends Stateful<PlayerState> {
 		}
 
 		const tickEnd =
-			Math.max(...this.songStore.state.channels.map((ch) => ch.tickTo)) +
+			Math.max(...this.songStore.state.song.channels.map((ch) => ch.tickTo)) +
 			TICK_PER_BEAT;
 
 		let lastEnqueuedTick = this.startedFromInTick;
@@ -235,7 +235,7 @@ export class Player extends Stateful<PlayerState> {
 
 			const nextEnqueueTick =
 				this.currentTick + PRE_ENQUEUE_SIZE_IN_SEC / this.secondPerTick;
-			for (const channel of this.songStore.state.channels) {
+			for (const channel of this.songStore.state.song.channels) {
 				if (this.state.mutedChannelIds.has(channel.id)) continue;
 
 				for (const note of channel.notes.values()) {
@@ -300,7 +300,7 @@ export class Player extends Stateful<PlayerState> {
 	private startedAtApplicationTime: number = 0;
 
 	private get secondPerTick(): number {
-		const secondPerMeasure = (60 / this.songStore.state.bpm) * 4;
+		const secondPerMeasure = (60 / this.songStore.state.song.bpm) * 4;
 		return secondPerMeasure / TICK_PER_MEASURE;
 	}
 

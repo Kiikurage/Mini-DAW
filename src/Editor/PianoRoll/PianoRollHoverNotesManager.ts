@@ -51,7 +51,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 
 		const update = () => {
 			const activeChannel = getActiveChannel(
-				this.songStore.state,
+				this.songStore.state.song,
 				this.editor.state,
 			);
 			if (activeChannel === null) {
@@ -64,7 +64,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 					this.pointerPositions,
 					this.editor.state,
 					this.pianoRoll.state,
-					this.songStore.state,
+					this.songStore.state.song,
 					this.soundFontStore.state,
 					activeChannel,
 				),

@@ -58,7 +58,7 @@ export abstract class ParameterEditorSampleDelegate {
 		}
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel !== null) {

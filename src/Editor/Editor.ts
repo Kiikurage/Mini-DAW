@@ -302,7 +302,7 @@ export class Editor extends Stateful<EditorState> {
 	togglePreviewAllChannels() {
 		this.updateState((state) => {
 			const allChannelIds = new Set(
-				this.songStore.state.channels.map((ch) => ch.id),
+				this.songStore.state.song.channels.map((ch) => ch.id),
 			);
 			const areAllPreviewed = [...allChannelIds].every((id) =>
 				state.previewChannelIds.has(id),
@@ -343,7 +343,10 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	*findNotesInMarqueeArea(): Generator<Note> {
-		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		const activeChannel = getActiveChannel(
+			this.songStore.state.song,
+			this.state,
+		);
 		if (activeChannel === null) return;
 
 		const area = getMarqueeArea(
@@ -406,7 +409,10 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	putAllNotesToSelection() {
-		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		const activeChannel = getActiveChannel(
+			this.songStore.state.song,
+			this.state,
+		);
 		if (activeChannel === null) return;
 
 		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));

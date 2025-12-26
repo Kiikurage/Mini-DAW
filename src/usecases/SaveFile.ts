@@ -5,7 +5,7 @@ export const SaveFileKey = ComponentKey<SaveFile>("SaveFile");
 
 export function SaveFile({ songStore }: { songStore: SongStore }) {
 	return () => {
-		const song = songStore.state;
+		const song = songStore.state.song;
 		const serializedSong = song.serialize();
 		const json = JSON.stringify(serializedSong);
 

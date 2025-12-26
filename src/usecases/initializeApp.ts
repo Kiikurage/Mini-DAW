@@ -1,3 +1,4 @@
+import type { AutoSaveService } from "../AutoSaveService/AutoSaveService.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { Editor } from "../Editor/Editor.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
@@ -15,6 +16,7 @@ export function InitializeApp({
 	soundFontStore,
 	synthesizer,
 }: {
+	autoSaveService: AutoSaveService;
 	newFile: NewFile;
 	songStore: SongStore;
 	editor: Editor;
@@ -30,7 +32,7 @@ export function InitializeApp({
 		})();
 
 		newFile(false);
-		editor.setActiveChannel(songStore.state.channels[0]?.id ?? null);
+		editor.setActiveChannel(songStore.state.song.channels[0]?.id ?? null);
 	};
 }
 

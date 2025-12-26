@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AutoSaveService } from "../AutoSaveService/AutoSaveService.ts";
 import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { EditorView } from "../Editor/EditorView.tsx";
@@ -6,6 +7,7 @@ import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
 import { KeyboardHandler } from "../KeyboardHandler.tsx";
 import { addListener } from "../lib.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
+import { loadLastFileLocation } from "../SongStore.ts";
 import { Splitter } from "../Splitter/Splitter.tsx";
 import { StatusBarView } from "../StatusBar/StatusBarView.tsx";
 import { ToolBar } from "../ToolBar/ToolBar.tsx";
@@ -18,18 +20,29 @@ export function AppView({
 	keyboard,
 	overlayPortal,
 	initializeApp,
+	autoSaveService,
 }: {
 	keyboard?: KeyboardHandler;
 	overlayPortal?: OverlayPortal;
 	initializeApp?: InitializeApp;
+	autoSaveService?: AutoSaveService;
 }) {
 	keyboard = useComponent(KeyboardHandler.Key, keyboard);
 	overlayPortal = useComponent(OverlayPortal.Key, overlayPortal);
 	initializeApp = useComponent(InitializeAppKey, initializeApp);
+	autoSaveService = useComponent(AutoSaveService.Key, autoSaveService);
 
 	useEffect(() => {
+		const location = loadLastFileLocation();
 		initializeApp();
-	}, [initializeApp]);
+		if (location !== null && location.type !== "newFile") {
+			if (confirm("前回の編集ファイルを開きますか？")) {
+				autoSaveService.open(location);
+				return;
+			} else {
+			}
+		}
+	}, [initializeApp, autoSaveService]);
 
 	useEffect(() => {
 		const handleKeyDownCapture = (ev: KeyboardEvent) => {

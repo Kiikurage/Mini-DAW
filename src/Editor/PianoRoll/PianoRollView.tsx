@@ -107,7 +107,7 @@ export function PianoRollView({
 				canvas,
 				pianoRollState: pianoRoll.state,
 				pianoRollHoverNotesManagerState: pianoRoll.hoverNotesManager.state,
-				song: songStore.state,
+				song: songStore.state.song,
 				playerState: player.state,
 				editorState: editor.state,
 				soundFontStoreState: soundFontStore.state,
@@ -201,7 +201,7 @@ function PianoRollSelectionActionPopup({
 	clipboard: ClipboardManager;
 }) {
 	const editorState = useStateful(editor);
-	const song = useStateful(songStore);
+	const song = useStateful(songStore, (state) => state.song);
 	const pianoRollState = useStateful(pianoRoll);
 
 	const selection = editorState.selection;

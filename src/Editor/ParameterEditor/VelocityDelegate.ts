@@ -29,14 +29,20 @@ export class VelocityDelegate extends ParameterEditorSampleDelegate {
 	}
 
 	getAllSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.songStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return [...channel.notes.values()].map(createSample);
 	}
 
 	getSelectedSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.songStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return [...channel.notes.values()]
@@ -180,7 +186,7 @@ function selectByRangeFeature(
 				if (marqueeArea !== null) {
 					const channelId = editor.state.activeChannelId;
 					if (channelId !== null) {
-						const channel = songStore.state.getChannel(channelId);
+						const channel = songStore.state.song.getChannel(channelId);
 						assertNotNullish(channel);
 
 						for (const note of channel.notes.values()) {

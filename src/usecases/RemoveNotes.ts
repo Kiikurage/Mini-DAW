@@ -17,7 +17,7 @@ export function RemoveNotes({
 	bus: EventBus;
 }) {
 	return (channelId: number, noteIds: Iterable<number>) => {
-		const channel = songStore.state.getChannel(channelId);
+		const channel = songStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		const notes: Note[] = [...noteIds]

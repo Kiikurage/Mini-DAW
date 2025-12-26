@@ -23,7 +23,7 @@ export class PianoRollPreviewManager {
 		this.stopPreviewNotes();
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return;
@@ -49,7 +49,7 @@ export class PianoRollPreviewManager {
 
 	stopPreviewNotes() {
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.songStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return;

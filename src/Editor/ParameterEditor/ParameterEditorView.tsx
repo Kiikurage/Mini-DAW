@@ -76,7 +76,7 @@ export function ParameterEditorView({
 			renderCanvas({
 				canvas,
 				parameterEditorState: parameterEditor.state,
-				song: songStore.state,
+				song: songStore.state.song,
 				playerState: player.state,
 				editorState: editor.state,
 				allSamples: parameterEditor.getAllSamples(),
