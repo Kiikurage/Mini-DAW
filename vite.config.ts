@@ -5,7 +5,8 @@ import checker from "vite-plugin-checker";
 
 export default {
 	root: path.resolve(__dirname, "./src"),
-	mode: process.env.NODE_ENV ?? "development",
+	// mode: process.env.NODE_ENV ?? "development",
+	mode: 'produciton',
 	build: {
 		outDir: path.resolve(__dirname, "./build"),
 		emptyOutDir: true

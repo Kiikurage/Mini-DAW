@@ -397,21 +397,16 @@ export class SoundFont {
 				const shdr = this.pdta.shdr[sampleId];
 				if (shdr === undefined) continue;
 
-				const sample = new Float32Array(
-					this.sdta.sample.slice(
-						shdr.start +
-							i16(
-								instrumentZoneRecord,
-								SFGenerator.START_ADDRESS_COARSE_OFFSET,
-							) *
-								32768 +
-							i16(instrumentZoneRecord, SFGenerator.START_ADDRESS_OFFSET),
-						shdr.end +
-							i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_COARSE_OFFSET) *
-								32768 +
-							i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_OFFSET),
-					),
-				).map((v) => v / 32768);
+				const sample = this.sdta.sample.subarray(
+					shdr.start +
+						i16(instrumentZoneRecord, SFGenerator.START_ADDRESS_COARSE_OFFSET) *
+							32768 +
+						i16(instrumentZoneRecord, SFGenerator.START_ADDRESS_OFFSET),
+					shdr.end +
+						i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_COARSE_OFFSET) *
+							32768 +
+						i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_OFFSET),
+				);
 
 				entries.push(
 					new InstrumentZone({

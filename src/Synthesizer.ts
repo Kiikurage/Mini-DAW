@@ -344,7 +344,10 @@ class InstrumentZoneSynthesizer {
 			numberOfChannels: 1,
 			sampleRate: this.instrumentZone.sampleRate,
 		});
-		this.audioBuffer.copyToChannel(this.instrumentZone.sample, 0);
+		this.audioBuffer.copyToChannel(
+			new Float32Array(this.instrumentZone.sample).map((v) => v / 32768),
+			0,
+		);
 		return this.audioBuffer;
 	}
 }

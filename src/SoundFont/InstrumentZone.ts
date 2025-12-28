@@ -31,7 +31,7 @@ export class InstrumentZone {
 	 */
 	private readonly rootKey: number;
 
-	readonly sample: Float32Array<ArrayBuffer>;
+	readonly sample: Int16Array<ArrayBuffer>;
 	readonly sampleRate: number;
 	readonly sampleMode: "no_loop" | "loop" | "loop_until_key_off";
 	readonly loopStartIndex: number;
@@ -46,7 +46,7 @@ export class InstrumentZone {
 		tune: number;
 		scaleTuning: number;
 		rootKey: number;
-		sample: Float32Array<ArrayBuffer>;
+		sample: Int16Array<ArrayBuffer>;
 		sampleRate: number;
 		sampleMode: "no_loop" | "loop" | "loop_until_key_off";
 		loopStartIndex: number;

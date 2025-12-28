@@ -37,13 +37,13 @@ export class AutoSaveService {
 					this.lastSavedSong = song;
 				}
 			} finally {
-				this.autoSaveTimerId = setInterval(
+				this.autoSaveTimerId = setTimeout(
 					mainLoop,
 					AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS,
 				);
 			}
 		};
-		this.autoSaveTimerId = setInterval(
+		this.autoSaveTimerId = setTimeout(
 			mainLoop,
 			AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS,
 		);
