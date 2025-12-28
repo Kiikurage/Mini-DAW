@@ -1,20 +1,16 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
-import type { EventBus } from "../EventBus.ts";
-import type { FileStore } from "../FileStore.ts";
 import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Song } from "../models/Song.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
+import type { PutFile } from "./PutFile.ts";
 
 export const NewFileKey = ComponentKey<NewFile>("NewFile");
 
-export function NewFile({
-	bus,
-	fileStore,
-}: {
-	bus: EventBus;
-	fileStore: FileStore;
-}) {
+/**
+ * 新しいファイルを作成する。
+ */
+export function NewFile({ putFile }: { putFile: PutFile }) {
 	return (withConfirmation: boolean) => {
 		if (withConfirmation) {
 			if (
@@ -24,9 +20,8 @@ export function NewFile({
 			}
 		}
 
-		bus.emitPhasedEvents(
-			"song.put",
-			new Song({
+		putFile({
+			song: new Song({
 				title: "Untitled",
 				bpm: 120,
 				channels: [
@@ -68,7 +63,8 @@ export function NewFile({
 					}),
 				],
 			}),
-		);
+			metadata: null,
+		});
 	};
 }
 

@@ -12,7 +12,7 @@ import { Keyboard } from "../react/Keyboard.tsx";
 import { Link } from "../react/Link.ts";
 import { ListBox } from "../react/ListBox/ListBox.tsx";
 import type { OverlayPortal } from "../react/OverlayPortal.ts";
-import { Select, SelectField } from "../react/Select/Select.tsx";
+import { SelectField } from "../react/Select/Select.tsx";
 import { FlexLayout } from "../react/Styles.ts";
 import type { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";

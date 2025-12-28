@@ -1,6 +1,6 @@
 import { MouseEventButton } from "../constants.ts";
 import { EventEmitter } from "../EventEmitter.ts";
-import { addListener, isNotNullish } from "../lib.ts";
+import { addListener } from "../lib.ts";
 import type { PositionSnapshot } from "./PositionSnapshot.ts";
 
 export class PointerEventManager extends EventEmitter<{

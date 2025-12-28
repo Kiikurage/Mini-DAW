@@ -3,14 +3,15 @@ import { EventEmitter } from "./EventEmitter.ts";
 import type { Channel, ChannelPatch } from "./models/Channel.ts";
 import type { ControlChange } from "./models/ControlChange.ts";
 import type { ControlType } from "./models/ControlType.ts";
-import type { Note } from "./models/Note.ts";
-import type { Song, SongPatch } from "./models/Song.ts";
+import type { MDFile } from "./models/MDFile.ts";
+import type { Note, NotePatch } from "./models/Note.ts";
+import type { SongPatch } from "./models/Song.ts";
 
 interface EventBusEventMap {
 	/**
-	 * 曲データの設定
+	 * ファイルを開く
 	 */
-	"song.put": [song: Song];
+	"file.put": [file: MDFile];
 
 	/**
 	 * 曲のプロパティの変更
@@ -36,6 +37,11 @@ interface EventBusEventMap {
 	 * ノートの追加または置換
 	 */
 	"notes.put": [channelId: number, notes: Iterable<Note>];
+
+	/**
+	 * ノートの更新
+	 */
+	"notes.update": [patches: Iterable<NotePatch>];
 
 	/**
 	 * ノートの削除
@@ -77,13 +83,13 @@ type PhasedEvents<E> = {
  * 各イベントは、ドメインモデル変更の前、中、後に発火される3種類のイベントからなる
  *
  * - `XXX.before` イベント: 変更が適用される前に発火される。
- * 		- 変更に伴う副作用のうち、事前に処理しておく必要があるものはこのイベントで処理する。
- * 			- 例: 変更の妨げとなる状態のクリーンアップ
+ *        - 変更に伴う副作用のうち、事前に処理しておく必要があるものはこのイベントで処理する。
+ *            - 例: 変更の妨げとなる状態のクリーンアップ
  * - `XXX` イベント: 変更が適用された直後に発火される
- * 		- 変更そのものを取り扱う。通常、ドメインモデルを所有するコンポーネントのみがこのイベントを処理する。
+ *        - 変更そのものを取り扱う。通常、ドメインモデルを所有するコンポーネントのみがこのイベントを処理する。
  * - `XXX.after` イベント: 変更が完全に適用された後に発火される
- * 		- 変更に伴う副作用のうち、事後に処理する必要があるものはこのイベントで処理する。
- * 			- 例: UIの更新、外部システムへの通知など
+ *        - 変更に伴う副作用のうち、事後に処理する必要があるものはこのイベントで処理する。
+ *            - 例: UIの更新、外部システムへの通知など
  */
 export class EventBus extends EventEmitter<PhasedEvents<EventBusEventMap>> {
 	static readonly Key = ComponentKey.of(EventBus);

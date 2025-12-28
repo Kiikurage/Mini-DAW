@@ -4,8 +4,8 @@ import type { FileStore } from "./FileStore.ts";
 import { getSelectedNotes } from "./getSelectedNotes.ts";
 import { Note } from "./models/Note.ts";
 import type { Player } from "./Player/Player.ts";
+import type { PutNotes } from "./usecases/PutNotes.ts";
 import type { RemoveNotes } from "./usecases/RemoveNotes.ts";
-import type { SetNotes } from "./usecases/SetNotes.ts";
 
 export class ClipboardManager {
 	static readonly Key = ComponentKey.of(ClipboardManager);
@@ -14,7 +14,7 @@ export class ClipboardManager {
 		private readonly fileStore: FileStore,
 		private readonly player: Player,
 		private readonly editor: Editor,
-		private readonly setNotes: SetNotes,
+		private readonly setNotes: PutNotes,
 		private readonly removeNotes: RemoveNotes,
 	) {}
 

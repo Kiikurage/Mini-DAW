@@ -1,29 +1,22 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
-import type { Editor } from "../Editor/Editor.ts";
-import type { EventBus } from "../EventBus.ts";
-import type { FileStore } from "../FileStore.ts";
 import type { GoogleAPIClient } from "../GoogleDriveAPI/GoogleAPIClient.ts";
 import { neverReachable } from "../lib.ts";
 import type { FileLocation } from "../models/FileLocation.ts";
+import type { MDFile } from "../models/MDFile.ts";
 import { type SerializedSong, Song } from "../models/Song.ts";
-import type { RecentFileService } from "../RecentFileService.ts";
 
 export const OpenFileKey = ComponentKey<OpenFile>("OpenFile");
 
+/**
+ * オンライン上のファイルを取得する。ファイルは戻り値として返されるのみで、
+ * アプリケーション上へは展開されない。
+ */
 export function OpenFile({
-	bus,
-	editor,
-	fileStore,
 	googleAPIClient,
-	recentFileService,
 }: {
-	bus: EventBus;
-	editor: Editor;
-	fileStore: FileStore;
 	googleAPIClient: GoogleAPIClient;
-	recentFileService: RecentFileService;
 }) {
-	return async (location: FileLocation) => {
+	return async (location: FileLocation): Promise<MDFile> => {
 		switch (location.type) {
 			case "googleDrive": {
 				const file = await googleAPIClient.getFileMetadata(location.fileId);
@@ -39,15 +32,13 @@ export function OpenFile({
 				const data = JSON.parse(body) as SerializedSong;
 				const song = Song.deserialize(data);
 
-				bus.emitPhasedEvents("song.put", song);
-				fileStore.setFileLocation(location);
-				recentFileService.upsertEntry({
-					songTitle: song.title,
-					fileName: file.name,
-					location,
-				});
-				editor.hideWelcomeView();
-				break;
+				return {
+					song,
+					metadata: {
+						name: file.name,
+						location,
+					},
+				};
 			}
 			default: {
 				neverReachable(location.type);

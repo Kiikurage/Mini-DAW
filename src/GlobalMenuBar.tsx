@@ -1,15 +1,15 @@
 import { FaGithub, FaRedo, FaUndo } from "react-icons/fa";
 import { MdContentPaste, MdFullscreen } from "react-icons/md";
-import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
-import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
+import { OpenFileDialog } from "./OpenFileDialog.tsx";
 import { Button } from "./react/Button.ts";
 import { IconButton } from "./react/IconButton.ts";
 import { Link } from "./react/Link.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
 import { FlexLayout } from "./react/Styles.ts";
+import { SaveFileDialog } from "./SaveFileDialog.tsx";
 import { useStateful } from "./Stateful/useStateful.tsx";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
 

@@ -6,10 +6,7 @@ import type { PlayerState } from "../../Player/Player.ts";
 import { addLinePath, addRectPath } from "../canvasUtil.ts";
 import type { EditorState } from "../Editor.ts";
 import type { ParameterEditorState } from "./ParameterEditor.ts";
-import type {
-	ParameterEditorSampleDelegate,
-	ParameterSample,
-} from "./ParameterEditorSampleDelegate.ts";
+import type { ParameterSample } from "./ParameterEditorSampleDelegate.ts";
 
 export function widthPerMeasure(zoom: number) {
 	return 180 * zoom;

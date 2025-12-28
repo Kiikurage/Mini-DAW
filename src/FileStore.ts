@@ -2,13 +2,14 @@ import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EventBus } from "./EventBus.ts";
 import type { Channel } from "./models/Channel.ts";
 import type { FileLocation } from "./models/FileLocation.ts";
+import type { MDFile } from "./models/MDFile.ts";
 import type { Note } from "./models/Note.ts";
 import { Song, type SongPatch } from "./models/Song.ts";
 import { Stateful } from "./Stateful/Stateful.ts";
 
 export interface FileStoreState {
 	song: Song;
-	location: FileLocation | null;
+	metadata: MDFile["metadata"];
 }
 
 export class FileStore extends Stateful<FileStoreState> {
@@ -17,7 +18,7 @@ export class FileStore extends Stateful<FileStoreState> {
 	constructor(bus: EventBus) {
 		super({
 			song: new Song(),
-			location: null,
+			metadata: null,
 		});
 
 		bus
@@ -36,7 +37,7 @@ export class FileStore extends Stateful<FileStoreState> {
 			.on("notes.remove", (channelId, noteIds) =>
 				this.removeNotes(channelId, noteIds),
 			)
-			.on("song.put", (song) => this.setSong(song))
+			.on("file.put", (file) => this.setFile(file))
 			.on("song.update", (patch) => this.applySongPatch(patch))
 			.on("control.put", (args) => {
 				this.updateChannel(args.channelId, (channel) => {
@@ -99,6 +100,14 @@ export class FileStore extends Stateful<FileStoreState> {
 		this.updateState((state) => ({
 			...state,
 			song,
+		}));
+	}
+
+	setFile(file: MDFile) {
+		this.updateState((state) => ({
+			...state,
+			song: file.song,
+			metadata: file.metadata,
 		}));
 	}
 

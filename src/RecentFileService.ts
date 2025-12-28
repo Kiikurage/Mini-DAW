@@ -1,4 +1,5 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
+import type { EventBus } from "./EventBus.ts";
 import { FileLocation } from "./models/FileLocation.ts";
 import { Stateful } from "./Stateful/Stateful.ts";
 
@@ -19,9 +20,19 @@ export interface RecentFileServiceState {
 export class RecentFileService extends Stateful<RecentFileServiceState> {
 	static readonly Key = ComponentKey.of(RecentFileService);
 
-	constructor() {
+	constructor(bus: EventBus) {
 		super({
 			recentFiles: [],
+		});
+
+		bus.on("file.put.after", (file) => {
+			if (file.metadata !== null) {
+				this.upsertEntry({
+					songTitle: file.song.title,
+					fileName: file.metadata.name,
+					location: file.metadata.location,
+				});
+			}
 		});
 		this.addChangeListener((state) => {
 			RecentFileService.saveToLocalStorage(state);

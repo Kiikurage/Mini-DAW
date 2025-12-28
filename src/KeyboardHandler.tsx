@@ -1,12 +1,12 @@
-import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
-import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
 import type { ClipboardManager } from "./ClipboardManager.ts";
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import type { Editor } from "./Editor/Editor.ts";
 import type { FileStore } from "./FileStore.ts";
+import { OpenFileDialog } from "./OpenFileDialog.tsx";
 import type { Player } from "./Player/Player.ts";
 import type { OverlayPortal } from "./react/OverlayPortal.ts";
+import { SaveFileDialog } from "./SaveFileDialog.tsx";
 import type { SaveFile } from "./usecases/SaveFile.ts";
 
 export class KeyboardHandler {
@@ -33,8 +33,8 @@ export class KeyboardHandler {
 		switch (ev.key) {
 			case "s": {
 				if (ev.ctrlKey || ev.metaKey) {
-					if (this.fileStore.state.location !== null && !ev.shiftKey) {
-						this.saveFile(this.fileStore.state.location);
+					if (this.fileStore.state.metadata !== null && !ev.shiftKey) {
+						this.saveFile(this.fileStore.state.metadata.location);
 					} else {
 						this.overlayPortal.show(({ close }) => (
 							<SaveFileDialog onClose={close} />

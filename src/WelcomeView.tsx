@@ -15,6 +15,7 @@ import { FlexLayout } from "./react/Styles.ts";
 import { useStateful } from "./Stateful/useStateful.tsx";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { type OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
+import { type PutFile, PutFileKey } from "./usecases/PutFile.ts";
 
 /**
  * アプリ起動時に表示される画面
@@ -25,16 +26,19 @@ export function WelcomeView({
 	recentFileService,
 	newFile,
 	openFile,
+	putFile,
 }: {
 	editor?: Editor;
 	recentFileService?: RecentFileService;
 	newFile?: NewFile;
 	openFile?: OpenFile;
+	putFile?: PutFile;
 }) {
 	editor = useComponent(Editor.Key, editor);
 	recentFileService = useComponent(RecentFileService.Key, recentFileService);
 	newFile = useComponent(NewFileKey, newFile);
 	openFile = useComponent(OpenFileKey, openFile);
+	putFile = useComponent(PutFileKey, putFile);
 
 	const [loadingState, setLoadingState] = useState(PromiseState.initial());
 
@@ -47,8 +51,8 @@ export function WelcomeView({
 		setLoadingState(PromiseState.pending());
 		try {
 			await sleep(1000);
-			await openFile(entry.location);
-			editor.hideWelcomeView();
+			const file = await openFile(entry.location);
+			await putFile(file);
 			setLoadingState(PromiseState.initial());
 		} catch (error) {
 			setLoadingState(PromiseState.rejected(error as Error));

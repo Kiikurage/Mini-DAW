@@ -1,4 +1,4 @@
-import { AudioContextKey } from "./AudioContextHolder.ts";
+import { AudioContextKey } from "./AudioContext.ts";
 import { AutoSaveService } from "./AutoSaveService.ts";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { ContextMenuManager } from "./ContextMenu/ContextMenuManager.tsx";
@@ -17,7 +17,6 @@ import { StatusBar } from "./StatusBar/StatusBar.tsx";
 import { Synthesizer } from "./Synthesizer.ts";
 import { AddChannel, AddChannelKey } from "./usecases/AddChannel.ts";
 import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
-import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
@@ -25,6 +24,8 @@ import {
 	PutControlChange,
 	PutControlChangeKey,
 } from "./usecases/PutControlChange.ts";
+import { PutFile, PutFileKey } from "./usecases/PutFile.ts";
+import { PutNotes, PutNotesKey } from "./usecases/PutNotes.ts";
 import { RemoveChannel, RemoveChannelKey } from "./usecases/RemoveChannel.ts";
 import {
 	RemoveControlChanges,
@@ -32,13 +33,8 @@ import {
 } from "./usecases/RemoveControlChanges.ts";
 import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
-import {
-	SetNoteParameter,
-	SetNoteParameterKey,
-} from "./usecases/SetNoteParameter.ts";
-import { SetNotes, SetNotesKey } from "./usecases/SetNotes.ts";
-import { SetSong, SetSongKey } from "./usecases/SetSong.ts";
 import { UpdateChannel, UpdateChannelKey } from "./usecases/UpdateChannel.ts";
+import { UpdateNotes, UpdateNotesKey } from "./usecases/UpdateNotes.ts";
 import { UpdateSong, UpdateSongKey } from "./usecases/UpdateSong.ts";
 
 export function configureDeps() {
@@ -91,7 +87,7 @@ export function configureDeps() {
 					deps.get(FileStore.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
-					deps.get(SetNotesKey),
+					deps.get(PutNotesKey),
 					deps.get(RemoveNotesKey),
 				);
 			})
@@ -113,7 +109,7 @@ export function configureDeps() {
 				return new GoogleAPIClient();
 			})
 			.set(RecentFileService.Key, (deps) => {
-				return new RecentFileService();
+				return new RecentFileService(deps.get(EventBus.Key));
 			})
 			.set(AutoSaveService.Key, (deps) => {
 				return new AutoSaveService(
@@ -124,9 +120,6 @@ export function configureDeps() {
 			})
 
 			// UseCases - Song
-			.set(SetSongKey, (deps) => {
-				return SetSong({ bus: deps.get(EventBus.Key) });
-			})
 			.set(UpdateSongKey, (deps) => {
 				return UpdateSong(deps.get(EventBus.Key));
 			})
@@ -155,17 +148,17 @@ export function configureDeps() {
 			})
 
 			// UseCases - Note
-			.set(SetNotesKey, (deps) => {
-				return SetNotes({
+			.set(PutNotesKey, (deps) => {
+				return PutNotes({
 					fileStore: deps.get(FileStore.Key),
 					history: deps.get(EditHistoryManager.Key),
 					bus: deps.get(EventBus.Key),
 				});
 			})
-			.set(MoveNotesKey, (deps) => {
-				return MoveNotes({
+			.set(UpdateNotesKey, (deps) => {
+				return UpdateNotes({
 					fileStore: deps.get(FileStore.Key),
-					setNotes: deps.get(SetNotesKey),
+					setNotes: deps.get(PutNotesKey),
 				});
 			})
 			.set(RemoveNotesKey, (deps) => {
@@ -175,10 +168,10 @@ export function configureDeps() {
 					bus: deps.get(EventBus.Key),
 				});
 			})
-			.set(SetNoteParameterKey, (deps) => {
-				return SetNoteParameter({
+			.set(MoveNotesKey, (deps) => {
+				return MoveNotes({
 					fileStore: deps.get(FileStore.Key),
-					setNotes: deps.get(SetNotesKey),
+					setNotes: deps.get(PutNotesKey),
 				});
 			})
 
@@ -199,8 +192,7 @@ export function configureDeps() {
 			// UseCases - File
 			.set(NewFileKey, (deps) => {
 				return NewFile({
-					bus: deps.get(EventBus.Key),
-					fileStore: deps.get(FileStore.Key),
+					putFile: deps.get(PutFileKey),
 				});
 			})
 			.set(SaveFileKey, (deps) => {
@@ -210,19 +202,15 @@ export function configureDeps() {
 					recentFileService: deps.get(RecentFileService.Key),
 				});
 			})
-			.set(LoadFileKey, (deps) => {
-				return LoadFile({
-					statusBar: deps.get(StatusBar.Key),
-					setSong: deps.get(SetSongKey),
-				});
-			})
 			.set(OpenFileKey, (deps) => {
 				return OpenFile({
+					googleAPIClient: deps.get(GoogleAPIClient.Key),
+				});
+			})
+			.set(PutFileKey, (deps) => {
+				return PutFile({
 					bus: deps.get(EventBus.Key),
 					editor: deps.get(Editor.Key),
-					fileStore: deps.get(FileStore.Key),
-					googleAPIClient: deps.get(GoogleAPIClient.Key),
-					recentFileService: deps.get(RecentFileService.Key),
 				});
 			})
 

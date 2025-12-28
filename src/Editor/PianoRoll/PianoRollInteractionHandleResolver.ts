@@ -12,8 +12,8 @@ import {
 import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type { Synthesizer } from "../../Synthesizer.ts";
+import type { PutNotes } from "../../usecases/PutNotes.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
-import type { SetNotes } from "../../usecases/SetNotes.ts";
 import { type Editor, getSelectedNoteIds } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import {
@@ -67,7 +67,7 @@ export class PianoRollInteractionHandleResolver
 		synthesizer: Synthesizer,
 		private readonly pianoRoll: PianoRoll,
 		private readonly fileStore: FileStore,
-		private readonly setNotes: SetNotes,
+		private readonly setNotes: PutNotes,
 		private readonly removeNotes: RemoveNotes,
 		private readonly player: Player,
 		private readonly editor: Editor,

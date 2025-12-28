@@ -11,9 +11,3 @@ export const MouseEventButton = {
 export type MouseEventButton =
 	| (typeof MouseEventButton)[keyof typeof MouseEventButton]
 	| number;
-
-export const MouseEventButtonMask = {
-	[MouseEventButton.PRIMARY]: 1,
-	[MouseEventButton.AUXILIARY]: 2,
-	[MouseEventButton.MIDDLE]: 4,
-};

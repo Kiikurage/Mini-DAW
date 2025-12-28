@@ -4,6 +4,9 @@ import type { FileStore } from "./FileStore.ts";
 import type { Song } from "./models/Song.ts";
 import type { SaveFile } from "./usecases/SaveFile.ts";
 
+/**
+ * 保存先が確定しているファイルを定期的に自動保存するサービス
+ */
 export class AutoSaveService {
 	static readonly Key = ComponentKey.of(AutoSaveService);
 
@@ -18,10 +21,10 @@ export class AutoSaveService {
 		bus: EventBus,
 	) {
 		bus
-			.on("song.put.before", () => {
+			.on("file.put.before", () => {
 				this.disableAutoSave();
 			})
-			.on("song.put.after", () => {
+			.on("file.put.after", () => {
 				this.enableAutoSave();
 			});
 	}
@@ -30,23 +33,25 @@ export class AutoSaveService {
 		this.disableAutoSave();
 		const mainLoop = async () => {
 			try {
-				const { song, location } = this.fileStore.state;
+				const { song, metadata } = this.fileStore.state;
 
-				if (location !== null && song !== this.lastSavedSong) {
-					await this.saveFile(location);
+				if (metadata !== null && song !== this.lastSavedSong) {
+					await this.saveFile(metadata.location);
 					this.lastSavedSong = song;
 				}
 			} finally {
-				this.autoSaveTimerId = setTimeout(
-					mainLoop,
-					AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS,
-				);
+				this.autoSaveTimerId = setTimeout(() => {
+					requestIdleCallback(() => {
+						mainLoop();
+					});
+				}, AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS);
 			}
 		};
-		this.autoSaveTimerId = setTimeout(
-			mainLoop,
-			AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS,
-		);
+		this.autoSaveTimerId = setTimeout(() => {
+			requestIdleCallback(() => {
+				mainLoop();
+			});
+		}, AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS);
 	}
 
 	disableAutoSave() {

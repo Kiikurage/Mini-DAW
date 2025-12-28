@@ -1,8 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import {
-	composeInteractionHandle,
-	type PointerEventManagerInteractionHandle,
-} from "./PointerEventManagerInteractionHandle.ts";
+import { composeInteractionHandle } from "./PointerEventManagerInteractionHandle.ts";
 
 describe("composeInteractionHandle", () => {
 	describe("handlePointerMove", () => {

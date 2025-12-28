@@ -1,29 +1,22 @@
 import { useState } from "react";
 import { MdUpload } from "react-icons/md";
-import { useComponent } from "../Dependency/DIContainerProvider.tsx";
-import { handlePromiseState, PromiseState } from "../PromiseState.ts";
-import { AlertMessage } from "../react/AlertMessage.tsx";
-import { Button } from "../react/Button.ts";
-import { Dialog } from "../react/Dialog.tsx";
-import { Form } from "../react/Form.tsx";
-import { SelectField } from "../react/Select/Select.tsx";
-import { Spinner } from "../react/Spinner.tsx";
-import { FlexLayout } from "../react/Styles.ts";
-import { type LoadFile, LoadFileKey } from "../usecases/LoadFile.ts";
-import { type OpenFile, OpenFileKey } from "../usecases/OpenFile.ts";
+import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
+import { type SerializedSong, Song } from "./models/Song.ts";
+import { handlePromiseState, PromiseState } from "./PromiseState.ts";
+import { AlertMessage } from "./react/AlertMessage.tsx";
+import { Button } from "./react/Button.ts";
+import { Dialog } from "./react/Dialog.tsx";
+import { Form } from "./react/Form.tsx";
+import { SelectField } from "./react/Select/Select.tsx";
+import { Spinner } from "./react/Spinner.tsx";
+import { FlexLayout } from "./react/Styles.ts";
+import { type OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
+import { type PutFile, PutFileKey } from "./usecases/PutFile.ts";
 
 type Method = "google-drive" | "local";
 
-export function OpenFileDialog({
-	onClose,
-	loadFile,
-}: {
-	onClose: () => void;
-	loadFile?: LoadFile;
-}) {
-	loadFile = useComponent(LoadFileKey, loadFile);
-
+export function OpenFileDialog({ onClose }: { onClose: () => void }) {
 	const [method, setMethod] = useState<Method>("local");
 
 	return (
@@ -66,23 +59,7 @@ export function OpenFileDialog({
 						/>
 					</Form.Row>
 					{method === "local" && (
-						<Form.Row>
-							<Button
-								variant="primary"
-								size="lg"
-								onClick={() => {
-									loadFile();
-									onClose();
-								}}
-								css={{
-									marginTop: 48,
-									marginBottom: 24,
-									flex: "1 1 0",
-								}}
-							>
-								ファイルを選択 <MdUpload />
-							</Button>
-						</Form.Row>
+						<LocalFileSection onComplete={() => onClose()} />
 					)}
 					{method === "google-drive" && (
 						<GoogleDriveSection onComplete={() => onClose()} />
@@ -93,14 +70,72 @@ export function OpenFileDialog({
 	);
 }
 
+function LocalFileSection({
+	onComplete,
+	putFile,
+}: {
+	onComplete: () => void;
+	putFile?: PutFile;
+}) {
+	putFile = useComponent(PutFileKey, putFile);
+
+	const onOpenButtonClick = async () => {
+		openFileSelectDialog({
+			accept: ".json,application/json",
+			onOpen: async (file) => {
+				try {
+					const body = await new Promise<string>((resolve) => {
+						const reader = new FileReader();
+						reader.addEventListener("loadend", () => {
+							resolve(reader.result as string);
+						});
+						reader.readAsText(file);
+					});
+					const data = JSON.parse(body) as SerializedSong;
+					const song = Song.deserialize(data);
+
+					await putFile({
+						song,
+						metadata: null,
+					});
+					onComplete();
+				} catch (e) {
+					console.error(e);
+				}
+			},
+		});
+		onComplete();
+	};
+
+	return (
+		<Form.Row>
+			<Button
+				variant="primary"
+				size="lg"
+				onClick={onOpenButtonClick}
+				css={{
+					marginTop: 48,
+					marginBottom: 24,
+					flex: "1 1 0",
+				}}
+			>
+				ファイルを選択 <MdUpload />
+			</Button>
+		</Form.Row>
+	);
+}
+
 function GoogleDriveSection({
 	onComplete,
 	openFile,
+	putFile,
 }: {
 	onComplete: () => void;
 	openFile?: OpenFile;
+	putFile?: PutFile;
 }) {
 	openFile = useComponent(OpenFileKey, openFile);
+	putFile = useComponent(PutFileKey, putFile);
 
 	const [fileId, setFileId] = useState<string | null>(null);
 	const [uploadPS, setUploadPS] = useState<PromiseState<{}>>(
@@ -112,7 +147,8 @@ function GoogleDriveSection({
 
 		setUploadPS(PromiseState.pending());
 		handlePromiseState(async () => {
-			await openFile({ type: "googleDrive", fileId });
+			const file = await openFile({ type: "googleDrive", fileId });
+			await putFile(file);
 
 			onComplete();
 
@@ -157,4 +193,27 @@ function GoogleDriveSection({
 			)}
 		</div>
 	);
+}
+
+/**
+ * Open file select dialog
+ * @param onOpen callback when file is selected
+ * @param accept accepted file types
+ */
+function openFileSelectDialog({
+	onOpen,
+	accept,
+}: {
+	onOpen: (file: File) => void;
+	accept: string;
+}) {
+	const input = document.createElement("input");
+	input.type = "file";
+	input.accept = accept;
+	input.addEventListener("change", (_ev) => {
+		const file = input.files?.[0];
+		if (file === undefined) return;
+		onOpen(file);
+	});
+	input.click();
 }

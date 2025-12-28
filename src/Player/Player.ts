@@ -48,11 +48,11 @@ export class Player extends Stateful<PlayerState> {
 	) {
 		super(InitialProps);
 
-		bus.on("song.put.after", (_song) => {
+		bus.on("file.put.after", () => {
 			this.setState(InitialProps);
 			this.syncSongFromFileStore();
 		});
-		bus.on("song.update.after", (_song) => {
+		bus.on("song.update.after", () => {
 			this.syncSongFromFileStore();
 		});
 		bus.on("channel.add.after", (channel) => {

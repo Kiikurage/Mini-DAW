@@ -14,9 +14,9 @@ import {
 	RemoveControlChangesKey,
 } from "../../usecases/RemoveControlChanges.ts";
 import {
-	type SetNoteParameter,
-	SetNoteParameterKey,
-} from "../../usecases/SetNoteParameter.ts";
+	type UpdateNotes,
+	UpdateNotesKey,
+} from "../../usecases/UpdateNotes.ts";
 import { Editor } from "../Editor.ts";
 import { ParameterEditor } from "./ParameterEditor.ts";
 import { renderCanvas } from "./ParameterEditorViewRenderer.ts";
@@ -25,21 +25,21 @@ export function ParameterEditorView({
 	fileStore,
 	player,
 	editor,
-	setNoteParameter,
+	updateNotes,
 	putControlChange,
 	removeControlChange,
 }: {
 	fileStore?: FileStore;
 	player?: Player;
 	editor?: Editor;
-	setNoteParameter?: SetNoteParameter;
+	updateNotes?: UpdateNotes;
 	putControlChange?: PutControlChange;
 	removeControlChange?: RemoveControlChanges;
 }) {
 	fileStore = useComponent(FileStore.Key, fileStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
-	setNoteParameter = useComponent(SetNoteParameterKey, setNoteParameter);
+	updateNotes = useComponent(UpdateNotesKey, updateNotes);
 	putControlChange = useComponent(PutControlChangeKey, putControlChange);
 	removeControlChange = useComponent(
 		RemoveControlChangesKey,
@@ -55,7 +55,7 @@ export function ParameterEditorView({
 		const parameterEditor = new ParameterEditor(
 			editor,
 			fileStore,
-			setNoteParameter,
+			updateNotes,
 			putControlChange,
 			removeControlChange,
 		);
@@ -114,7 +114,7 @@ export function ParameterEditorView({
 		fileStore,
 		putControlChange,
 		removeControlChange,
-		setNoteParameter,
+		updateNotes,
 	]);
 
 	return (

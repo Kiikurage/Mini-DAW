@@ -10,6 +10,14 @@ export interface Note {
 	readonly velocity: number;
 }
 
+export interface NotePatch {
+	id: number;
+	key?: number;
+	tickFrom?: number;
+	tickTo?: number;
+	velocity?: number;
+}
+
 export const Note = {
 	create(props: {
 		id: number;
@@ -27,5 +35,13 @@ export const Note = {
 			tickTo,
 			velocity: props.velocity,
 		};
+	},
+
+	applyPatch(note: Note, patch: NotePatch) {
+		return Note.create({
+			...note,
+			...patch,
+			id: note.id,
+		});
 	},
 };

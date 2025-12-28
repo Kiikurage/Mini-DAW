@@ -4,9 +4,9 @@ import type { EventBus } from "../EventBus.ts";
 import type { FileStore } from "../FileStore.ts";
 import type { Note } from "../models/Note.ts";
 
-export const SetNotesKey = ComponentKey<SetNotes>("SetNotes");
+export const PutNotesKey = ComponentKey<PutNotes>("PutNotes");
 
-export function SetNotes({
+export function PutNotes({
 	fileStore,
 	history,
 	bus,
@@ -43,4 +43,4 @@ export function SetNotes({
 		history.markCheckpoint();
 	};
 }
-export type SetNotes = ReturnType<typeof SetNotes>;
+export type PutNotes = ReturnType<typeof PutNotes>;

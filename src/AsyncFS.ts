@@ -1,8 +1,17 @@
-import { PromiseState } from "../PromiseState.ts";
-import { Stateful } from "../Stateful/Stateful.ts";
-import { type GoogleAPIClient, GoogleDrive } from "./GoogleAPIClient.ts";
+import { PromiseState } from "./PromiseState.ts";
+import { Stateful } from "./Stateful/Stateful.ts";
 
-export namespace FS {
+export namespace AsyncFS {
+	export interface Delegate {
+		listFilesByFolder(folderId: string): Promise<
+			readonly {
+				readonly id: string;
+				readonly name: string;
+				readonly isFolder: boolean;
+			}[]
+		>;
+	}
+
 	export interface File {
 		id: string;
 		name: string;
@@ -19,7 +28,7 @@ export namespace FS {
 		constructor(
 			public readonly id: string,
 			public readonly name: string,
-			private readonly client: GoogleAPIClient,
+			private readonly client: Delegate,
 		) {
 			super({
 				get children() {
@@ -36,13 +45,13 @@ export namespace FS {
 
 			this.loadChildrenPromise = this.client
 				.listFilesByFolder(this.id)
-				.then((googleFiles) => {
-					const children = googleFiles
-						.map((child) => {
-							if (child.mimeType === GoogleDrive.MimeType.FOLDER) {
-								return new Folder(child.id, child.name, this.client);
+				.then((files) => {
+					const children = files
+						.map((file) => {
+							if (file.isFolder) {
+								return new Folder(file.id, file.name, this.client);
 							} else {
-								return { id: child.id, name: child.name } as File;
+								return file;
 							}
 						})
 						.sort((f1, f2) => {

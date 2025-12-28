@@ -2,7 +2,7 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { FileStore } from "../FileStore.ts";
 import { isNotNullish } from "../lib.ts";
 import { Note } from "../models/Note.ts";
-import type { SetNotes } from "./SetNotes.ts";
+import type { PutNotes } from "./PutNotes.ts";
 
 export const MoveNotesKey = ComponentKey<MoveNotes>("MoveNotes");
 
@@ -11,7 +11,7 @@ export function MoveNotes({
 	setNotes,
 }: {
 	fileStore: FileStore;
-	setNotes: SetNotes;
+	setNotes: PutNotes;
 }) {
 	return (
 		channelId: number,

@@ -8,7 +8,7 @@ import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
 } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
-import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
+import type { UpdateNotes } from "../../usecases/UpdateNotes.ts";
 import { type Editor, getSelectedNoteIds } from "../Editor.ts";
 import { VelocityParameterType } from "../ParameterType.ts";
 import { toParameterEditorPosition } from "./features.ts";
@@ -23,7 +23,7 @@ export class VelocityDelegate extends ParameterEditorSampleDelegate {
 		fileStore: FileStore,
 		editor: Editor,
 		parameterEditor: ParameterEditor,
-		private readonly setNoteParameter: SetNoteParameter,
+		private readonly updateNotes: UpdateNotes,
 	) {
 		super(VelocityParameterType, editor, parameterEditor, fileStore);
 	}
@@ -54,7 +54,10 @@ export class VelocityDelegate extends ParameterEditorSampleDelegate {
 		const channelId = this.editor.state.activeChannelId;
 		if (channelId === null) return;
 
-		this.setNoteParameter(channelId, sampleIds, "velocity", value);
+		this.updateNotes(
+			channelId,
+			[...sampleIds].map((id) => ({ id, velocity: value })),
+		);
 	}
 
 	override getBackgroundInteractionHandle() {
@@ -65,22 +68,14 @@ export class VelocityDelegate extends ParameterEditorSampleDelegate {
 
 	override getSelectionInteractionHandle() {
 		return composeInteractionHandle(
-			changeValueFeature(
-				this.editor,
-				this.parameterEditor,
-				this.setNoteParameter,
-			),
+			changeValueFeature(this.editor, this.parameterEditor, this.updateNotes),
 		);
 	}
 
 	override getSampleInteractionHandle(sampleId: number) {
 		return composeInteractionHandle(
 			toggleSelectionFeature(sampleId, this.editor),
-			changeValueFeature(
-				this.editor,
-				this.parameterEditor,
-				this.setNoteParameter,
-			),
+			changeValueFeature(this.editor, this.parameterEditor, this.updateNotes),
 		);
 	}
 }
@@ -96,7 +91,7 @@ function createSample(note: Note) {
 function changeValueFeature(
 	editor: Editor,
 	parameterEditor: ParameterEditor,
-	setNoteParameter: SetNoteParameter,
+	updateNotes: UpdateNotes,
 ): PointerEventManagerInteractionHandle {
 	return {
 		handlePointerDown: (ev) => {
@@ -111,11 +106,9 @@ function changeValueFeature(
 					editor.state,
 					parameterEditor.state,
 				);
-				setNoteParameter(
+				updateNotes(
 					channelId,
-					selectedNoteIds,
-					"velocity",
-					position.value,
+					[...selectedNoteIds].map((id) => ({ id, velocity: position.value })),
 				);
 			});
 			ev.sessionEvents.on("dragMove", (ev) => {
@@ -124,11 +117,9 @@ function changeValueFeature(
 					editor.state,
 					parameterEditor.state,
 				);
-				setNoteParameter(
+				updateNotes(
 					channelId,
-					selectedNoteIds,
-					"velocity",
-					position.value,
+					[...selectedNoteIds].map((id) => ({ id, velocity: position.value })),
 				);
 			});
 			ev.sessionEvents.on("dragEnd", (ev) => {
@@ -137,11 +128,9 @@ function changeValueFeature(
 					editor.state,
 					parameterEditor.state,
 				);
-				setNoteParameter(
+				updateNotes(
 					channelId,
-					selectedNoteIds,
-					"velocity",
-					position.value,
+					[...selectedNoteIds].map((id) => ({ id, velocity: position.value })),
 				);
 			});
 		},

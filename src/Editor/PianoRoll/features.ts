@@ -6,8 +6,8 @@ import { Note } from "../../models/Note.ts";
 import type { PEMPointerEvent } from "../../PointerEventManager/PointerEventManager.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
+import type { PutNotes } from "../../usecases/PutNotes.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
-import type { SetNotes } from "../../usecases/SetNotes.ts";
 import {
 	type Editor,
 	type EditorState,
@@ -49,7 +49,7 @@ export function setCursorFeature(context: {
 export function moveNotesFeature(context: {
 	editor: Editor;
 	fileStore: FileStore;
-	setNotes: SetNotes;
+	setNotes: PutNotes;
 	pianoRoll: PianoRoll;
 	previewManager: PianoRollPreviewManager;
 }): PointerEventManagerInteractionHandle {
@@ -125,7 +125,7 @@ function resizeNotes(
 		editor: Editor;
 		pianoRoll: PianoRoll;
 		fileStore: FileStore;
-		setNotes: SetNotes;
+		setNotes: PutNotes;
 		noteIdForNewNoteDuration: number | null;
 	},
 	updateNote: (note: Note, tickDiff: number) => Note,
@@ -189,7 +189,7 @@ export function resizeNoteStartFeature(context: {
 	editor: Editor;
 	pianoRoll: PianoRoll;
 	fileStore: FileStore;
-	setNotes: SetNotes;
+	setNotes: PutNotes;
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {
 	return {
@@ -223,7 +223,7 @@ export function resizeNoteEndFeature(context: {
 	editor: Editor;
 	pianoRoll: PianoRoll;
 	fileStore: FileStore;
-	setNotes: SetNotes;
+	setNotes: PutNotes;
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {
 	return {

@@ -6,7 +6,7 @@ import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapsho
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { PutControlChange } from "../../usecases/PutControlChange.ts";
 import type { RemoveControlChanges } from "../../usecases/RemoveControlChanges.ts";
-import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
+import type { UpdateNotes } from "../../usecases/UpdateNotes.ts";
 import type { Editor } from "../Editor.ts";
 import { ControlChangeDelegate } from "./ControlChangeDelegate.ts";
 import type {
@@ -36,7 +36,7 @@ export class ParameterEditor
 	constructor(
 		private readonly editor: Editor,
 		private readonly fileStore: FileStore,
-		private readonly setNoteParameter: SetNoteParameter,
+		private readonly updateNotes: UpdateNotes,
 		private readonly putControlChange: PutControlChange,
 		private readonly removeControlChange: RemoveControlChanges,
 	) {
@@ -78,7 +78,7 @@ export class ParameterEditor
 					this.fileStore,
 					this.editor,
 					this,
-					this.setNoteParameter,
+					this.updateNotes,
 				);
 				break;
 			}

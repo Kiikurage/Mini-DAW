@@ -2,10 +2,8 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
 import type { FileStore } from "../FileStore.ts";
-import { isNotNullish, toSet } from "../lib.ts";
-import type { ControlChange } from "../models/ControlChange.ts";
+import { toSet } from "../lib.ts";
 import type { ControlType } from "../models/ControlType.ts";
-import type { Note } from "../models/Note.ts";
 
 export const RemoveControlChangesKey = ComponentKey<RemoveControlChanges>(
 	"RemoveControlChanges",

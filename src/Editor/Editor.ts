@@ -253,16 +253,16 @@ export class Editor extends Stateful<EditorState> {
 		});
 
 		bus
-			.on("song.put.before", () => {
+			.on("file.put.before", () => {
 				this.setActiveChannel(null);
 			})
-			.on("song.put.after", (song) => {
+			.on("file.put.after", (file) => {
 				this.setState({
 					...this.state,
 					previewChannelIds: EmptySet,
 				});
 
-				const firstChannel = song.channels[0];
+				const firstChannel = file.song.channels.at(0);
 				if (firstChannel !== undefined) {
 					this.setActiveChannel(firstChannel.id);
 				}

@@ -18,11 +18,11 @@ import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { Synthesizer } from "../../Synthesizer.ts";
+import { type PutNotes, PutNotesKey } from "../../usecases/PutNotes.ts";
 import {
 	type RemoveNotes,
 	RemoveNotesKey,
 } from "../../usecases/RemoveNotes.ts";
-import { type SetNotes, SetNotesKey } from "../../usecases/SetNotes.ts";
 import { Editor } from "../Editor.ts";
 import { widthPerTick } from "../ParameterEditor/ParameterEditorViewRenderer.ts";
 import { PianoRoll } from "./PianoRoll.ts";
@@ -47,7 +47,7 @@ export function PianoRollView({
 	fileStore?: FileStore;
 	player?: Player;
 	editor?: Editor;
-	setNotes?: SetNotes;
+	setNotes?: PutNotes;
 	removeNotes?: RemoveNotes;
 	synthesizer?: Synthesizer;
 	soundFontStore?: SoundFontStore;
@@ -58,7 +58,7 @@ export function PianoRollView({
 	fileStore = useComponent(FileStore.Key, fileStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
-	setNotes = useComponent(SetNotesKey, setNotes);
+	setNotes = useComponent(PutNotesKey, setNotes);
 	removeNotes = useComponent(RemoveNotesKey, removeNotes);
 	clipboard = useComponent(ClipboardManager.Key, clipboard);
 
