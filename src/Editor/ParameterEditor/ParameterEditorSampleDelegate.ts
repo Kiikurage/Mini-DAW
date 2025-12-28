@@ -1,7 +1,7 @@
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { Editor } from "../Editor.ts";
 import type { ParameterType } from "../ParameterType.ts";
 import { toParameterEditorPosition } from "./features.ts";
@@ -18,7 +18,7 @@ export abstract class ParameterEditorSampleDelegate {
 		public readonly parameterType: ParameterType,
 		protected readonly editor: Editor,
 		protected readonly parameterEditor: ParameterEditor,
-		protected readonly songStore: SongStore,
+		protected readonly fileStore: FileStore,
 	) {}
 
 	abstract getAllSamples(): Iterable<ParameterSample>;
@@ -58,7 +58,7 @@ export abstract class ParameterEditorSampleDelegate {
 		}
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel !== null) {

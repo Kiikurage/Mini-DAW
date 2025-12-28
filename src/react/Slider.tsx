@@ -1,8 +1,15 @@
-import type { ChangeEventHandler } from "react";
+import {
+	type ChangeEventHandler,
+	type ComponentProps,
+	type ReactNode,
+	useId,
+} from "react";
 import { minmax } from "../lib.ts";
+import { Field } from "./Field.tsx";
 import { useFormValue } from "./useFormValue.ts";
 
 export function Slider({
+	id,
 	min,
 	max,
 	step,
@@ -11,6 +18,7 @@ export function Slider({
 	title,
 	onChange,
 }: {
+	id?: string;
 	min?: number;
 	max?: number;
 	step?: number;
@@ -36,6 +44,7 @@ export function Slider({
 			}}
 		>
 			<input
+				id={id}
 				css={{
 					opacity: 0,
 					cursor: "grab",
@@ -107,6 +116,21 @@ export function Slider({
 	);
 }
 
+export function SliderField({
+	label,
+	sliderProps,
+}: {
+	label: ReactNode;
+	sliderProps: ComponentProps<typeof Slider>;
+}) {
+	const fieldId = useId();
+
+	return (
+		<Field label={label} htmlFor={fieldId}>
+			<Slider {...sliderProps} />
+		</Field>
+	);
+}
 const TOTAL_WIDTH = 300;
 const MARKER_RADIUS = 16;
 const TRACK_WIDTH = TOTAL_WIDTH - 2 * MARKER_RADIUS;

@@ -1,5 +1,6 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
+import type { FileStore } from "../FileStore.ts";
 import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Song } from "../models/Song.ts";
@@ -7,7 +8,13 @@ import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 
 export const NewFileKey = ComponentKey<NewFile>("NewFile");
 
-export function NewFile({ bus }: { bus: EventBus }) {
+export function NewFile({
+	bus,
+	fileStore,
+}: {
+	bus: EventBus;
+	fileStore: FileStore;
+}) {
 	return (withConfirmation: boolean) => {
 		if (withConfirmation) {
 			if (

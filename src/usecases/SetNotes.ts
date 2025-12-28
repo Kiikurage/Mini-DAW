@@ -1,22 +1,22 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
+import type { FileStore } from "../FileStore.ts";
 import type { Note } from "../models/Note.ts";
-import type { SongStore } from "../SongStore.ts";
 
 export const SetNotesKey = ComponentKey<SetNotes>("SetNotes");
 
 export function SetNotes({
-	songStore,
+	fileStore,
 	history,
 	bus,
 }: {
-	songStore: SongStore;
+	fileStore: FileStore;
 	history: EditHistoryManager;
 	bus: EventBus;
 }) {
 	return (channelId: number, notes: Iterable<Note>) => {
-		const channel = songStore.state.getChannel(channelId);
+		const channel = fileStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		const oldNotes: Note[] = [];

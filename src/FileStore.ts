@@ -1,15 +1,24 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EventBus } from "./EventBus.ts";
 import type { Channel } from "./models/Channel.ts";
+import type { FileLocation } from "./models/FileLocation.ts";
 import type { Note } from "./models/Note.ts";
 import { Song, type SongPatch } from "./models/Song.ts";
 import { Stateful } from "./Stateful/Stateful.ts";
 
-export class SongStore extends Stateful<Song> {
-	static readonly Key = ComponentKey.of(SongStore);
+export interface FileStoreState {
+	song: Song;
+	location: FileLocation | null;
+}
+
+export class FileStore extends Stateful<FileStoreState> {
+	static readonly Key = ComponentKey.of(FileStore);
 
 	constructor(bus: EventBus) {
-		super(new Song());
+		super({
+			song: new Song(),
+			location: null,
+		});
 
 		bus
 			.on("channel.add", (channel) => {
@@ -42,19 +51,28 @@ export class SongStore extends Stateful<Song> {
 	}
 
 	putChannel(channel: Channel) {
-		this.updateState((state) => state.putChannel(channel));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.putChannel(channel),
+		}));
 	}
 
 	removeChannel(channelId: number) {
-		this.updateState((state) => state.removeChannel(channelId));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.removeChannel(channelId),
+		}));
 	}
 
 	updateChannel(channelId: number, updater: (channel: Channel) => Channel) {
 		this.updateState((state) => {
-			const channel = state.getChannel(channelId);
+			const channel = state.song.getChannel(channelId);
 			if (channel === null) return state;
 
-			return state.replaceChannel(updater(channel));
+			return {
+				...state,
+				song: state.song.replaceChannel(updater(channel)),
+			};
 		});
 	}
 
@@ -64,18 +82,34 @@ export class SongStore extends Stateful<Song> {
 	 * @param notes 追加・更新するノート
 	 */
 	putNotes(channelId: number, notes: Iterable<Note>) {
-		this.updateState((state) => state.putNotes(channelId, notes));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.putNotes(channelId, notes),
+		}));
 	}
 
 	removeNotes(channelId: number, noteIds: Iterable<number>) {
-		this.updateState((state) => state.removeNotes(channelId, noteIds));
+		this.updateState((state) => ({
+			...state,
+			song: state.song.removeNotes(channelId, noteIds),
+		}));
 	}
 
 	setSong(song: Song) {
-		this.setState(song);
+		this.updateState((state) => ({
+			...state,
+			song,
+		}));
+	}
+
+	setFileLocation(location: FileLocation | null) {
+		this.updateState((state) => ({
+			...state,
+			location,
+		}));
 	}
 
 	applySongPatch(patch: SongPatch) {
-		this.setSong(this.state.applyPatch(patch));
+		this.setSong(this.state.song.applyPatch(patch));
 	}
 }

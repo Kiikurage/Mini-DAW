@@ -1,10 +1,10 @@
 import { NUM_KEYS } from "../../constants.ts";
 import { ComponentKey } from "../../Dependency/DIContainer.ts";
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { EmptySet, minmax } from "../../lib.ts";
 import type { Channel } from "../../models/Channel.ts";
 import { PromiseState } from "../../PromiseState.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type {
 	SoundFontStore,
 	SoundFontStoreState,
@@ -38,7 +38,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 
 	constructor(
 		private readonly soundFontStore: SoundFontStore,
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		private readonly editor: Editor,
 	) {
 		super({
@@ -50,7 +50,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 		this.hoverNotesManager = new PianoRollHoverNotesManager(
 			this.editor,
 			this,
-			this.songStore,
+			this.fileStore,
 			this.soundFontStore,
 		);
 	}
@@ -98,7 +98,7 @@ export class PianoRoll extends Stateful<PianoRollState> {
 
 	get loopKeys(): ReadonlySet<number> {
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return EmptySet;
@@ -112,6 +112,7 @@ export function getLoopKeys(
 	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
 	const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+	if (soundFontPromise === undefined) return EmptySet;
 	if (!PromiseState.isFulfilled(soundFontPromise?.state)) return EmptySet;
 
 	const soundFont = soundFontPromise.state;

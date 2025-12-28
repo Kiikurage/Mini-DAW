@@ -1,6 +1,6 @@
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import type { Note } from "../../models/Note.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { Synthesizer } from "../../Synthesizer.ts";
 import type { Editor } from "../Editor.ts";
 
@@ -14,7 +14,7 @@ export class PianoRollPreviewManager {
 	private readonly currentPreviewingNotes = new Set<Note>();
 
 	constructor(
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		private readonly editor: Editor,
 		private readonly synthesizer: Synthesizer,
 	) {}
@@ -23,7 +23,7 @@ export class PianoRollPreviewManager {
 		this.stopPreviewNotes();
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return;
@@ -49,7 +49,7 @@ export class PianoRollPreviewManager {
 
 	stopPreviewNotes() {
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel === null) return;

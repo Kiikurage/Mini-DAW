@@ -3,10 +3,11 @@ import { MdSearch } from "react-icons/md";
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
+import { FileStore } from "../FileStore.ts";
 import { formatDuration } from "../lib.ts";
 import { Player } from "../Player/Player.ts";
 import { Button } from "../react/Button.ts";
-import { SongStore } from "../SongStore.ts";
+import { FlexLayout } from "../react/Styles.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import { type UpdateSong, UpdateSongKey } from "../usecases/UpdateSong.ts";
 import { StatusBar } from "./StatusBar.tsx";
@@ -22,26 +23,26 @@ const StatusBarButton = styled(Button)({
 
 export function StatusBarView({
 	statusBar,
-	songStore,
+	fileStore,
 	updateSong,
 	player,
 	editor,
 }: {
 	statusBar?: StatusBar;
-	songStore?: SongStore;
+	fileStore?: FileStore;
 	updateSong?: UpdateSong;
 	player?: Player;
 	editor?: Editor;
 }) {
 	statusBar = useComponent(StatusBar.Key, statusBar);
-	songStore = useComponent(SongStore.Key, songStore);
+	fileStore = useComponent(FileStore.Key, fileStore);
 	updateSong = useComponent(UpdateSongKey, updateSong);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
 
 	const statusMessage = useStateful(statusBar, (state) => state.message);
 	const zoom = useStateful(editor, (state) => state.zoom);
-	const bpm = useStateful(songStore, (state) => state.bpm);
+	const bpm = useStateful(fileStore, (state) => state.song.bpm);
 	const newNoteDuration = useStateful(
 		editor,
 		(state) => state.newNoteDurationInTick,
@@ -58,36 +59,20 @@ export function StatusBarView({
 
 	return (
 		<div
-			css={{
-				height: 24,
-				borderTop: "1px solid var(--color-StatusBar-border)",
-				background: "var(--color-StatusBar-background)",
-				color: "var(--color-StatusBar-foreground)",
-				fontSize: "0.9em",
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "stretch",
-				justifyContent: "space-between",
-				padding: "0 12px",
-				gap: 16,
-			}}
+			css={[
+				FlexLayout.row.stretch.spaceBetween.gap(16),
+				{
+					height: 24,
+					borderTop: "1px solid var(--color-StatusBar-border)",
+					background: "var(--color-StatusBar-background)",
+					color: "var(--color-StatusBar-foreground)",
+					fontSize: "0.9em",
+					padding: "0 12px",
+				},
+			]}
 		>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-				}}
-			>
-				{statusMessage}
-			</div>
-			<div
-				css={{
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-				}}
-			>
+			<div css={FlexLayout.row.center}>{statusMessage}</div>
+			<div css={FlexLayout.row.center}>
 				<StatusBarButton
 					variant="normalInline"
 					onClick={() => {

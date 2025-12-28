@@ -1,4 +1,5 @@
 import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { assertNotNullish } from "../../lib.ts";
@@ -7,7 +8,6 @@ import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
 } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { SetNoteParameter } from "../../usecases/SetNoteParameter.ts";
 import { type Editor, getSelectedNoteIds } from "../Editor.ts";
 import { VelocityParameterType } from "../ParameterType.ts";
@@ -20,23 +20,29 @@ import {
 
 export class VelocityDelegate extends ParameterEditorSampleDelegate {
 	constructor(
-		songStore: SongStore,
+		fileStore: FileStore,
 		editor: Editor,
 		parameterEditor: ParameterEditor,
 		private readonly setNoteParameter: SetNoteParameter,
 	) {
-		super(VelocityParameterType, editor, parameterEditor, songStore);
+		super(VelocityParameterType, editor, parameterEditor, fileStore);
 	}
 
 	getAllSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.fileStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return [...channel.notes.values()].map(createSample);
 	}
 
 	getSelectedSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.fileStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return [...channel.notes.values()]
@@ -53,7 +59,7 @@ export class VelocityDelegate extends ParameterEditorSampleDelegate {
 
 	override getBackgroundInteractionHandle() {
 		return composeInteractionHandle(
-			selectByRangeFeature(this.editor, this.parameterEditor, this.songStore),
+			selectByRangeFeature(this.editor, this.parameterEditor, this.fileStore),
 		);
 	}
 
@@ -145,7 +151,7 @@ function changeValueFeature(
 function selectByRangeFeature(
 	editor: Editor,
 	parameterEditor: ParameterEditor,
-	songStore: SongStore,
+	fileStore: FileStore,
 ): PointerEventManagerInteractionHandle {
 	return {
 		handlePointerDown: (ev) => {
@@ -180,7 +186,7 @@ function selectByRangeFeature(
 				if (marqueeArea !== null) {
 					const channelId = editor.state.activeChannelId;
 					if (channelId !== null) {
-						const channel = songStore.state.getChannel(channelId);
+						const channel = fileStore.state.song.getChannel(channelId);
 						assertNotNullish(channel);
 
 						for (const note of channel.notes.values()) {

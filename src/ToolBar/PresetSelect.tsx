@@ -20,25 +20,15 @@ export function PresetSelect({
 
 	return (
 		<Select
-			value={value}
-			onChange={(value) => {
-				setUncontrolledValue(value as number);
-				onChange?.(value as number);
+			value={value.toString()}
+			onChange={(option) => {
+				setUncontrolledValue(Number.parseInt(option.id, 10));
+				onChange?.(Number.parseInt(option.id, 10));
 			}}
-			renderValue={() => {
-				const presetName = presetNames.find(
-					(preset) => preset.presetNumber === value,
-				);
-				if (presetName === undefined) return "#N/A";
-
-				return `${presetName.presetNumber}: ${presetName.name}`;
-			}}
-		>
-			{presetNames.map((preset) => (
-				<Select.Option key={preset.presetNumber} value={preset.presetNumber}>
-					{preset.presetNumber}: {preset.name}
-				</Select.Option>
-			))}
-		</Select>
+			options={presetNames.map((preset) => ({
+				label: `${preset.presetNumber}: ${preset.name}`,
+				id: preset.presetNumber.toString(),
+			}))}
+		/>
 	);
 }

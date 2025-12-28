@@ -1,11 +1,11 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
+import type { FileStore } from "../FileStore.ts";
 import { isNotNullish, toSet } from "../lib.ts";
 import type { ControlChange } from "../models/ControlChange.ts";
 import type { ControlType } from "../models/ControlType.ts";
 import type { Note } from "../models/Note.ts";
-import type { SongStore } from "../SongStore.ts";
 
 export const RemoveControlChangesKey = ComponentKey<RemoveControlChanges>(
 	"RemoveControlChanges",
@@ -14,18 +14,18 @@ export const RemoveControlChangesKey = ComponentKey<RemoveControlChanges>(
 export function RemoveControlChanges({
 	bus,
 	history,
-	songStore,
+	fileStore,
 }: {
 	bus: EventBus;
 	history: EditHistoryManager;
-	songStore: SongStore;
+	fileStore: FileStore;
 }) {
 	return (args: {
 		channelId: number;
 		type: ControlType;
 		ticks: Iterable<number>;
 	}) => {
-		const channel = songStore.state.getChannel(args.channelId);
+		const channel = fileStore.state.song.getChannel(args.channelId);
 		if (channel === null) return;
 
 		const changeList = channel.controlChanges.get(args.type);

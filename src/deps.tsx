@@ -1,15 +1,17 @@
 import { AudioContextKey } from "./AudioContextHolder.ts";
+import { AutoSaveService } from "./AutoSaveService.ts";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { ContextMenuManager } from "./ContextMenu/ContextMenuManager.tsx";
 import { DIContainer } from "./Dependency/DIContainer.ts";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { Editor } from "./Editor/Editor.ts";
 import { EventBus } from "./EventBus.ts";
+import { FileStore } from "./FileStore.ts";
 import { GoogleAPIClient } from "./GoogleDriveAPI/GoogleAPIClient.ts";
-import { KeyboardHandler } from "./KeyboardHandler.ts";
+import { KeyboardHandler } from "./KeyboardHandler.tsx";
 import { Player } from "./Player/Player.ts";
+import { RecentFileService } from "./RecentFileService.ts";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
-import { SongStore } from "./SongStore.ts";
 import { SoundFontStore } from "./SoundFontStore.ts";
 import { StatusBar } from "./StatusBar/StatusBar.tsx";
 import { Synthesizer } from "./Synthesizer.ts";
@@ -18,6 +20,7 @@ import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { LoadFile, LoadFileKey } from "./usecases/LoadFile.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
+import { OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
 import {
 	PutControlChange,
 	PutControlChangeKey,
@@ -46,7 +49,7 @@ export function configureDeps() {
 			})
 			.set(Editor.Key, (deps) => {
 				return new Editor(
-					deps.get(SongStore.Key),
+					deps.get(FileStore.Key),
 					deps.get(Player.Key),
 					deps.get(EventBus.Key),
 					deps.get(RemoveNotesKey),
@@ -60,8 +63,8 @@ export function configureDeps() {
 			.set(EditHistoryManager.Key, () => {
 				return new EditHistoryManager();
 			})
-			.set(SongStore.Key, (deps) => {
-				return new SongStore(deps.get(EventBus.Key));
+			.set(FileStore.Key, (deps) => {
+				return new FileStore(deps.get(EventBus.Key));
 			})
 			.set(SoundFontStore.Key, () => {
 				return new SoundFontStore();
@@ -75,7 +78,7 @@ export function configureDeps() {
 			.set(Player.Key, (deps) => {
 				return new Player(
 					deps.get(AudioContextKey),
-					deps.get(SongStore.Key),
+					deps.get(FileStore.Key),
 					deps.get(Synthesizer.Key),
 					deps.get(EventBus.Key),
 				);
@@ -85,7 +88,7 @@ export function configureDeps() {
 			})
 			.set(ClipboardManager.Key, (deps) => {
 				return new ClipboardManager(
-					deps.get(SongStore.Key),
+					deps.get(FileStore.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
 					deps.get(SetNotesKey),
@@ -97,16 +100,27 @@ export function configureDeps() {
 			})
 			.set(KeyboardHandler.Key, (deps) => {
 				return new KeyboardHandler(
+					deps.get(FileStore.Key),
 					deps.get(EditHistoryManager.Key),
 					deps.get(ClipboardManager.Key),
 					deps.get(Player.Key),
 					deps.get(Editor.Key),
+					deps.get(OverlayPortal.Key),
 					deps.get(SaveFileKey),
-					deps.get(LoadFileKey),
 				);
 			})
 			.set(GoogleAPIClient.Key, (deps) => {
 				return new GoogleAPIClient();
+			})
+			.set(RecentFileService.Key, (deps) => {
+				return new RecentFileService();
+			})
+			.set(AutoSaveService.Key, (deps) => {
+				return new AutoSaveService(
+					deps.get(FileStore.Key),
+					deps.get(SaveFileKey),
+					deps.get(EventBus.Key),
+				);
 			})
 
 			// UseCases - Song
@@ -129,13 +143,13 @@ export function configureDeps() {
 				return UpdateChannel({
 					bus: deps.get(EventBus.Key),
 					history: deps.get(EditHistoryManager.Key),
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 				});
 			})
 			.set(RemoveChannelKey, (deps) => {
 				return RemoveChannel({
 					history: deps.get(EditHistoryManager.Key),
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 					bus: deps.get(EventBus.Key),
 				});
 			})
@@ -143,27 +157,27 @@ export function configureDeps() {
 			// UseCases - Note
 			.set(SetNotesKey, (deps) => {
 				return SetNotes({
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 					history: deps.get(EditHistoryManager.Key),
 					bus: deps.get(EventBus.Key),
 				});
 			})
 			.set(MoveNotesKey, (deps) => {
 				return MoveNotes({
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 					setNotes: deps.get(SetNotesKey),
 				});
 			})
 			.set(RemoveNotesKey, (deps) => {
 				return RemoveNotes({
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 					history: deps.get(EditHistoryManager.Key),
 					bus: deps.get(EventBus.Key),
 				});
 			})
 			.set(SetNoteParameterKey, (deps) => {
 				return SetNoteParameter({
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 					setNotes: deps.get(SetNotesKey),
 				});
 			})
@@ -178,7 +192,7 @@ export function configureDeps() {
 				return RemoveControlChanges({
 					bus: deps.get(EventBus.Key),
 					history: deps.get(EditHistoryManager.Key),
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
 				});
 			})
 
@@ -186,11 +200,14 @@ export function configureDeps() {
 			.set(NewFileKey, (deps) => {
 				return NewFile({
 					bus: deps.get(EventBus.Key),
+					fileStore: deps.get(FileStore.Key),
 				});
 			})
 			.set(SaveFileKey, (deps) => {
 				return SaveFile({
-					songStore: deps.get(SongStore.Key),
+					fileStore: deps.get(FileStore.Key),
+					googleAPIClient: deps.get(GoogleAPIClient.Key),
+					recentFileService: deps.get(RecentFileService.Key),
 				});
 			})
 			.set(LoadFileKey, (deps) => {
@@ -199,14 +216,21 @@ export function configureDeps() {
 					setSong: deps.get(SetSongKey),
 				});
 			})
+			.set(OpenFileKey, (deps) => {
+				return OpenFile({
+					bus: deps.get(EventBus.Key),
+					editor: deps.get(Editor.Key),
+					fileStore: deps.get(FileStore.Key),
+					googleAPIClient: deps.get(GoogleAPIClient.Key),
+					recentFileService: deps.get(RecentFileService.Key),
+				});
+			})
 
 			.set(InitializeAppKey, (deps) => {
 				return InitializeApp({
-					newFile: deps.get(NewFileKey),
-					songStore: deps.get(SongStore.Key),
-					editor: deps.get(Editor.Key),
 					soundFontStore: deps.get(SoundFontStore.Key),
 					synthesizer: deps.get(Synthesizer.Key),
+					autoSaveService: deps.get(AutoSaveService.Key),
 				});
 			})
 	);

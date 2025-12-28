@@ -1,7 +1,8 @@
 import type { CSSObject } from "@emotion/styled";
 import styled from "@emotion/styled";
+import { FlexLayout } from "./Styles.ts";
 
-const VariantStyles = {
+export const ButtonVariantStyles = {
 	normal: {
 		background: "none",
 		color: "var(--color-foreground)",
@@ -39,6 +40,7 @@ const VariantStyles = {
 	},
 	primary: {
 		background: "var(--color-primary-background)",
+		border: "1px solid var(--color-primary-600)",
 		color: "var(--color-primary-foreground)",
 		transition: "background 100ms ease",
 		"&:hover": {
@@ -115,18 +117,15 @@ const SizeStyles = {
 } as const satisfies Record<string, CSSObject>;
 
 export const Button = styled.button<{
-	variant?: keyof typeof VariantStyles;
+	variant?: keyof typeof ButtonVariantStyles;
 	size?: keyof typeof SizeStyles;
 }>(
+	FlexLayout.row.center.center.gap(8),
 	{
 		border: "none",
 		padding: "0 8px",
 		borderRadius: "4px",
 		cursor: "pointer",
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		gap: "8px",
 		outline: "none",
 
 		"&[disabled]": {
@@ -140,6 +139,6 @@ export const Button = styled.button<{
 			opacity: 0.3,
 		},
 	},
-	({ variant = "normal" }) => VariantStyles[variant],
+	({ variant = "normal" }) => ButtonVariantStyles[variant],
 	({ size = "md" }) => SizeStyles[size],
 );

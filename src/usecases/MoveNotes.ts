@@ -1,16 +1,16 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
+import type { FileStore } from "../FileStore.ts";
 import { isNotNullish } from "../lib.ts";
 import { Note } from "../models/Note.ts";
-import type { SongStore } from "../SongStore.ts";
 import type { SetNotes } from "./SetNotes.ts";
 
 export const MoveNotesKey = ComponentKey<MoveNotes>("MoveNotes");
 
 export function MoveNotes({
-	songStore,
+	fileStore,
 	setNotes,
 }: {
-	songStore: SongStore;
+	fileStore: FileStore;
 	setNotes: SetNotes;
 }) {
 	return (
@@ -19,7 +19,7 @@ export function MoveNotes({
 		keyOffset: number,
 		tickOffset: number,
 	) => {
-		const channel = songStore.state.getChannel(channelId);
+		const channel = fileStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		setNotes(

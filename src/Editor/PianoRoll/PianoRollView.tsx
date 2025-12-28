@@ -4,13 +4,17 @@ import { ClipboardManager } from "../../ClipboardManager.ts";
 import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
+import { FileStore } from "../../FileStore.ts";
 import { addListener, EmptySet } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { IconButton } from "../../react/IconButton.ts";
-import { BoxShadowStyleBase, UIControlStyleBase } from "../../react/Styles.ts";
+import {
+	BoxShadowStyleBase,
+	FlexLayout,
+	UIControlStyleBase,
+} from "../../react/Styles.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
-import { SongStore } from "../../SongStore.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { Synthesizer } from "../../Synthesizer.ts";
@@ -31,7 +35,7 @@ import {
 } from "./PianoRollViewRenderer.ts";
 
 export function PianoRollView({
-	songStore,
+	fileStore,
 	player,
 	editor,
 	setNotes,
@@ -40,7 +44,7 @@ export function PianoRollView({
 	soundFontStore,
 	clipboard,
 }: {
-	songStore?: SongStore;
+	fileStore?: FileStore;
 	player?: Player;
 	editor?: Editor;
 	setNotes?: SetNotes;
@@ -51,7 +55,7 @@ export function PianoRollView({
 }) {
 	synthesizer = useComponent(Synthesizer.Key, synthesizer);
 	soundFontStore = useComponent(SoundFontStore.Key, soundFontStore);
-	songStore = useComponent(SongStore.Key, songStore);
+	fileStore = useComponent(FileStore.Key, fileStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
 	setNotes = useComponent(SetNotesKey, setNotes);
@@ -61,7 +65,7 @@ export function PianoRollView({
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const pianoRollRef = useRef<PianoRoll>(null);
 	if (pianoRollRef.current == null) {
-		pianoRollRef.current = new PianoRoll(soundFontStore, songStore, editor);
+		pianoRollRef.current = new PianoRoll(soundFontStore, fileStore, editor);
 	}
 	const pianoRoll = pianoRollRef.current;
 
@@ -73,7 +77,7 @@ export function PianoRollView({
 		const handleResolver = new PianoRollInteractionHandleResolver(
 			synthesizer,
 			pianoRoll,
-			songStore,
+			fileStore,
 			setNotes,
 			removeNotes,
 			player,
@@ -103,7 +107,7 @@ export function PianoRollView({
 				canvas,
 				pianoRollState: pianoRoll.state,
 				pianoRollHoverNotesManagerState: pianoRoll.hoverNotesManager.state,
-				song: songStore.state,
+				song: fileStore.state.song,
 				playerState: player.state,
 				editorState: editor.state,
 				soundFontStoreState: soundFontStore.state,
@@ -116,7 +120,7 @@ export function PianoRollView({
 			}),
 			pianoRoll.addChangeListener(render),
 			pianoRoll.hoverNotesManager.addChangeListener(render),
-			songStore.addChangeListener(render),
+			fileStore.addChangeListener(render),
 			player.addChangeListener(render),
 			editor.addChangeListener(render),
 			soundFontStore.addChangeListener(render),
@@ -149,7 +153,7 @@ export function PianoRollView({
 		synthesizer,
 		editor,
 		player,
-		songStore,
+		fileStore,
 		removeNotes,
 		setNotes,
 		soundFontStore,
@@ -178,7 +182,7 @@ export function PianoRollView({
 			<PianoRollSelectionActionPopup
 				pianoRoll={pianoRoll}
 				editor={editor}
-				songStore={songStore}
+				fileStore={fileStore}
 				clipboard={clipboard}
 			/>
 		</div>
@@ -187,17 +191,17 @@ export function PianoRollView({
 
 function PianoRollSelectionActionPopup({
 	editor,
-	songStore,
+	fileStore,
 	pianoRoll,
 	clipboard,
 }: {
 	editor: Editor;
-	songStore: SongStore;
+	fileStore: FileStore;
 	pianoRoll: PianoRoll;
 	clipboard: ClipboardManager;
 }) {
 	const editorState = useStateful(editor);
-	const song = useStateful(songStore);
+	const song = useStateful(fileStore, (state) => state.song);
 	const pianoRollState = useStateful(pianoRoll);
 
 	const selection = editorState.selection;
@@ -226,17 +230,13 @@ function PianoRollSelectionActionPopup({
 			css={[
 				BoxShadowStyleBase,
 				UIControlStyleBase,
+				FlexLayout.row.center.center.gap(8),
 				{
 					position: "absolute",
 					bottom: selectionBottom,
 					right: selectionRight,
 					minHeight: "unset",
 					padding: "4px 8px",
-					display: "flex",
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "center",
-					gap: 8,
 				},
 			]}
 		>

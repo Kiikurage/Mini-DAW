@@ -1,17 +1,17 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
+import type { FileStore } from "../FileStore.ts";
 import { assert, isNotNullish } from "../lib.ts";
 import { Note } from "../models/Note.ts";
-import type { SongStore } from "../SongStore.ts";
 import type { SetNotes } from "./SetNotes.ts";
 
 export const SetNoteParameterKey =
 	ComponentKey<SetNoteParameter>("SetNoteParameter");
 
 export function SetNoteParameter({
-	songStore,
+	fileStore,
 	setNotes,
 }: {
-	songStore: SongStore;
+	fileStore: FileStore;
 	setNotes: SetNotes;
 }) {
 	return (
@@ -22,7 +22,7 @@ export function SetNoteParameter({
 	) => {
 		assert(parameter === "velocity", `Unsupported parameter: ${parameter}`);
 
-		const channel = songStore.state.getChannel(channelId);
+		const channel = fileStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		const notes = [...noteIds]

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { MdClose } from "react-icons/md";
 import { IconButton } from "./IconButton";
-import { BoxShadowStyleBase } from "./Styles.ts";
+import { BoxShadowStyleBase, FlexLayout } from "./Styles.ts";
 
 const context = createContext<{
 	onClose: () => void;
@@ -18,19 +18,17 @@ function DialogHeader({ children }: { children: ReactNode }) {
 	const { onClose } = useContext(context);
 	return (
 		<header
-			css={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "flex-start",
-				gap: 16,
-				padding: "4px 16px",
-				height: 36,
-				overflow: "clip",
-				borderBottom: "1px solid var(--color-border)",
-				userSelect: "none",
-				color: "var(--color-foreground-weak)",
-			}}
+			css={[
+				FlexLayout.row.center.start.gap(16),
+				{
+					padding: "4px 16px",
+					height: 36,
+					overflow: "clip",
+					borderBottom: "1px solid var(--color-border)",
+					userSelect: "none",
+					color: "var(--color-foreground-weak)",
+				},
+			]}
 		>
 			<span css={{ flex: "1 1 0" }}>{children}</span>
 			<IconButton title="閉じる" onClick={onClose} variant="normalInline">
@@ -40,25 +38,23 @@ function DialogHeader({ children }: { children: ReactNode }) {
 	);
 }
 
-function DialogBody({ children }: { children: ReactNode }) {
+function DialogBody({ children }: { children?: ReactNode }) {
 	return <div css={{ padding: "16px 24px", flex: "1 1 0" }}>{children}</div>;
 }
 
 function DialogFooter({ children }: { children: ReactNode }) {
 	return (
 		<footer
-			css={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "flex-end",
-				gap: 16,
-				padding: "4px 16px",
-				height: 36,
-				overflow: "clip",
-				borderTop: "1px solid var(--color-border)",
-				userSelect: "none",
-			}}
+			css={[
+				FlexLayout.row.center.end.gap(16),
+				{
+					padding: "4px 16px",
+					height: 36,
+					overflow: "clip",
+					borderTop: "1px solid var(--color-border)",
+					userSelect: "none",
+				},
+			]}
 		>
 			{children}
 		</footer>
@@ -110,6 +106,7 @@ export const Dialog = Object.assign(
 					}}
 					css={[
 						BoxShadowStyleBase,
+						FlexLayout.column.stretch.stretch,
 						{
 							"&::backdrop": {
 								backgroundColor: "rgba(0, 0, 0, 0.3)",
@@ -126,10 +123,6 @@ export const Dialog = Object.assign(
 							minWidth: "min(640px, 80vw)",
 							padding: 0,
 							margin: 0,
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "stretch",
-							justifyContent: "stretch",
 						},
 					]}
 				>

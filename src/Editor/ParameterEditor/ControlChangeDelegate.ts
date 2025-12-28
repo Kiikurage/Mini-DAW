@@ -1,4 +1,5 @@
 import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { assertNotNullish } from "../../lib.ts";
@@ -9,7 +10,6 @@ import {
 	composeInteractionHandle,
 	type PointerEventManagerInteractionHandle,
 } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { PutControlChange } from "../../usecases/PutControlChange.ts";
 import type { RemoveControlChanges } from "../../usecases/RemoveControlChanges.ts";
 import {
@@ -31,18 +31,21 @@ export class ControlChangeDelegate extends ParameterEditorSampleDelegate {
 
 	constructor(
 		parameterType: ControlChangeParametrType,
-		songStore: SongStore,
+		fileStore: FileStore,
 		editor: Editor,
 		parameterEditor: ParameterEditor,
 		private readonly putControlChange: PutControlChange,
 		private readonly removeControlChange: RemoveControlChanges,
 	) {
-		super(parameterType, editor, parameterEditor, songStore);
+		super(parameterType, editor, parameterEditor, fileStore);
 		this.controlType = parameterType.controlType;
 	}
 
 	getAllSamples(): Iterable<ParameterSample> {
-		const channel = getActiveChannel(this.songStore.state, this.editor.state);
+		const channel = getActiveChannel(
+			this.fileStore.state.song,
+			this.editor.state,
+		);
 		if (channel === null) return [];
 
 		return (channel.controlChanges.get(this.controlType)?.toArray() ?? []).map(
@@ -52,7 +55,7 @@ export class ControlChangeDelegate extends ParameterEditorSampleDelegate {
 
 	getSelectedSamples(): Iterable<ParameterSample> {
 		return getSelectedControlChanges(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 			this.controlType,
 		).map(createSample);
@@ -69,7 +72,7 @@ export class ControlChangeDelegate extends ParameterEditorSampleDelegate {
 			selectByRangeFeature(
 				this.editor,
 				this.parameterEditor,
-				this.songStore,
+				this.fileStore,
 				this.controlType,
 			),
 		);
@@ -234,7 +237,7 @@ function changeValueFeature(
 function selectByRangeFeature(
 	editor: Editor,
 	parameterEditor: ParameterEditor,
-	songStore: SongStore,
+	fileStore: FileStore,
 	controlType: ControlType,
 ): PointerEventManagerInteractionHandle {
 	return {
@@ -273,7 +276,7 @@ function selectByRangeFeature(
 				if (marqueeArea !== null) {
 					const channelId = editor.state.activeChannelId;
 					if (channelId !== null) {
-						const channel = songStore.state.getChannel(channelId);
+						const channel = fileStore.state.song.getChannel(channelId);
 						assertNotNullish(channel);
 
 						const controlChanges = channel.controlChanges.get(controlType);

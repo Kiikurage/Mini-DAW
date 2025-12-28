@@ -8,6 +8,8 @@ const GoogleAPIScope = {
 	DRIVE_METADATA_READONLY:
 		"https://www.googleapis.com/auth/drive.metadata.readonly",
 	DRIVE_METADATA: "https://www.googleapis.com/auth/drive.metadata",
+	DRIVE_FILE: "https://www.googleapis.com/auth/drive.file",
+	DRIVE: "https://www.googleapis.com/auth/drive",
 };
 type GoogleAPIScope = (typeof GoogleAPIScope)[keyof typeof GoogleAPIScope];
 
@@ -16,7 +18,6 @@ export namespace GoogleDrive {
 		readonly id: string;
 		readonly kind: string;
 		readonly mimeType: MimeType;
-		readonly resourceKey: string;
 		readonly name: string;
 	}
 
@@ -37,8 +38,6 @@ export class GoogleAPIClient {
 	private grantedScopes: Set<GoogleAPIScope> = new Set();
 	private token: string = "";
 	private expiresAt: number = 0;
-
-	constructor() {}
 
 	async listFilesByFolder(folderId: string) {
 		const files: GoogleDrive.File[] = [];
@@ -65,7 +64,7 @@ export class GoogleAPIClient {
 		folderId?: string;
 		pageToken?: string;
 	}): Promise<ListFilesResponse> {
-		await this.ensureScope([GoogleAPIScope.DRIVE_METADATA_READONLY]);
+		await this.ensureScope();
 		const url = new URL("https://www.googleapis.com/drive/v3/files");
 
 		const queries: string[] = ["trashed = false"];
@@ -83,11 +82,82 @@ export class GoogleAPIClient {
 		return (await this.fetchJSON(url.toString())) as ListFilesResponse;
 	}
 
-	async getAbout() {
-		await this.ensureScope([
-			GoogleAPIScope.DRIVE_METADATA_READONLY,
-			GoogleAPIScope.DRIVE_METADATA,
-		]);
+	async postFile(options: {
+		parentId: string;
+		file: File;
+	}): Promise<GoogleDrive.File> {
+		await this.ensureScope();
+
+		const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
+		url.searchParams.set("uploadType", "multipart");
+
+		const formData = new FormData();
+		formData.append(
+			"metadata",
+			new Blob(
+				[
+					JSON.stringify({
+						parents: [options.parentId],
+						mimeType: options.file.type,
+						name: options.file.name,
+					}),
+				],
+				{ type: "application/json; charset=UTF-8" },
+			),
+		);
+		formData.append("file", options.file);
+
+		return await this.fetchJSON(url.toString(), {
+			method: "POST",
+			body: formData,
+		});
+	}
+
+	async patchFile(options: {
+		fileId: string;
+		file: File;
+	}): Promise<GoogleDrive.File> {
+		await this.ensureScope();
+
+		const url = new URL(
+			`https://www.googleapis.com/upload/drive/v3/files/${options.fileId}`,
+		);
+		url.searchParams.set("uploadType", "media");
+
+		return await this.fetchJSON(url.toString(), {
+			method: "PATCH",
+			headers: {
+				"Content-Type": options.file.type,
+			},
+			body: options.file,
+		});
+	}
+
+	async getFile(fileId: string): Promise<ArrayBuffer> {
+		await this.ensureScope();
+
+		const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+		url.searchParams.set("alt", "media");
+
+		return await this.fetchBuffer(url.toString());
+	}
+
+	async getFileMetadata(fileId: string): Promise<GoogleDrive.File> {
+		await this.ensureScope();
+
+		const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+		url.searchParams.set("fields", "id,kind,mimeType,name");
+
+		return await this.fetchJSON(url.toString());
+	}
+
+	async getAbout(): Promise<{
+		user: {
+			photoLink: string;
+			emailAddress: string;
+		};
+	}> {
+		await this.ensureScope();
 
 		return await this.fetchJSON(
 			"https://www.googleapis.com/drive/v3/about?fields=kind,user,storageQuota",
@@ -97,6 +167,11 @@ export class GoogleAPIClient {
 	private async fetchJSON(url: string, req?: RequestInit) {
 		const res = await this.fetch(url, req);
 		return res.json();
+	}
+
+	private async fetchBuffer(url: string, req?: RequestInit) {
+		const res = await this.fetch(url, req);
+		return res.arrayBuffer();
 	}
 
 	private async fetch(url: string, req: RequestInit = {}) {
@@ -116,7 +191,8 @@ export class GoogleAPIClient {
 		return res;
 	}
 
-	private async ensureScope(scopes: Iterable<GoogleAPIScope>) {
+	private async ensureScope() {
+		const scopes = [GoogleAPIScope.DRIVE];
 		if (Date.now() > this.expiresAt) {
 			this.grantedScopes.clear();
 		}

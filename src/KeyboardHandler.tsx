@@ -1,24 +1,74 @@
+import { OpenFileDialog } from "./AutoSaveConfigDialog/OpenFileDialog.tsx";
+import { SaveFileDialog } from "./AutoSaveConfigDialog/SaveFileDialog.tsx";
 import type { ClipboardManager } from "./ClipboardManager.ts";
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import type { Editor } from "./Editor/Editor.ts";
+import type { FileStore } from "./FileStore.ts";
 import type { Player } from "./Player/Player.ts";
-import type { LoadFile } from "./usecases/LoadFile.ts";
-import type { MoveNotes } from "./usecases/MoveNotes.ts";
-import type { RemoveNotes } from "./usecases/RemoveNotes.ts";
+import type { OverlayPortal } from "./react/OverlayPortal.ts";
 import type { SaveFile } from "./usecases/SaveFile.ts";
 
 export class KeyboardHandler {
 	static readonly Key = ComponentKey.of(KeyboardHandler);
 
 	constructor(
+		private readonly fileStore: FileStore,
 		private readonly history: EditHistoryManager,
 		private readonly clipboard: ClipboardManager,
 		private readonly player: Player,
 		private readonly editor: Editor,
+		private readonly overlayPortal: OverlayPortal,
 		private readonly saveFile: SaveFile,
-		private readonly loadFile: LoadFile,
 	) {}
+
+	/**
+	 * Captureフェーズでのkeydownイベントハンドラ
+	 * ブラウザのデフォルト動作を防ぎたい場合はこちらで処理する
+	 * @param ev
+	 */
+	handleKeyDownCapture(ev: KeyboardEvent) {
+		if (document.activeElement?.tagName === "INPUT") return null;
+
+		switch (ev.key) {
+			case "s": {
+				if (ev.ctrlKey || ev.metaKey) {
+					if (this.fileStore.state.location !== null && !ev.shiftKey) {
+						this.saveFile(this.fileStore.state.location);
+					} else {
+						this.overlayPortal.show(({ close }) => (
+							<SaveFileDialog onClose={close} />
+						));
+					}
+					return true;
+				}
+				break;
+			}
+			case "o": {
+				if (ev.ctrlKey || ev.metaKey) {
+					this.overlayPortal.show(({ close }) => (
+						<OpenFileDialog onClose={close} />
+					));
+					return true;
+				}
+				break;
+			}
+			case "=": {
+				if (ev.ctrlKey || ev.metaKey) {
+					this.editor.zoomIn();
+					return true;
+				}
+				break;
+			}
+			case "-": {
+				if (ev.ctrlKey || ev.metaKey) {
+					this.editor.zoomOut();
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	handleKeyDown(ev: KeyboardEvent) {
 		if (document.activeElement?.tagName === "INPUT") return null;
@@ -104,33 +154,6 @@ export class KeyboardHandler {
 					return true;
 				}
 				break;
-			}
-			case "s": {
-				if (ev.ctrlKey || ev.metaKey) {
-					this.saveFile();
-					return true;
-				}
-				break;
-			}
-			case "o": {
-				if (ev.ctrlKey || ev.metaKey) {
-					this.loadFile();
-					return true;
-				}
-				break;
-			}
-			case "=": {
-				if (ev.ctrlKey || ev.metaKey) {
-					this.editor.zoomIn();
-					return true;
-				}
-				break;
-			}
-			case "-": {
-				if (ev.ctrlKey || ev.metaKey) {
-					this.editor.zoomOut();
-					return true;
-				}
 			}
 		}
 		return false;

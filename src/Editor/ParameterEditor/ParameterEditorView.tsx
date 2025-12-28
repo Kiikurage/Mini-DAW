@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
+import { FileStore } from "../../FileStore.ts";
 import { addListener } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
-import { SongStore } from "../../SongStore.ts";
 import {
 	type PutControlChange,
 	PutControlChangeKey,
@@ -22,21 +22,21 @@ import { ParameterEditor } from "./ParameterEditor.ts";
 import { renderCanvas } from "./ParameterEditorViewRenderer.ts";
 
 export function ParameterEditorView({
-	songStore,
+	fileStore,
 	player,
 	editor,
 	setNoteParameter,
 	putControlChange,
 	removeControlChange,
 }: {
-	songStore?: SongStore;
+	fileStore?: FileStore;
 	player?: Player;
 	editor?: Editor;
 	setNoteParameter?: SetNoteParameter;
 	putControlChange?: PutControlChange;
 	removeControlChange?: RemoveControlChanges;
 }) {
-	songStore = useComponent(SongStore.Key, songStore);
+	fileStore = useComponent(FileStore.Key, fileStore);
 	player = useComponent(Player.Key, player);
 	editor = useComponent(Editor.Key, editor);
 	setNoteParameter = useComponent(SetNoteParameterKey, setNoteParameter);
@@ -54,7 +54,7 @@ export function ParameterEditorView({
 
 		const parameterEditor = new ParameterEditor(
 			editor,
-			songStore,
+			fileStore,
 			setNoteParameter,
 			putControlChange,
 			removeControlChange,
@@ -76,7 +76,7 @@ export function ParameterEditorView({
 			renderCanvas({
 				canvas,
 				parameterEditorState: parameterEditor.state,
-				song: songStore.state,
+				song: fileStore.state.song,
 				playerState: player.state,
 				editorState: editor.state,
 				allSamples: parameterEditor.getAllSamples(),
@@ -89,7 +89,7 @@ export function ParameterEditorView({
 				canvas.style.cursor = state.cursor;
 			}),
 			parameterEditor.addChangeListener(render),
-			songStore.addChangeListener(render),
+			fileStore.addChangeListener(render),
 			player.addChangeListener(render),
 			editor.addChangeListener(render),
 			ResizeObserverWrapper.getInstance().observe(canvas, (entry) => {
@@ -111,7 +111,7 @@ export function ParameterEditorView({
 	}, [
 		editor,
 		player,
-		songStore,
+		fileStore,
 		putControlChange,
 		removeControlChange,
 		setNoteParameter,

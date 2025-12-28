@@ -1,8 +1,8 @@
+import type { FileStore } from "../../FileStore.ts";
 import { EmptySet } from "../../lib.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import type { SongStore } from "../../SongStore.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
 import type { PutControlChange } from "../../usecases/PutControlChange.ts";
 import type { RemoveControlChanges } from "../../usecases/RemoveControlChanges.ts";
@@ -35,7 +35,7 @@ export class ParameterEditor
 
 	constructor(
 		private readonly editor: Editor,
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		private readonly setNoteParameter: SetNoteParameter,
 		private readonly putControlChange: PutControlChange,
 		private readonly removeControlChange: RemoveControlChanges,
@@ -75,7 +75,7 @@ export class ParameterEditor
 		switch (this.editor.state.parameterType.type) {
 			case "velocity": {
 				this.delegate = new VelocityDelegate(
-					this.songStore,
+					this.fileStore,
 					this.editor,
 					this,
 					this.setNoteParameter,
@@ -85,7 +85,7 @@ export class ParameterEditor
 			case "controlChange": {
 				this.delegate = new ControlChangeDelegate(
 					this.editor.state.parameterType,
-					this.songStore,
+					this.fileStore,
 					this.editor,
 					this,
 					this.putControlChange,

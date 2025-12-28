@@ -1,9 +1,9 @@
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { EmptySet, isNotNullish } from "../../lib.ts";
 import type { Channel } from "../../models/Channel.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type {
 	SoundFontStore,
 	SoundFontStoreState,
@@ -44,14 +44,14 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 	constructor(
 		private readonly editor: Editor,
 		private readonly pianoRoll: PianoRoll,
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		private readonly soundFontStore: SoundFontStore,
 	) {
 		super({ hoverNoteIds: EmptySet });
 
 		const update = () => {
 			const activeChannel = getActiveChannel(
-				this.songStore.state,
+				this.fileStore.state.song,
 				this.editor.state,
 			);
 			if (activeChannel === null) {
@@ -64,7 +64,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 					this.pointerPositions,
 					this.editor.state,
 					this.pianoRoll.state,
-					this.songStore.state,
+					this.fileStore.state.song,
 					this.soundFontStore.state,
 					activeChannel,
 				),
@@ -79,7 +79,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 		};
 		editor.addChangeListener(update);
 		pianoRoll.addChangeListener(update);
-		songStore.addChangeListener(update);
+		fileStore.addChangeListener(update);
 		soundFontStore.addChangeListener(update);
 	}
 

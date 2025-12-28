@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FlexLayout } from "../react/Styles.ts";
 
 function ContextMenuItem({
 	children,
@@ -68,17 +69,16 @@ function ContextMenuItem({
 function ContextMenuSeparator() {
 	return (
 		<li
-			css={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "stretch",
-				cursor: "pointer",
-				pointerEvents: "none",
-				userSelect: "none",
-				padding: "4px 4px",
-				minHeight: "8px",
-			}}
+			css={[
+				FlexLayout.row.center.stretch,
+				{
+					cursor: "pointer",
+					pointerEvents: "none",
+					userSelect: "none",
+					padding: "4px 4px",
+					minHeight: "8px",
+				},
+			]}
 		>
 			<hr
 				css={{
@@ -119,22 +119,21 @@ export const ContextMenu = Object.assign(
 						top: clientTop,
 						left: clientLeft,
 					}}
-					css={{
-						borderRadius: "8px",
-						overflow: "clip",
-						position: "fixed",
-						background: "var(--color-background)",
-						color: "var(--color-foreground)",
-						boxShadow:
-							"rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px",
-						listStyle: "none",
-						display: "flex",
-						flexDirection: "column",
-						margin: 0,
-						padding: "6px 6px",
-						alignItems: "stretch",
-						justifyContent: "flex-start",
-					}}
+					css={[
+						FlexLayout.column.stretch.start,
+						{
+							borderRadius: "8px",
+							overflow: "clip",
+							position: "fixed",
+							background: "var(--color-background)",
+							color: "var(--color-foreground)",
+							boxShadow:
+								"rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px",
+							listStyle: "none",
+							margin: 0,
+							padding: "6px 6px",
+						},
+					]}
 					onPointerDown={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();

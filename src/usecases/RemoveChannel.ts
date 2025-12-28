@@ -1,21 +1,21 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
-import type { SongStore } from "../SongStore.ts";
+import type { FileStore } from "../FileStore.ts";
 
 export const RemoveChannelKey = ComponentKey<RemoveChannel>("RemoveChannel");
 
 export function RemoveChannel({
 	history,
-	songStore,
+	fileStore,
 	bus,
 }: {
 	history: EditHistoryManager;
-	songStore: SongStore;
+	fileStore: FileStore;
 	bus: EventBus;
 }) {
 	return (channelId: number) => {
-		const channel = songStore.state.getChannel(channelId);
+		const channel = fileStore.state.song.getChannel(channelId);
 		if (channel === null) return;
 
 		history.execute({

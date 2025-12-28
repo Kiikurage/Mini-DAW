@@ -1,4 +1,6 @@
 import styled from "@emotion/styled";
+import { type ComponentProps, useId } from "react";
+import { Field } from "./Field.tsx";
 import { UIControlStyleBase } from "./Styles.ts";
 
 export const Input = styled.input([
@@ -24,3 +26,18 @@ export const Input = styled.input([
 		},
 	},
 ]);
+
+export function InputField({
+	label,
+	inputProps,
+}: {
+	label: string;
+	inputProps?: ComponentProps<typeof Input>;
+}) {
+	const fieldId = useId();
+	return (
+		<Field label={label} htmlFor={fieldId}>
+			<Input {...inputProps} id={fieldId} />
+		</Field>
+	);
+}

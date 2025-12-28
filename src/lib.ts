@@ -1,3 +1,5 @@
+import type { Interpolation } from "@emotion/react";
+import type { ClassAttributes, ComponentType, JSX, RefAttributes } from "react";
 import { TICK_PER_MEASURE } from "./constants.ts";
 
 export function isNullish(x: unknown): x is null | undefined {
@@ -15,6 +17,10 @@ export function assertNotNullish<T>(
 	if (value === null || value === undefined) {
 		throw new Error(message);
 	}
+}
+
+export function sleep(ms: number) {
+	return new Promise<void>((r) => setTimeout(r, ms));
 }
 
 export function assert(
@@ -57,6 +63,12 @@ export function formatDuration(durationInTick: number) {
 	}
 }
 
+export function addListener<K extends keyof WindowEventMap>(
+	target: Window,
+	type: K,
+	listener: (this: Window, ev: WindowEventMap[K]) => void,
+	options?: AddEventListenerOptions,
+): () => void;
 export function addListener<K extends keyof DocumentEventMap>(
 	target: Document,
 	type: K,
@@ -82,10 +94,6 @@ export function addListener(
 	return () => target.removeEventListener(type, listener, options);
 }
 
-export function run<T>(fn: () => T): T {
-	return fn();
-}
-
 export const EmptySet: ReadonlySet<never> = new Set<never>();
 export const EmptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
@@ -99,4 +107,37 @@ export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
 
 export function toMutableSet<T>(iterable: Iterable<T>): Set<T> {
 	return new Set(iterable);
+}
+
+export type ElementOf<T> = T extends keyof JSX.IntrinsicElements
+	? JSX.IntrinsicElements[T] extends ClassAttributes<infer E>
+		? E
+		: never
+	: never;
+
+export type PropsOf<T> =
+	T extends ComponentType<infer P>
+		? P & { css?: Interpolation } & RefAttributes<T>
+		: T extends keyof JSX.IntrinsicElements
+			? JSX.IntrinsicElements[T] & { css?: Interpolation } & RefAttributes<
+						ElementOf<T>
+					>
+			: never;
+
+export function formatTimestamp(timestamp: number): string {
+	return formatDate(new Date(timestamp));
+}
+
+export function formatDate(date: Date): string {
+	const YYYY = date.getFullYear();
+	const MM = String(date.getMonth() + 1).padStart(2, "0");
+	const DD = String(date.getDate()).padStart(2, "0");
+	const hh = String(date.getHours()).padStart(2, "0");
+	const mm = String(date.getMinutes()).padStart(2, "0");
+
+	return `${YYYY}/${MM}/${DD} ${hh}:${mm}`;
+}
+
+export function neverReachable(x: never): never {
+	throw new Error(`This code should never be reachable. (${x})`);
 }

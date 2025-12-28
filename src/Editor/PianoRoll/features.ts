@@ -1,11 +1,11 @@
 import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
+import type { FileStore } from "../../FileStore.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import { minmax, quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
 import type { PEMPointerEvent } from "../../PointerEventManager/PointerEventManager.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
 import {
@@ -42,18 +42,18 @@ export function setCursorFeature(context: {
 /**
  * ノートを移動する
  * @param context.editor
- * @param context.songStore
+ * @param context.fileStore
  * @param context.setNotes
  * @param context.pianoRoll
  */
 export function moveNotesFeature(context: {
 	editor: Editor;
-	songStore: SongStore;
+	fileStore: FileStore;
 	setNotes: SetNotes;
 	pianoRoll: PianoRoll;
 	previewManager: PianoRollPreviewManager;
 }): PointerEventManagerInteractionHandle {
-	const { editor, songStore, setNotes, pianoRoll, previewManager } = context;
+	const { editor, fileStore, setNotes, pianoRoll, previewManager } = context;
 
 	return {
 		handlePointerDown: (ev) => {
@@ -61,7 +61,7 @@ export function moveNotesFeature(context: {
 			if (activeChannelId === null) return;
 
 			const originalNotes = [
-				...getSelectedNotes(songStore.state, editor.state),
+				...getSelectedNotes(fileStore.state.song, editor.state),
 			];
 			previewManager.startPreviewNotes(originalNotes);
 
@@ -114,7 +114,7 @@ export function moveNotesFeature(context: {
  * @param context.ev
  * @param context.editor
  * @param context.pianoRoll
- * @param context.songStore
+ * @param context.fileStore
  * @param context.setNotes
  * @param context.noteIdForNewNoteDuration 新規ノートのデフォルトの長さとして今後参照されるノート
  * @param updateNote ノート更新関数
@@ -124,7 +124,7 @@ function resizeNotes(
 		ev: PEMPointerEvent;
 		editor: Editor;
 		pianoRoll: PianoRoll;
-		songStore: SongStore;
+		fileStore: FileStore;
 		setNotes: SetNotes;
 		noteIdForNewNoteDuration: number | null;
 	},
@@ -134,7 +134,7 @@ function resizeNotes(
 		ev,
 		editor,
 		pianoRoll,
-		songStore,
+		fileStore,
 		setNotes,
 		noteIdForNewNoteDuration,
 	} = context;
@@ -142,7 +142,9 @@ function resizeNotes(
 	const activeChannelId = editor.state.activeChannelId;
 	if (activeChannelId === null) return;
 
-	const originalNotes = [...getSelectedNotes(songStore.state, editor.state)];
+	const originalNotes = [
+		...getSelectedNotes(fileStore.state.song, editor.state),
+	];
 	pianoRoll.hoverNotesManager.disableUpdate();
 
 	const startTick = toPianoRollPosition(
@@ -179,14 +181,14 @@ function resizeNotes(
  * ノートの開始位置を変更する
  * @param context.editor
  * @param context.pianoRoll
- * @param context.songStore
+ * @param context.fileStore
  * @param context.setNotes
  * @param context.noteIdForNewNoteDuration 新規ノートのデフォルトの長さとして今後参照されるノート
  */
 export function resizeNoteStartFeature(context: {
 	editor: Editor;
 	pianoRoll: PianoRoll;
-	songStore: SongStore;
+	fileStore: FileStore;
 	setNotes: SetNotes;
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {
@@ -213,14 +215,14 @@ export function resizeNoteStartFeature(context: {
  * ノートの終了位置を変更する
  * @param context.editor
  * @param context.pianoRoll
- * @param context.songStore
+ * @param context.fileStore
  * @param context.setNotes
  * @param context.noteIdForNewNoteDuration 新規ノートのデフォルトの長さとして今後参照されるノート
  */
 export function resizeNoteEndFeature(context: {
 	editor: Editor;
 	pianoRoll: PianoRoll;
-	songStore: SongStore;
+	fileStore: FileStore;
 	setNotes: SetNotes;
 	noteIdForNewNoteDuration: number | null;
 }): PointerEventManagerInteractionHandle {

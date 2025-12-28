@@ -1,5 +1,6 @@
-import { type ReactNode, useLayoutEffect, useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { KEY_PER_OCTAVE, NUM_KEYS } from "../constants.ts";
+import { useIntersectionObserver } from "./useIntersectionObserver.ts";
 
 function isBlackKey(key: number) {
 	const k = key % KEY_PER_OCTAVE;
@@ -13,15 +14,16 @@ export function Keyboard({
 	onPointerDown?: (key: number) => void;
 	onPointerUp?: (key: number) => void;
 }) {
-	const containerRef = useRef<HTMLDivElement>(null);
-	useLayoutEffect(() => {
-		// マウント時にC4が見えるようスクロール
+	const isFirstIntersectRef = useRef(false);
+	const intersectionObserverCallback = useIntersectionObserver((entry) => {
+		if (entry.isIntersecting && !isFirstIntersectRef.current) {
+			isFirstIntersectRef.current = true;
 
-		const container = containerRef.current;
-		if (container === null) return;
-
-		container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-	}, []);
+			// 初期状態でC4キーが見えるようにスクロールする
+			entry.target.scrollLeft =
+				(entry.target.scrollWidth - entry.target.clientWidth) / 2;
+		}
+	});
 
 	const whiteKeys: ReactNode[] = [];
 	const blackKeys: ReactNode[] = [];
@@ -94,6 +96,7 @@ export function Keyboard({
 			if (key % KEY_PER_OCTAVE === 0) {
 				whiteKeys.push(
 					<text
+						key={`label-${key}`}
 						x={x + KEY_WIDTH / 2}
 						y={KEY_HEIGHT - 8}
 						textAnchor="middle"
@@ -110,9 +113,12 @@ export function Keyboard({
 			x += KEY_WIDTH;
 		}
 	}
+
 	return (
 		<div
-			ref={containerRef}
+			ref={(e) => {
+				intersectionObserverCallback(e);
+			}}
 			css={{
 				overflowX: "scroll",
 				userSelect: "none",

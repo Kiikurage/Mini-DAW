@@ -1,9 +1,9 @@
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
+import type { FileStore } from "../FileStore.ts";
 import { EmptySet, minmax } from "../lib.ts";
 import { ControlType } from "../models/ControlType.ts";
-import type { SongStore } from "../SongStore.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import type { Synthesizer } from "../Synthesizer.ts";
@@ -42,7 +42,7 @@ export class Player extends Stateful<PlayerState> {
 
 	constructor(
 		private readonly context: AudioContext,
-		private readonly songStore: StateOnly<SongStore>,
+		private readonly fileStore: StateOnly<FileStore>,
 		private readonly synthesizer: Synthesizer,
 		bus: EventBus,
 	) {
@@ -50,33 +50,33 @@ export class Player extends Stateful<PlayerState> {
 
 		bus.on("song.put.after", (_song) => {
 			this.setState(InitialProps);
-			this.syncSongFromSongStore();
+			this.syncSongFromFileStore();
 		});
 		bus.on("song.update.after", (_song) => {
-			this.syncSongFromSongStore();
+			this.syncSongFromFileStore();
 		});
 		bus.on("channel.add.after", (channel) => {
-			this.syncChannelFromSongStore(channel.id);
+			this.syncChannelFromFileStore(channel.id);
 		});
 		bus.on("channel.update.after", (channelId) => {
-			this.syncChannelFromSongStore(channelId);
+			this.syncChannelFromFileStore(channelId);
 		});
 		bus.on("channel.remove.before", (channelId: number) => {
 			this.unmuteChannels([channelId]);
 		});
 	}
 
-	private syncSongFromSongStore() {
+	private syncSongFromFileStore() {
 		this.synthesizer.resetAll();
 		this.clearMutedChannels();
 
-		for (const channel of this.songStore.state.channels) {
-			this.syncChannelFromSongStore(channel.id);
+		for (const channel of this.fileStore.state.song.channels) {
+			this.syncChannelFromFileStore(channel.id);
 		}
 	}
 
-	private syncChannelFromSongStore(channelId: number) {
-		const channel = this.songStore.state.channels.find(
+	private syncChannelFromFileStore(channelId: number) {
+		const channel = this.fileStore.state.song.channels.find(
 			(ch) => ch.id === channelId,
 		);
 		if (channel === undefined) return;
@@ -132,7 +132,7 @@ export class Player extends Stateful<PlayerState> {
 
 	toggleMuteAllChannels() {
 		const allChannelIds = new Set(
-			this.songStore.state.channels.map((ch) => ch.id),
+			this.fileStore.state.song.channels.map((ch) => ch.id),
 		);
 		const areAllMuted = [...allChannelIds].every((id) =>
 			this.state.mutedChannelIds.has(id),
@@ -197,7 +197,7 @@ export class Player extends Stateful<PlayerState> {
 		const PRE_ENQUEUE_SIZE_IN_SEC = 1 / 30;
 
 		const audioLastTickFrom = Math.max(
-			...this.songStore.state.channels.map((ch) => ch.lastTickFrom),
+			...this.fileStore.state.song.channels.map((ch) => ch.lastTickFrom),
 		);
 		if (this.state.currentTick > audioLastTickFrom) {
 			this.pause();
@@ -206,7 +206,7 @@ export class Player extends Stateful<PlayerState> {
 			return;
 		}
 
-		for (const channel of this.songStore.state.channels) {
+		for (const channel of this.fileStore.state.song.channels) {
 			this.synthesizer.setBank({
 				channel: channel.id,
 				bankNumber: channel.instrumentKey.bankNumber,
@@ -218,7 +218,7 @@ export class Player extends Stateful<PlayerState> {
 		}
 
 		const tickEnd =
-			Math.max(...this.songStore.state.channels.map((ch) => ch.tickTo)) +
+			Math.max(...this.fileStore.state.song.channels.map((ch) => ch.tickTo)) +
 			TICK_PER_BEAT;
 
 		let lastEnqueuedTick = this.startedFromInTick;
@@ -235,7 +235,7 @@ export class Player extends Stateful<PlayerState> {
 
 			const nextEnqueueTick =
 				this.currentTick + PRE_ENQUEUE_SIZE_IN_SEC / this.secondPerTick;
-			for (const channel of this.songStore.state.channels) {
+			for (const channel of this.fileStore.state.song.channels) {
 				if (this.state.mutedChannelIds.has(channel.id)) continue;
 
 				for (const note of channel.notes.values()) {
@@ -300,7 +300,7 @@ export class Player extends Stateful<PlayerState> {
 	private startedAtApplicationTime: number = 0;
 
 	private get secondPerTick(): number {
-		const secondPerMeasure = (60 / this.songStore.state.bpm) * 4;
+		const secondPerMeasure = (60 / this.fileStore.state.song.bpm) * 4;
 		return secondPerMeasure / TICK_PER_MEASURE;
 	}
 

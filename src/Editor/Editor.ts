@@ -1,13 +1,13 @@
 import { TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
+import type { FileStore } from "../FileStore.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
 import { getMarqueeArea } from "../getMarqueeArea.ts";
 import { EmptySet, minmax, toMutableSet, toSet } from "../lib.ts";
 import type { ControlType } from "../models/ControlType.ts";
 import type { Note } from "../models/Note.ts";
 import type { Player } from "../Player/Player.ts";
-import type { SongStore } from "../SongStore.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import type { MoveNotes } from "../usecases/MoveNotes.ts";
 import type { RemoveControlChanges } from "../usecases/RemoveControlChanges.ts";
@@ -21,6 +21,12 @@ import { ParameterType } from "./ParameterType.ts";
  * 各サブコンポーネント固有の状態はここではなく、個別にサブコンポーネントのStateで管理する。
  */
 export interface EditorState {
+	/**
+	 * TODO: 削除予定
+	 * ウェルカムページを表示しているかどうか
+	 */
+	readonly showWelcomeView: boolean;
+
 	/**
 	 * 新規に挿入されるノートのデフォルトの長さ
 	 */
@@ -210,7 +216,7 @@ export class Editor extends Stateful<EditorState> {
 	static readonly Key = ComponentKey.of(Editor);
 
 	constructor(
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		player: Player,
 		bus: EventBus,
 		private readonly removeNotes: RemoveNotes,
@@ -218,6 +224,7 @@ export class Editor extends Stateful<EditorState> {
 		private readonly removeControlChanges: RemoveControlChanges,
 	) {
 		super({
+			showWelcomeView: true,
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
 			previewChannelIds: new Set<number>(),
 			activeChannelId: null,
@@ -273,6 +280,20 @@ export class Editor extends Stateful<EditorState> {
 			});
 	}
 
+	showWelcomeView() {
+		this.updateState((state) => {
+			if (state.showWelcomeView) return state;
+			return { ...state, showWelcomeView: true };
+		});
+	}
+
+	hideWelcomeView() {
+		this.updateState((state) => {
+			if (!state.showWelcomeView) return state;
+			return { ...state, showWelcomeView: false };
+		});
+	}
+
 	setParameterType(parameterType: ParameterType) {
 		this.updateState((state) => {
 			if (state.parameterType === parameterType) return state;
@@ -302,7 +323,7 @@ export class Editor extends Stateful<EditorState> {
 	togglePreviewAllChannels() {
 		this.updateState((state) => {
 			const allChannelIds = new Set(
-				this.songStore.state.channels.map((ch) => ch.id),
+				this.fileStore.state.song.channels.map((ch) => ch.id),
 			);
 			const areAllPreviewed = [...allChannelIds].every((id) =>
 				state.previewChannelIds.has(id),
@@ -343,7 +364,10 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	*findNotesInMarqueeArea(): Generator<Note> {
-		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		const activeChannel = getActiveChannel(
+			this.fileStore.state.song,
+			this.state,
+		);
 		if (activeChannel === null) return;
 
 		const area = getMarqueeArea(
@@ -406,7 +430,10 @@ export class Editor extends Stateful<EditorState> {
 	}
 
 	putAllNotesToSelection() {
-		const activeChannel = getActiveChannel(this.songStore.state, this.state);
+		const activeChannel = getActiveChannel(
+			this.fileStore.state.song,
+			this.state,
+		);
 		if (activeChannel === null) return;
 
 		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));

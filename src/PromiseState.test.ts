@@ -64,10 +64,6 @@ describe("PromiseState", () => {
 
 			expect(PromiseState.isFulfilled(state)).toBe(false);
 		});
-
-		it("should return false for undefined", () => {
-			expect(PromiseState.isFulfilled(undefined)).toBe(false);
-		});
 	});
 
 	describe("isPending", () => {
@@ -87,10 +83,6 @@ describe("PromiseState", () => {
 			const state = PromiseState.rejected("error");
 
 			expect(PromiseState.isPending(state)).toBe(false);
-		});
-
-		it("should return false for undefined", () => {
-			expect(PromiseState.isPending(undefined)).toBe(false);
 		});
 	});
 

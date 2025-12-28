@@ -1,5 +1,6 @@
 import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { MouseEventButton } from "../../constants.ts";
+import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
 import { minmax, quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
@@ -10,7 +11,6 @@ import {
 } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
-import type { SongStore } from "../../SongStore.ts";
 import type { Synthesizer } from "../../Synthesizer.ts";
 import type { RemoveNotes } from "../../usecases/RemoveNotes.ts";
 import type { SetNotes } from "../../usecases/SetNotes.ts";
@@ -66,14 +66,14 @@ export class PianoRollInteractionHandleResolver
 	constructor(
 		synthesizer: Synthesizer,
 		private readonly pianoRoll: PianoRoll,
-		private readonly songStore: SongStore,
+		private readonly fileStore: FileStore,
 		private readonly setNotes: SetNotes,
 		private readonly removeNotes: RemoveNotes,
 		private readonly player: Player,
 		private readonly editor: Editor,
 	) {
 		this.previewManager = new PianoRollPreviewManager(
-			this.songStore,
+			this.fileStore,
 			this.editor,
 			synthesizer,
 		);
@@ -209,7 +209,7 @@ export class PianoRollInteractionHandleResolver
 			resizeNoteStartFeature({
 				editor: this.editor,
 				pianoRoll: this.pianoRoll,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: null,
 			}),
@@ -222,7 +222,7 @@ export class PianoRollInteractionHandleResolver
 			}),
 			moveNotesFeature({
 				editor: this.editor,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				pianoRoll: this.pianoRoll,
 				previewManager: this.previewManager,
@@ -237,7 +237,7 @@ export class PianoRollInteractionHandleResolver
 			resizeNoteEndFeature({
 				editor: this.editor,
 				pianoRoll: this.pianoRoll,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: null,
 			}),
@@ -275,7 +275,7 @@ export class PianoRollInteractionHandleResolver
 		);
 
 		const activeChannel = getActiveChannel(
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (activeChannel !== null) {
@@ -380,7 +380,7 @@ export class PianoRollInteractionHandleResolver
 	): PointerEventManagerInteractionHandle | null {
 		const selectionArea = computeSelectionArea(
 			this.pianoRoll.loopKeys,
-			this.songStore.state,
+			this.fileStore.state.song,
 			this.editor.state,
 		);
 		if (selectionArea === null) return null;
@@ -436,7 +436,7 @@ export class PianoRollInteractionHandleResolver
 			resizeNoteStartFeature({
 				editor: this.editor,
 				pianoRoll: this.pianoRoll,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: targetNote.id,
 			}),
@@ -458,7 +458,7 @@ export class PianoRollInteractionHandleResolver
 			toggleNoteSelectionFeature(targetNote, this.editor),
 			moveNotesFeature({
 				editor: this.editor,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				pianoRoll: this.pianoRoll,
 				previewManager: this.previewManager,
@@ -482,7 +482,7 @@ export class PianoRollInteractionHandleResolver
 			resizeNoteEndFeature({
 				editor: this.editor,
 				pianoRoll: this.pianoRoll,
-				songStore: this.songStore,
+				fileStore: this.fileStore,
 				setNotes: this.setNotes,
 				noteIdForNewNoteDuration: targetNote.id,
 			}),
