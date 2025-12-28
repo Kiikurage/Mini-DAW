@@ -6,7 +6,7 @@ interface Option {
 }
 
 export interface ListBoxState {
-	readonly selectedId: string;
+	readonly selectedId: string | null;
 	readonly focusedId: string | null;
 	readonly options: readonly Option[];
 }
@@ -19,7 +19,7 @@ export class ListBoxController extends Stateful<
 > {
 	constructor(initialState?: Partial<ListBoxState>) {
 		super({
-			selectedId: "",
+			selectedId: null,
 			focusedId: null,
 			options: [],
 			...initialState,
@@ -28,11 +28,7 @@ export class ListBoxController extends Stateful<
 
 	setSelectedOptionId(optionId: string | null) {
 		this.updateState((state) => {
-			const option =
-				state.options.find((option) => option.id === optionId) ?? null;
-			if (option === null) return state;
-
-			return { ...state, selectedId: option.id };
+			return { ...state, selectedId: optionId };
 		});
 		this.emit("change", this.state);
 	}

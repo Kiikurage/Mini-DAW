@@ -50,7 +50,7 @@ export function Select<T extends ListBoxOption>({
 
 	const [listBoxController] = useState(() => {
 		const listBoxController = new ListBoxController({
-			selectedId: value ?? defaultValue ?? "",
+			selectedId: value ?? defaultValue ?? null,
 		});
 		listBoxController.on("change", () => {
 			closePopup();

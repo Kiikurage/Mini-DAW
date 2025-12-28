@@ -37,11 +37,11 @@ export function ListBox({
 	options: readonly ListBoxOption[];
 	value?: string;
 	defaultValue?: string;
-	onChange?: (value: string) => void;
+	onChange?: (value: string | null) => void;
 }) {
 	const [controller] = useState(() => {
 		return new ListBoxController({
-			selectedId: value ?? defaultValue ?? "",
+			selectedId: value ?? defaultValue ?? null,
 		});
 	});
 	useEffect(() => {

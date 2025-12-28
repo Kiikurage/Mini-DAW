@@ -192,6 +192,7 @@ function SoundFontDialogView({
 												})),
 											]}
 											onChange={(presetNumber) => {
+												if (presetNumber === null) return;
 												setInstrumentKey(
 													new InstrumentKey(
 														instrumentKey.name,
@@ -221,6 +222,7 @@ function SoundFontDialogView({
 										<ListBox
 											value={instrumentKey.presetNumber.toString()}
 											onChange={(bankNumber) => {
+												if (bankNumber === null) return;
 												setInstrumentKey(
 													new InstrumentKey(
 														instrumentKey.name,
