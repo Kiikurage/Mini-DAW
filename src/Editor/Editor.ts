@@ -240,7 +240,7 @@ export class Editor extends Stateful<EditorState> {
 		});
 
 		player.addChangeListener((state) => {
-			if (!state.isAutoScrollEnabled) return;
+			if (!state.isPlaying || !state.isAutoScrollEnabled) return;
 
 			const playHeadX = state.currentTick * widthPerTick(this.state.zoom);
 			const scrollLeft = minmax(

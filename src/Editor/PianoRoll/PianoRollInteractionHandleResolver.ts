@@ -2,7 +2,7 @@ import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { MouseEventButton } from "../../constants.ts";
 import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import { minmax, quantize } from "../../lib.ts";
+import { quantize } from "../../lib.ts";
 import { Note } from "../../models/Note.ts";
 import type { Player } from "../../Player/Player.ts";
 import {
@@ -252,19 +252,6 @@ export class PianoRollInteractionHandleResolver
 				noteIdForNewNoteDuration: null,
 			}),
 		);
-
-		player.addChangeListener((state) => {
-			if (!state.isAutoScrollEnabled) return;
-
-			const playHeadX = state.currentTick * widthPerTick(editor.state.zoom);
-			const scrollLeft = minmax(
-				playHeadX - this.editor.state.width / 2,
-				playHeadX,
-				editor.state.scrollLeft,
-			);
-
-			this.editor.setScrollLeft(scrollLeft);
-		});
 	}
 
 	resolveHandle(
