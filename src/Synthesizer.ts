@@ -271,7 +271,6 @@ class InstrumentZoneSynthesizer {
 		pitchBend: ConstantSourceNode;
 	}) {
 		this.instrumentZone = props.instrumentZone;
-		console.log(props.instrumentZone);
 		this.context = props.context;
 		this.destination = props.destination;
 		this.pitchBend = props.pitchBend;

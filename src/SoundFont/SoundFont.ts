@@ -546,6 +546,7 @@ export class SoundFont {
 							) -
 							shdr.start,
 						tune:
+							shdr.pitchCorrection +
 							i16(
 								instrumentZoneRecord,
 								SFGenerator.COARSE_TUNE,
