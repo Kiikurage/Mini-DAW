@@ -31,6 +31,7 @@ export class AutoSaveService {
 
 	enableAutoSave() {
 		this.disableAutoSave();
+		console.log("[AutoSaveService] Auto save enabled.");
 		const mainLoop = async () => {
 			try {
 				const { song, metadata } = this.fileStore.state;
@@ -41,16 +42,12 @@ export class AutoSaveService {
 				}
 			} finally {
 				this.autoSaveTimerId = setTimeout(() => {
-					requestIdleCallback(() => {
-						mainLoop();
-					});
+					mainLoop();
 				}, AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS);
 			}
 		};
 		this.autoSaveTimerId = setTimeout(() => {
-			requestIdleCallback(() => {
-				mainLoop();
-			});
+			mainLoop();
 		}, AutoSaveService.AUTO_SAVE_INTERVAL_IN_MS);
 	}
 

@@ -5,7 +5,7 @@ import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { FileStore } from "../../FileStore.ts";
-import { addListener, EmptySet } from "../../lib.ts";
+import { addListener, EmptySet, minmax } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { IconButton } from "../../react/IconButton.ts";
@@ -101,8 +101,8 @@ export function PianoRollView({
 				const startZoom = editor.state.zoom;
 
 				ev.sessionEvents.on("gestureChange", (ev) => {
-					const scale = ev.scale.x;
-					const newZoom = startZoom * scale;
+					const scale = Math.hypot(ev.scale.x, ev.scale.y);
+					const newZoom = minmax(0.25, startZoom * scale, 16);
 
 					// ジェスチャ中心のティック位置は維持
 					// tick
