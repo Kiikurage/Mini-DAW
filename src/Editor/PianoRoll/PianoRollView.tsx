@@ -17,6 +17,7 @@ import {
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
+import { StatusBar } from "../../StatusBar/StatusBar.tsx";
 import { Synthesizer } from "../../Synthesizer.ts";
 import { type PutNotes, PutNotesKey } from "../../usecases/PutNotes.ts";
 import {
@@ -61,7 +62,7 @@ export function PianoRollView({
 	setNotes = useComponent(PutNotesKey, setNotes);
 	removeNotes = useComponent(RemoveNotesKey, removeNotes);
 	clipboard = useComponent(ClipboardManager.Key, clipboard);
-
+	const statusbar = useComponent(StatusBar.Key);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const pianoRollRef = useRef<PianoRoll>(null);
 	if (pianoRollRef.current == null) {
@@ -94,10 +95,29 @@ export function PianoRollView({
 				handleResolver.resolveHandle(ev.position)?.handleDoubleClick?.(ev),
 			)
 			.on("gestureStart", (ev) => {
-				const startScrollLeft = editor.state.scrollLeft;
+				const gesturePositionTick =
+					(editor.state.scrollLeft + ev.position.x - SIDEBAR_WIDTH) /
+					widthPerTick(editor.state.zoom);
 				const startScrollTop = pianoRoll.state.scrollTop;
+				const startZoom = editor.state.zoom;
+
 				ev.sessionEvents.on("gestureChange", (ev) => {
-					editor.setScrollLeft(startScrollLeft - ev.distance.x);
+					const scale = ev.scale.x;
+					const newZoom = startZoom * scale;
+
+					// ジェスチャ中心のティック位置は維持
+					// tick
+					//   = (oldScrollLeft + oldGestureX - SIDEBAR_WIDTH) / widthPerTick(oldZoom)
+					//   = (newScrollLeft + newGestureX - SIDEBAR_WIDTH) / widthPerTick(newZoom)
+					//
+					// newScrollLeft =  tick * widthPerTick(newZoom) - (newCenterX - SIDEBAR_WIDTH)
+
+					const newScrollLeft =
+						gesturePositionTick * widthPerTick(newZoom) -
+						(ev.position.x - SIDEBAR_WIDTH);
+
+					editor.setZoom(newZoom);
+					editor.setScrollLeft(newScrollLeft);
 					pianoRoll.setScrollTop(startScrollTop - ev.distance.y);
 				});
 			});

@@ -1,3 +1,4 @@
+import { start } from "happy-dom/lib/PropertySymbol";
 import { MouseEventButton } from "../constants.ts";
 import { EventEmitter } from "../EventEmitter.ts";
 import { addListener } from "../lib.ts";
@@ -293,24 +294,31 @@ export class PointerEventManager extends EventEmitter<{
 
 				if (this.pointers.size >= 2) {
 					if (this.gestureState === null) {
-						const startPosition = [...this.getPointerPositions()].reduce<{
-							x: number;
-							y: number;
-						}>(
-							(acc, pos) => {
-								acc.x += pos.x / this.pointers.size;
-								acc.y += pos.y / this.pointers.size;
-								return acc;
-							},
-							{ x: 0, y: 0 },
-						);
+						const startPosition = { x: 0, y: 0 };
+						for (const pos of this.getPointerPositions()) {
+							startPosition.x += pos.x;
+							startPosition.y += pos.y;
+						}
+						startPosition.x /= this.pointers.size;
+						startPosition.y /= this.pointers.size;
+
+						const startRadius = { x: 1, y: 1 };
+						for (const pos of this.getPointerPositions()) {
+							startRadius.x *= pos.x - startPosition.x;
+							startRadius.y *= pos.y - startPosition.y;
+						}
+						startRadius.x = Math.abs(startRadius.x) ** (1 / this.pointers.size);
+						startRadius.y = Math.abs(startRadius.y) ** (1 / this.pointers.size);
 
 						this.gestureState = {
 							eventEmitter: new EventEmitter<GestureSequenceEventMap>(),
 							startPosition,
+							startRadius,
 						};
 						const ev: PEMGestureEvent = {
+							position: startPosition,
 							distance: { x: 0, y: 0 },
+							scale: { x: 1, y: 1 },
 							sessionEvents: this.gestureState.eventEmitter,
 						};
 						this.emit("gestureStart", ev);
@@ -324,45 +332,61 @@ export class PointerEventManager extends EventEmitter<{
 
 			if (this.pointers.size >= 2) {
 				if (this.gestureState === null) {
-					const startPosition = [...this.getPointerPositions()].reduce<{
-						x: number;
-						y: number;
-					}>(
-						(acc, pos) => {
-							acc.x += pos.x / this.pointers.size;
-							acc.y += pos.y / this.pointers.size;
-							return acc;
-						},
-						{ x: 0, y: 0 },
-					);
+					const startPosition = { x: 0, y: 0 };
+					for (const pos of this.getPointerPositions()) {
+						startPosition.x += pos.x;
+						startPosition.y += pos.y;
+					}
+					startPosition.x /= this.pointers.size;
+					startPosition.y /= this.pointers.size;
+
+					const startRadius = { x: 1, y: 1 };
+					for (const pos of this.getPointerPositions()) {
+						startRadius.x *= pos.x - startPosition.x;
+						startRadius.y *= pos.y - startPosition.y;
+					}
+					startRadius.x = Math.abs(startRadius.x) ** (1 / this.pointers.size);
+					startRadius.y = Math.abs(startRadius.y) ** (1 / this.pointers.size);
 
 					this.gestureState = {
 						eventEmitter: new EventEmitter<GestureSequenceEventMap>(),
 						startPosition,
+						startRadius,
 					};
 					const ev: PEMGestureEvent = {
+						position: startPosition,
 						distance: { x: 0, y: 0 },
+						scale: { x: 1, y: 1 },
 						sessionEvents: this.gestureState.eventEmitter,
 					};
 					this.emit("gestureStart", ev);
 				}
 
-				const currentCenter = [...this.getPointerPositions()].reduce<{
-					x: number;
-					y: number;
-				}>(
-					(acc, pos) => {
-						acc.x += pos.x / this.pointers.size;
-						acc.y += pos.y / this.pointers.size;
-						return acc;
-					},
-					{ x: 0, y: 0 },
-				);
+				const center = { x: 0, y: 0 };
+				for (const pos of this.getPointerPositions()) {
+					center.x += pos.x;
+					center.y += pos.y;
+				}
+				center.x /= this.pointers.size;
+				center.y /= this.pointers.size;
+
+				const radius = { x: 1, y: 1 };
+				for (const pos of this.getPointerPositions()) {
+					radius.x *= pos.x - center.x;
+					radius.y *= pos.y - center.y;
+				}
+				radius.x = Math.abs(radius.x) ** (1 / this.pointers.size);
+				radius.y = Math.abs(radius.y) ** (1 / this.pointers.size);
 
 				const ev: PEMGestureEvent = {
+					position: center,
 					distance: {
-						x: currentCenter.x - this.gestureState.startPosition.x,
-						y: currentCenter.y - this.gestureState.startPosition.y,
+						x: center.x - this.gestureState.startPosition.x,
+						y: center.y - this.gestureState.startPosition.y,
+					},
+					scale: {
+						x: radius.x / this.gestureState.startRadius.x,
+						y: radius.y / this.gestureState.startRadius.y,
 					},
 					sessionEvents: this.gestureState.eventEmitter,
 				};
@@ -418,8 +442,18 @@ export class PointerEventManager extends EventEmitter<{
 		}
 
 		if (this.gestureState !== null) {
+			const center = { x: 0, y: 0 };
+			for (const pos of this.getPointerPositions()) {
+				center.x += pos.x;
+				center.y += pos.y;
+			}
+			center.x /= this.pointers.size;
+			center.y /= this.pointers.size;
+
 			const ev: PEMGestureEvent = {
+				position: center,
 				distance: { x: 0, y: 0 },
+				scale: { x: 1, y: 1 },
 				sessionEvents: this.gestureState.eventEmitter,
 			};
 			this.emit("gestureEnd", ev);
@@ -502,7 +536,17 @@ interface DragState {
 
 interface GestureState {
 	eventEmitter: EventEmitter<GestureSequenceEventMap>;
+	/**
+	 * ジェスチャ開始時における、タッチ点の中心(ジェスチャ中心)の位置
+	 */
 	startPosition: PositionSnapshot;
+	/**
+	 * ジェスチャ開始時における、ジェスチャ中心から各タッチ点までの距離の相乗平均
+	 */
+	startRadius: {
+		readonly x: number;
+		readonly y: number;
+	};
 }
 
 export interface PEMMouseEvent {
@@ -540,8 +584,16 @@ interface GestureSequenceEventMap {
 }
 
 export interface PEMGestureEvent {
-	// position: PositionSnapshot;
-	// button: MouseEventButton;
-	distance: { x: number; y: number };
-	sessionEvents: EventEmitter<GestureSequenceEventMap>;
+	readonly position: PositionSnapshot;
+
+	/**
+	 * ジェスチャの拡大量
+	 */
+	readonly scale: { readonly x: number; readonly y: number };
+
+	/**
+	 * ジェスチャの移動量
+	 */
+	readonly distance: { readonly x: number; readonly y: number };
+	readonly sessionEvents: EventEmitter<GestureSequenceEventMap>;
 }
