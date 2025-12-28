@@ -136,8 +136,15 @@ type KeyOf<T> = {
 	[K in keyof GeneratorTypes]: [GeneratorTypes[K]] extends [T] ? K : never;
 }[keyof GeneratorTypes];
 
-function i16<K extends KeyOf<number>>(record: GeneratorRecord, key: K): number {
-	return record[key]?.amount?.getInt16(0, true) ?? GeneratorDefaultValue[key];
+function i16<K extends KeyOf<number>>(
+	record: GeneratorRecord,
+	key: K,
+	presetZoneRecord: GeneratorRecord,
+): number {
+	return (
+		(record[key]?.amount?.getInt16(0, true) ?? GeneratorDefaultValue[key]) +
+		(presetZoneRecord[key]?.amount?.getInt16(0, true) ?? 0)
+	);
 }
 
 function i16OrNull<K extends KeyOf<number | null>>(
@@ -399,19 +406,39 @@ export class SoundFont {
 
 				const sample = this.sdta.sample.subarray(
 					shdr.start +
-						i16(instrumentZoneRecord, SFGenerator.START_ADDRESS_COARSE_OFFSET) *
+						i16(
+							instrumentZoneRecord,
+							SFGenerator.START_ADDRESS_COARSE_OFFSET,
+							presetZoneRecord,
+						) *
 							32768 +
-						i16(instrumentZoneRecord, SFGenerator.START_ADDRESS_OFFSET),
+						i16(
+							instrumentZoneRecord,
+							SFGenerator.START_ADDRESS_OFFSET,
+							presetZoneRecord,
+						),
 					shdr.end +
-						i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_COARSE_OFFSET) *
+						i16(
+							instrumentZoneRecord,
+							SFGenerator.END_ADDRESS_COARSE_OFFSET,
+							presetZoneRecord,
+						) *
 							32768 +
-						i16(instrumentZoneRecord, SFGenerator.END_ADDRESS_OFFSET),
+						i16(
+							instrumentZoneRecord,
+							SFGenerator.END_ADDRESS_OFFSET,
+							presetZoneRecord,
+						),
 				);
 
 				entries.push(
 					new InstrumentZone({
 						sampleMode:
-							i16(instrumentZoneRecord, SFGenerator.SAMPLE_MODES) === 1
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.SAMPLE_MODES,
+								presetZoneRecord,
+							) === 1
 								? "loop"
 								: "no_loop",
 						keyRange: range(presetZoneRecord, SFGenerator.KEY_RANGE).intersect(
@@ -426,25 +453,42 @@ export class SoundFont {
 						volumeEnvelope: new Envelope({
 							delay:
 								2 **
-								(i16(instrumentZoneRecord, SFGenerator.DELAY_VOLUME_ENVELOPE) /
+								(i16(
+									instrumentZoneRecord,
+									SFGenerator.DELAY_VOLUME_ENVELOPE,
+									presetZoneRecord,
+								) /
 									1200),
 							attack:
 								2 **
-								(i16(instrumentZoneRecord, SFGenerator.ATTACK_VOLUME_ENVELOPE) /
+								(i16(
+									instrumentZoneRecord,
+									SFGenerator.ATTACK_VOLUME_ENVELOPE,
+									presetZoneRecord,
+								) /
 									1200),
 							hold:
 								2 **
-								(i16(instrumentZoneRecord, SFGenerator.HOLD_VOLUME_ENVELOPE) /
+								(i16(
+									instrumentZoneRecord,
+									SFGenerator.HOLD_VOLUME_ENVELOPE,
+									presetZoneRecord,
+								) /
 									1200),
 							decay:
 								2 **
-								(i16(instrumentZoneRecord, SFGenerator.DECAY_VOLUME_ENVELOPE) /
+								(i16(
+									instrumentZoneRecord,
+									SFGenerator.DECAY_VOLUME_ENVELOPE,
+									presetZoneRecord,
+								) /
 									1200),
 							sustain:
 								10 **
 								(-i16(
 									instrumentZoneRecord,
 									SFGenerator.SUSTAIN_VOLUME_ENVELOPE,
+									presetZoneRecord,
 								) /
 									100),
 							release:
@@ -452,6 +496,7 @@ export class SoundFont {
 								(i16(
 									instrumentZoneRecord,
 									SFGenerator.RELEASE_VOLUME_ENVELOPE,
+									presetZoneRecord,
 								) /
 									1200),
 						}),
@@ -461,10 +506,15 @@ export class SoundFont {
 								(i16(
 									instrumentZoneRecord,
 									SFGenerator.INITIAL_FILTER_CUTOFF_FREQUENCY,
+									presetZoneRecord,
 								) /
 									1200),
 						initialFilterQ:
-							i16(instrumentZoneRecord, SFGenerator.INITIAL_FILTER_Q) / 10,
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.INITIAL_FILTER_Q,
+								presetZoneRecord,
+							) / 10,
 						sample,
 						sampleRate: shdr.sampleRate,
 						loopStartIndex:
@@ -472,23 +522,46 @@ export class SoundFont {
 							i16(
 								instrumentZoneRecord,
 								SFGenerator.START_LOOP_ADDRESS_COARSE_OFFSET,
+								presetZoneRecord,
 							) *
 								32768 +
-							i16(instrumentZoneRecord, SFGenerator.START_LOOP_ADDRESS_OFFSET) -
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.START_LOOP_ADDRESS_OFFSET,
+								presetZoneRecord,
+							) -
 							shdr.start,
 						loopEndIndex:
 							shdr.endLoop +
 							i16(
 								instrumentZoneRecord,
 								SFGenerator.END_LOOP_ADDRESS_COARSE_OFFSET,
+								presetZoneRecord,
 							) *
 								32768 +
-							i16(instrumentZoneRecord, SFGenerator.END_LOOP_ADDRESS_OFFSET) -
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.END_LOOP_ADDRESS_OFFSET,
+								presetZoneRecord,
+							) -
 							shdr.start,
 						tune:
-							i16(instrumentZoneRecord, SFGenerator.COARSE_TUNE) * 100 +
-							i16(instrumentZoneRecord, SFGenerator.FINE_TUNE),
-						scaleTuning: i16(instrumentZoneRecord, SFGenerator.SCALE_TUNING),
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.COARSE_TUNE,
+								presetZoneRecord,
+							) *
+								100 +
+							i16(
+								instrumentZoneRecord,
+								SFGenerator.FINE_TUNE,
+								presetZoneRecord,
+							),
+						scaleTuning: i16(
+							instrumentZoneRecord,
+							SFGenerator.SCALE_TUNING,
+							presetZoneRecord,
+						),
 						rootKey:
 							i16OrNull(
 								instrumentZoneRecord,
