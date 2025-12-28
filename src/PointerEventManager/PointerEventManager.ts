@@ -304,8 +304,8 @@ export class PointerEventManager extends EventEmitter<{
 
 						const startRadius = { x: 1, y: 1 };
 						for (const pos of this.getPointerPositions()) {
-							startRadius.x *= pos.x - startPosition.x;
-							startRadius.y *= pos.y - startPosition.y;
+							startRadius.x *= Math.max(32, Math.abs(pos.x - startPosition.x));
+							startRadius.y *= Math.max(32, Math.abs(pos.y - startPosition.y));
 						}
 						startRadius.x = Math.abs(startRadius.x) ** (1 / this.pointers.size);
 						startRadius.y = Math.abs(startRadius.y) ** (1 / this.pointers.size);
@@ -342,8 +342,8 @@ export class PointerEventManager extends EventEmitter<{
 
 					const startRadius = { x: 1, y: 1 };
 					for (const pos of this.getPointerPositions()) {
-						startRadius.x *= pos.x - startPosition.x;
-						startRadius.y *= pos.y - startPosition.y;
+						startRadius.x *= Math.max(32, Math.abs(pos.x - startPosition.x));
+						startRadius.y *= Math.max(32, Math.abs(pos.y - startPosition.y));
 					}
 					startRadius.x = Math.abs(startRadius.x) ** (1 / this.pointers.size);
 					startRadius.y = Math.abs(startRadius.y) ** (1 / this.pointers.size);
@@ -372,8 +372,8 @@ export class PointerEventManager extends EventEmitter<{
 
 				const radius = { x: 1, y: 1 };
 				for (const pos of this.getPointerPositions()) {
-					radius.x *= pos.x - center.x;
-					radius.y *= pos.y - center.y;
+					radius.x *= Math.max(32, Math.abs(pos.x - center.x));
+					radius.y *= Math.max(32, Math.abs(pos.y - center.y));
 				}
 				radius.x = Math.abs(radius.x) ** (1 / this.pointers.size);
 				radius.y = Math.abs(radius.y) ** (1 / this.pointers.size);
