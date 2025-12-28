@@ -17,7 +17,6 @@ import {
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import { StatusBar } from "../../StatusBar/StatusBar.tsx";
 import { Synthesizer } from "../../Synthesizer.ts";
 import { type PutNotes, PutNotesKey } from "../../usecases/PutNotes.ts";
 import {
@@ -62,7 +61,7 @@ export function PianoRollView({
 	setNotes = useComponent(PutNotesKey, setNotes);
 	removeNotes = useComponent(RemoveNotesKey, removeNotes);
 	clipboard = useComponent(ClipboardManager.Key, clipboard);
-	const statusbar = useComponent(StatusBar.Key);
+
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const pianoRollRef = useRef<PianoRoll>(null);
 	if (pianoRollRef.current == null) {

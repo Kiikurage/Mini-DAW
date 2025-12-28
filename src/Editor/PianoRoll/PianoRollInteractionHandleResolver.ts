@@ -97,22 +97,32 @@ export class PianoRollInteractionHandleResolver
 
 					const selectedNoteIds = getSelectedNoteIds(this.editor.state);
 					ev.sessionEvents.on("dragStart", (ev) => {
-						this.editor.startMarqueeSelection(
-							toPianoRollPosition(
-								ev.position,
-								this.editor.state,
-								this.pianoRoll.state,
-							),
+						const position = toPianoRollPosition(
+							ev.position,
+							this.editor.state,
+							this.pianoRoll.state,
 						);
+						this.editor.startMarqueeSelection({
+							key: position.key,
+							tick: quantize(
+								position.tick,
+								this.editor.state.quantizeUnitInTick,
+							),
+						});
 					});
 					ev.sessionEvents.on("dragMove", (ev) => {
-						this.editor.setMarqueeAreaTo(
-							toPianoRollPosition(
-								ev.position,
-								this.editor.state,
-								this.pianoRoll.state,
-							),
+						const position = toPianoRollPosition(
+							ev.position,
+							this.editor.state,
+							this.pianoRoll.state,
 						);
+						this.editor.setMarqueeAreaTo({
+							key: position.key,
+							tick: quantize(
+								position.tick,
+								this.editor.state.quantizeUnitInTick,
+							),
+						});
 						this.editor.setSelectedNotes([
 							...selectedNoteIds,
 							...this.editor.findNotesInMarqueeArea().map((note) => note.id),
