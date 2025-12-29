@@ -100,12 +100,14 @@ namespace flex {
 			return Object.assign(Object.create(AlignItems), {
 				display: "flex",
 				flexDirection: "row",
+				flexWrap: "wrap",
 			});
 		},
 		get column(): AlignItems {
 			return Object.assign(Object.create(AlignItems), {
 				display: "flex",
 				flexDirection: "column",
+				flexWrap: "wrap",
 			});
 		},
 		get default(): AlignItems {

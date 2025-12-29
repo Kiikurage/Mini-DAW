@@ -98,6 +98,30 @@ export function renderCanvas({
 	ctx.stroke();
 	// endregion
 
+	// region 1/8ごとの横罫線
+	ctx.beginPath();
+	for (let y = 0; y < totalHeight; y += totalHeight / 8) {
+		addLinePath({ ctx, x0: sideBarWidth, y0: y, x1: totalWidth, y1: y });
+	}
+	ctx.strokeStyle = COLOR_TICK_BORDER;
+	ctx.setLineDash([devicePixelRatio, 2 * devicePixelRatio]);
+	ctx.stroke();
+	ctx.setLineDash([]);
+	// endregion
+
+	// region 中央の横罫線
+	ctx.beginPath();
+	addLinePath({
+		ctx,
+		x0: sideBarWidth,
+		y0: totalHeight / 2,
+		x1: totalWidth,
+		y1: totalHeight / 2,
+	});
+	ctx.strokeStyle = COLOR_TICK_BORDER_MEASURE;
+	ctx.stroke();
+	// endregion
+
 	// region サンプル
 	ctx.beginPath();
 	addSamplePathAll({
