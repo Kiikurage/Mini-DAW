@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { EditorView } from "../Editor/EditorView.tsx";
@@ -6,7 +8,6 @@ import { GlobalMenuBar } from "../GlobalMenuBar.tsx";
 import { KeyboardHandler } from "../KeyboardHandler.tsx";
 import { addListener } from "../lib.ts";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
-import { FlexLayout } from "../react/Styles.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import {
 	type InitializeApp,
@@ -65,30 +66,34 @@ export function AppView({
 
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.stretch.gap(0),
-				{
+			className={cx(
+				flex({
+					flexDirection: "column",
+					alignItems: "stretch",
+					justifyContent: "stretch",
+				}),
+				css({
 					position: "fixed",
 					inset: 0,
-				},
-			]}
+				}),
+			)}
 		>
 			<div
-				css={{
+				className={css({
 					gridArea: "GlobalMenuBar",
 					position: "relative",
 					flex: 0,
-				}}
+				})}
 			>
 				<GlobalMenuBar />
 			</div>
 
 			<div
-				css={{
+				className={css({
 					flex: 1,
 					background: "var(--color-background-weak)",
 					position: "relative",
-				}}
+				})}
 			>
 				{showWelcomPage ? <WelcomeView /> : <EditorView />}
 			</div>

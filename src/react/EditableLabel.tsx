@@ -1,5 +1,6 @@
 import { type MouseEventHandler, useRef } from "react";
 import { assertNotNullish } from "../lib.ts";
+import { css } from "../../styled-system/css";
 
 export function EditableLabel({
 	edit,
@@ -22,10 +23,10 @@ export function EditableLabel({
 
 	return (
 		<form
-			css={{
+			className={css({
 				margin: 0,
 				maxWidth: "100%",
-			}}
+			})}
 			onSubmit={(ev) => {
 				ev.nativeEvent.stopImmediatePropagation();
 				ev.preventDefault();
@@ -46,7 +47,7 @@ export function EditableLabel({
 						inputRef.current = element;
 						element?.focus();
 					}}
-					css={{
+					className={css({
 						fontSize: "inherit",
 						border: "none",
 						background: "none",
@@ -55,11 +56,11 @@ export function EditableLabel({
 						maxWidth: "100%",
 						padding: 0,
 						lineHeight: "inherit",
-					}}
+					})}
 				/>
 			) : (
 				<span
-					css={{
+					className={css({
 						display: "inline-block",
 						fontSize: "inherit",
 						color: "inherit",
@@ -67,7 +68,7 @@ export function EditableLabel({
 						maxWidth: "100%",
 						overflow: "clip",
 						textOverflow: "ellipsis",
-					}}
+					})}
 				>
 					{value}
 				</span>

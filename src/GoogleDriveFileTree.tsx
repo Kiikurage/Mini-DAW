@@ -1,6 +1,8 @@
 import { type ReactNode, useState } from "react";
 import { FaFile, FaFolder } from "react-icons/fa";
 import { MdError } from "react-icons/md";
+import { css, cx } from "../styled-system/css";
+import { flex } from "../styled-system/patterns";
 import { AsyncFS } from "./AsyncFS.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import {
@@ -8,9 +10,8 @@ import {
 	GoogleDrive,
 } from "./GoogleDriveAPI/GoogleAPIClient.ts";
 import { PromiseState, usePromiseState } from "./PromiseState.ts";
-import { Button } from "./react/Button.ts";
+import { Button } from "./react/Button.tsx";
 import { Spinner } from "./react/Spinner.tsx";
-import { FlexLayout } from "./react/Styles.ts";
 import { TreeView } from "./react/TreeView/TreeView.tsx";
 import { useStateful } from "./Stateful/useStateful.tsx";
 
@@ -39,15 +40,15 @@ export function GoogleDriveFileTree({
 	const about = usePromiseState(() => googleAPIClient.getAbout());
 
 	return (
-		<div css={{ flex: "1 1 0" }}>
+		<div className={css({ flex: "1 1 0" })}>
 			<header
-				css={[
-					FlexLayout.row.center.start.gap(8),
-					{
+				className={cx(
+					flex({ direction: "row", align: "center", justify: "start", gap: 8 }),
+					css({
 						padding: "4px 0",
 						width: "100%",
-					},
-				]}
+					}),
+				)}
 			>
 				<span>アカウント:</span>
 				{PromiseState.isPending(about) && <Spinner />}
@@ -58,9 +59,9 @@ export function GoogleDriveFileTree({
 							src={about.user.photoLink}
 							width={16}
 							height={16}
-							css={{
+							className={css({
 								borderRadius: "50%",
-							}}
+							})}
 						/>
 						<span>{about.user.emailAddress}</span>
 						<Button
@@ -99,12 +100,10 @@ function GoogleDriveFileTreeItemChildren({
 	if (PromiseState.isPending(children)) {
 		return (
 			<ul
-				css={[
-					{
-						padding: 0,
-						margin: 0,
-					},
-				]}
+				className={css({
+					padding: 0,
+					margin: 0,
+				})}
 			>
 				<TreeView.Item
 					id={`${folder.id}-loading`}
@@ -121,12 +120,10 @@ function GoogleDriveFileTreeItemChildren({
 	if (PromiseState.isRejected(children)) {
 		return (
 			<ul
-				css={[
-					{
-						padding: 0,
-						margin: 0,
-					},
-				]}
+				className={css({
+					padding: 0,
+					margin: 0,
+				})}
 			>
 				<TreeView.Item
 					id={`${folder.id}-loading`}
@@ -136,9 +133,9 @@ function GoogleDriveFileTreeItemChildren({
 					expandable={false}
 				>
 					<div
-						css={{
+						className={css({
 							color: "var(--color-error-500)",
-						}}
+						})}
 					>
 						エラー: 読み込めませんでした
 					</div>
@@ -149,12 +146,10 @@ function GoogleDriveFileTreeItemChildren({
 
 	return (
 		<ul
-			css={[
-				{
-					padding: 0,
-					margin: 0,
-				},
-			]}
+			className={css({
+				padding: 0,
+				margin: 0,
+			})}
 		>
 			{children.map((child) => (
 				<GoogleDriveFileTreeItem

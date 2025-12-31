@@ -9,14 +9,10 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { PropsOf } from "../../lib.ts";
+import { css, cx } from "../../../styled-system/css";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { Field } from "../Field.tsx";
-import {
-	ListBoxItemStyleBase,
-	ListBoxStyleBase,
-	UIControlStyleBase,
-} from "../Styles.ts";
+import { ListBoxItemStyleBase, UIControlStyleBase } from "../Styles.ts";
 import { ListBoxController, type ListBoxState } from "./ListBoxController.tsx";
 
 const context = createContext<ListBoxController>(null as never);
@@ -74,7 +70,7 @@ export function ListBox({
 }
 
 export namespace ListBox {
-	export function useOptionProps(id: string): PropsOf<"li"> {
+	export function useOptionProps(id: string): ComponentProps<"li"> {
 		const controller = useContext(context);
 
 		const focused = useStateful(controller, (state) => state.focusedId === id);
@@ -108,7 +104,7 @@ export namespace ListBox {
 			role: "option",
 			"aria-selected": selected,
 			tabIndex: focused ? 0 : -1,
-			css: [ListBoxItemStyleBase],
+			className: ListBoxItemStyleBase,
 			onFocus: (ev) => {
 				controller.setFocusedOptionId(id);
 				ev.stopPropagation();
@@ -133,7 +129,7 @@ export namespace ListBox {
 		};
 	}
 
-	export function useOptionListProps(): PropsOf<"ul"> {
+	export function useOptionListProps(): ComponentProps<"ul"> {
 		const controller = useContext(context);
 		const focusedOptionId = useStateful(controller, (state) => state.focusedId);
 		const isFocusedNothing = focusedOptionId === null;
@@ -176,7 +172,7 @@ export namespace ListBox {
 		const props = useOptionProps(id);
 
 		return (
-			<li {...props} css={[ListBoxItemStyleBase]}>
+			<li {...props} className={ListBoxItemStyleBase}>
 				{children}
 			</li>
 		);
@@ -192,7 +188,21 @@ export namespace ListBox {
 		const props = useOptionListProps();
 
 		return (
-			<ul {...props} id={id} css={[UIControlStyleBase, ListBoxStyleBase]}>
+			<ul
+				{...props}
+				id={id}
+				className={cx(
+					UIControlStyleBase,
+					css({
+						position: "relative",
+						minWidth: 120,
+						overflow: "auto",
+						boxSizing: "border-box",
+						flex: "0 1 auto",
+						minHeight: 0,
+					}),
+				)}
+			>
 				{children}
 			</ul>
 		);

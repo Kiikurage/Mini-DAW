@@ -7,8 +7,10 @@ import {
 	useRef,
 } from "react";
 import { MdClose } from "react-icons/md";
-import { IconButton } from "./IconButton";
-import { BoxShadowStyleBase, FlexLayout } from "./Styles.ts";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
+import { IconButton } from "./IconButton.tsx";
+import { BoxShadowStyleBase } from "./Styles.ts";
 
 const context = createContext<{
 	onClose: () => void;
@@ -18,19 +20,19 @@ function DialogHeader({ children }: { children: ReactNode }) {
 	const { onClose } = useContext(context);
 	return (
 		<header
-			css={[
-				FlexLayout.row.center.start.gap(16),
-				{
-					padding: "4px 16px",
-					height: 36,
+			className={cx(
+				flex({ direction: "row", align: "center", justify: "start", gap: 16 }),
+				css({
+					padding: "8px 16px",
 					overflow: "clip",
 					borderBottom: "1px solid var(--color-border)",
 					userSelect: "none",
 					color: "var(--color-foreground-weak)",
-				},
-			]}
+					flex: "0 0 auto",
+				}),
+			)}
 		>
-			<span css={{ flex: "1 1 0" }}>{children}</span>
+			<span className={css({ flex: "1 1 0" })}>{children}</span>
 			<IconButton title="閉じる" onClick={onClose} variant="normalInline">
 				<MdClose />
 			</IconButton>
@@ -39,22 +41,37 @@ function DialogHeader({ children }: { children: ReactNode }) {
 }
 
 function DialogBody({ children }: { children?: ReactNode }) {
-	return <div css={{ padding: "16px 24px", flex: "1 1 0" }}>{children}</div>;
+	return (
+		<div
+			className={css({
+				position: "relative",
+				padding: "16px 24px",
+				flex: "1 1 auto",
+				minHeight: 0,
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "stretch",
+				justifyContent: "stretch",
+			})}
+		>
+			{children}
+		</div>
+	);
 }
 
 function DialogFooter({ children }: { children: ReactNode }) {
 	return (
 		<footer
-			css={[
-				FlexLayout.row.center.end.gap(16),
-				{
-					padding: "4px 16px",
-					height: 36,
+			className={cx(
+				flex({ direction: "row", align: "center", justify: "end", gap: 16 }),
+				css({
+					padding: "8px 16px",
 					overflow: "clip",
 					borderTop: "1px solid var(--color-border)",
 					userSelect: "none",
-				},
-			]}
+					flex: "0 0 auto",
+				}),
+			)}
 		>
 			{children}
 		</footer>
@@ -104,10 +121,14 @@ export const Dialog = Object.assign(
 							ev.preventDefault();
 						}
 					}}
-					css={[
+					className={cx(
 						BoxShadowStyleBase,
-						FlexLayout.column.stretch.stretch,
-						{
+						flex({
+							direction: "column",
+							align: "stretch",
+							justify: "stretch",
+						}),
+						css({
 							"&::backdrop": {
 								backgroundColor: "rgba(0, 0, 0, 0.3)",
 							},
@@ -120,11 +141,13 @@ export const Dialog = Object.assign(
 							outline: "none",
 							border: "1px solid var(--color-border)",
 							borderRadius: 6,
+							minHeight: "360px",
+							maxHeight: "80vh",
 							minWidth: "min(640px, 80vw)",
 							padding: 0,
 							margin: 0,
-						},
-					]}
+						}),
+					)}
 				>
 					{children}
 				</dialog>

@@ -1,31 +1,39 @@
-import styled from "@emotion/styled";
 import { type ComponentProps, useId } from "react";
+import { css, cx } from "../../styled-system/css";
+import { styled } from "../../styled-system/jsx";
 import { Field } from "./Field.tsx";
 import { UIControlStyleBase } from "./Styles.ts";
 
-export const Input = styled.input([
-	UIControlStyleBase,
-	{
-		minWidth: "128px",
-		display: "block",
-		flex: "1 1 auto",
-		outline: "2px solid transparent",
-		outlineOffset: -2,
+export function Input(props: ComponentProps<"input">) {
+	return (
+		<styled.input
+			{...props}
+			className={cx(
+				UIControlStyleBase,
+				css({
+					minWidth: "128px",
+					display: "block",
+					flex: "1 1 auto",
+					outline: "2px solid transparent",
+					outlineOffset: -2,
 
-		"&:hover": {
-			background: "var(--color-background-hover-weak)",
-		},
+					"&:hover": {
+						background: "var(--color-background-hover-weak)",
+					},
 
-		"&:active": {
-			background: "var(--color-background-hover)",
-		},
+					"&:active": {
+						background: "var(--color-background-hover)",
+					},
 
-		"&:focus": {
-			background: "var(--color-background-hover-weak)",
-			outline: "2px solid var(--color-primary-500)",
-		},
-	},
-]);
+					"&:focus": {
+						background: "var(--color-background-hover-weak)",
+						outline: "2px solid var(--color-primary-500)",
+					},
+				}),
+			)}
+		/>
+	);
+}
 
 export function InputField({
 	label,

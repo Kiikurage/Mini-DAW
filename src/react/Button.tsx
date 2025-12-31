@@ -1,9 +1,10 @@
-import type { CSSObject } from "@emotion/styled";
-import styled from "@emotion/styled";
-import { FlexLayout } from "./Styles.ts";
+import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import { css, cx } from "../../styled-system/css";
+import { styled } from "../../styled-system/jsx";
+import { flex } from "../../styled-system/patterns";
 
-export const ButtonVariantStyles = {
-	normal: {
+const ButtonVariantStyles = {
+	normal: css({
 		background: "none",
 		color: "var(--color-foreground)",
 		border: "1px solid var(--color-gray-600)",
@@ -20,8 +21,8 @@ export const ButtonVariantStyles = {
 			color: "var(--color-background-active)",
 			transition: "background 0s",
 		},
-	},
-	normalInline: {
+	}),
+	normalInline: css({
 		background: "none",
 		color: "var(--color-foreground)",
 		transition: "background 100ms ease",
@@ -37,8 +38,8 @@ export const ButtonVariantStyles = {
 			color: "var(--color-background-active)",
 			transition: "background 0s",
 		},
-	},
-	primary: {
+	}),
+	primary: css({
 		background: "var(--color-primary-background)",
 		border: "1px solid var(--color-primary-600)",
 		color: "var(--color-primary-foreground)",
@@ -51,8 +52,8 @@ export const ButtonVariantStyles = {
 			background: "var(--color-primary-background-active)",
 			transition: "background 0s",
 		},
-	},
-	primaryInline: {
+	}),
+	primaryInline: css({
 		background: "none",
 		color: "var(--color-primary-foreground)",
 		transition: "background 100ms ease",
@@ -68,8 +69,8 @@ export const ButtonVariantStyles = {
 			color: "var(--color-primary-background-active)",
 			transition: "background 0s",
 		},
-	},
-	error: {
+	}),
+	error: css({
 		background: "var(--color-error-background)",
 		color: "var(--color-error-foreground)",
 		transition: "background 100ms ease",
@@ -81,8 +82,8 @@ export const ButtonVariantStyles = {
 			background: "var(--color-error-background-active)",
 			transition: "background 0s",
 		},
-	},
-	errorInline: {
+	}),
+	errorInline: css({
 		background: "none",
 		color: "var(--color-error-foreground)",
 		transition: "background 100ms ease",
@@ -98,47 +99,64 @@ export const ButtonVariantStyles = {
 			color: "var(--color-error-background-active)",
 			transition: "background 0s",
 		},
-	},
-} as const satisfies Record<string, CSSObject>;
+	}),
+} as const satisfies Record<string, string>;
 
 const SizeStyles = {
-	sm: {
+	sm: css({
 		minWidth: "24px",
 		minHeight: "24px",
-	},
-	md: {
+	}),
+	md: css({
 		minWidth: "32px",
 		minHeight: "32px",
-	},
-	lg: {
+	}),
+	lg: css({
 		minWidth: "40px",
 		minHeight: "40px",
-	},
-} as const satisfies Record<string, CSSObject>;
+	}),
+} as const satisfies Record<string, string>;
 
-export const Button = styled.button<{
+export function Button({
+	variant = "normal",
+	size = "md",
+	...props
+}: {
 	variant?: keyof typeof ButtonVariantStyles;
 	size?: keyof typeof SizeStyles;
-}>(
-	FlexLayout.row.center.center.gap(8),
-	{
-		border: "none",
-		padding: "0 8px",
-		borderRadius: "4px",
-		cursor: "pointer",
-		outline: "none",
+} & ComponentProps<"button">) {
+	return (
+		<styled.button
+			{...props}
+			className={cx(
+				ButtonVariantStyles[variant],
+				SizeStyles[size],
+				flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "center",
+					gap: 8,
+				}),
+				css({
+					border: "none",
+					padding: "0 8px",
+					borderRadius: "4px",
+					cursor: "pointer",
+					outline: "none",
 
-		"&[disabled]": {
-			opacity: 0.3,
-			pointerEvents: "none",
-		},
-		"&:focus-visible": {
-			outline: "2px solid var(--color-primary-500)",
-		},
-		"&[aria-pressed='false']": {
-			opacity: 0.3,
-		},
-	},
-	({ variant = "normal" }) => ButtonVariantStyles[variant],
-	({ size = "md" }) => SizeStyles[size],
-);
+					"&[disabled]": {
+						opacity: 0.3,
+						pointerEvents: "none",
+					},
+					"&:focus-visible": {
+						outline: "2px solid var(--color-primary-500)",
+					},
+					"&[aria-pressed='false']": {
+						opacity: 0.3,
+					},
+				}),
+				props.className,
+			)}
+		/>
+	);
+}

@@ -1,4 +1,5 @@
 import { type ReactNode, useRef } from "react";
+import { css } from "../../styled-system/css";
 import { KEY_PER_OCTAVE, NUM_KEYS } from "../constants.ts";
 import { useIntersectionObserver } from "./useIntersectionObserver.ts";
 
@@ -43,7 +44,7 @@ export function Keyboard({
 					y={0}
 					width={KEY_WIDTH_BLACK}
 					height={KEY_HEIGHT_BLACK}
-					css={{
+					className={css({
 						fill: "var(--color-keyboard-black-fill)",
 						stroke: "var(--color-keyboard-black-stroke)",
 
@@ -53,7 +54,7 @@ export function Keyboard({
 						"&:active": {
 							fill: "var(--color-keyboard-black-fill-active)",
 						},
-					}}
+					})}
 					onPointerDown={(ev) => {
 						ev.currentTarget.setPointerCapture(ev.pointerId);
 						onPointerDown?.(key);
@@ -72,7 +73,7 @@ export function Keyboard({
 					y={0}
 					width={KEY_WIDTH}
 					height={KEY_HEIGHT}
-					css={{
+					className={css({
 						fill: "var(--color-keyboard-white-fill)",
 						stroke: "var(--color-keyboard-white-stroke)",
 
@@ -82,7 +83,7 @@ export function Keyboard({
 						"&:active": {
 							fill: "var(--color-keyboard-white-fill-active)",
 						},
-					}}
+					})}
 					onPointerDown={(ev) => {
 						ev.currentTarget.setPointerCapture(ev.pointerId);
 						onPointerDown?.(key);
@@ -100,10 +101,10 @@ export function Keyboard({
 						x={x + KEY_WIDTH / 2}
 						y={KEY_HEIGHT - 8}
 						textAnchor="middle"
-						css={{
+						className={css({
 							fill: "var(--color-keyboard-foreground)",
 							pointerEvents: "none",
-						}}
+						})}
 					>
 						C{Math.floor(key / KEY_PER_OCTAVE) - 1}
 					</text>,
@@ -119,10 +120,11 @@ export function Keyboard({
 			ref={(e) => {
 				intersectionObserverCallback(e);
 			}}
-			css={{
+			className={css({
 				overflowX: "scroll",
 				userSelect: "none",
-			}}
+				maxWidth: "600px",
+			})}
 		>
 			<svg viewBox={`0 0 ${x} ${KEY_HEIGHT}`} width={x} height={KEY_HEIGHT}>
 				<title>Keyboard</title>

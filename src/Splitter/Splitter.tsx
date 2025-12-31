@@ -7,8 +7,9 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { assertNotNullish } from "../lib.ts";
-import { FlexLayout } from "../react/Styles.ts";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -290,7 +291,7 @@ function SplitterArea({
 			style={{
 				flex: `${layout.flex} ${layout.flex} ${layout.base}px`,
 			}}
-			css={{ position: "relative", overflow: "clip" }}
+			className={css({ position: "relative", overflow: "clip" })}
 		>
 			{children}
 		</div>
@@ -326,14 +327,14 @@ export const Splitter = Object.assign(
 					style={{
 						flexDirection: direction,
 					}}
-					css={[
-						FlexLayout.default,
-						{
+					className={cx(
+						flex({}),
+						css({
 							position: "absolute",
 							inset: 0,
 							overflow: "clip",
-						},
-					]}
+						}),
+					)}
 				>
 					{children}
 					{state.handles.map((handle) => (
@@ -346,12 +347,12 @@ export const Splitter = Object.assign(
 							}}
 							width={direction === "row" ? RESIZE_HANDLE_SIZE : "100%"}
 							height={direction === "column" ? RESIZE_HANDLE_SIZE : "100%"}
-							css={{
+							className={css({
 								position: "absolute",
 								background: "transparent",
 								zIndex: 1,
 								touchAction: "none",
-							}}
+							})}
 							onPointerDown={(ev) => {
 								if (dragState.isDragging) return;
 								vibrateFeedback();
@@ -391,9 +392,9 @@ export const Splitter = Object.assign(
 								y={direction === "column" ? RESIZE_HANDLE_SIZE / 2 - 1 : 0}
 								width={direction === "row" ? 2 : handle.width}
 								height={direction === "column" ? 2 : handle.height}
-								css={{
+								className={css({
 									fill: isDragging ? "var(--color-primary-300)" : "none",
-								}}
+								})}
 							/>
 						</svg>
 					))}

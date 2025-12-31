@@ -5,7 +5,7 @@
 		"module": "Preserve",
 		"moduleDetection": "force",
 		"jsx": "react-jsx",
-		"jsxImportSource": "@emotion/react",
+		"jsxImportSource": "react",
 		"allowJs": true,
 
 		"moduleResolution": "bundler",

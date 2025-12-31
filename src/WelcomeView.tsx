@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { css, cx } from "../styled-system/css";
+import { flex } from "../styled-system/patterns";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { Editor } from "./Editor/Editor.ts";
 import { formatTimestamp, sleep } from "./lib.ts";
@@ -8,10 +10,9 @@ import {
 	RecentFileService,
 } from "./RecentFileService.ts";
 import { AlertMessage } from "./react/AlertMessage.tsx";
-import { Button } from "./react/Button.ts";
+import { Button } from "./react/Button.tsx";
 import { Divider } from "./react/Divider.tsx";
 import { Spinner } from "./react/Spinner.tsx";
-import { FlexLayout } from "./react/Styles.ts";
 import { useStateful } from "./Stateful/useStateful.tsx";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { type OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
@@ -61,42 +62,55 @@ export function WelcomeView({
 
 	return (
 		<div
-			css={[
-				FlexLayout.row.stretch.center,
-				{
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "stretch",
+					justifyContent: "center",
+					wrap: "wrap",
+				}),
+				css({
 					position: "absolute",
 					inset: 0,
 					overflow: "auto",
-				},
-			]}
+				}),
+			)}
 		>
 			<div
-				css={[
-					FlexLayout.column.start.center,
-					{
+				className={cx(
+					flex({
+						direction: "column",
+						alignItems: "start",
+						justifyContent: "center",
+					}),
+					css({
 						position: "relative",
 						padding: "32px 64px",
 						width: "60%",
 						maxHeight: "540px",
-						pointerEvents: PromiseState.isPending(loadingState)
-							? "none"
-							: "auto",
-					},
-				]}
+					}),
+				)}
+				style={{
+					pointerEvents: PromiseState.isPending(loadingState) ? "none" : "auto",
+				}}
 			>
 				<h1
-					css={{
+					className={css({
 						fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-						fontWeight: 100,
+						fontWeight: "light",
 						letterSpacing: "0.1em",
 						fontSize: "48px",
 						margin: 0,
 						lineHeight: 1,
-					}}
+					})}
 				>
 					Mini-DAW
 				</h1>
-				<div css={{ margin: "32px 0" }}>
+				<div
+					className={css({
+						my: "32px",
+					})}
+				>
 					<Button
 						variant="primary"
 						onClick={() => {
@@ -109,12 +123,12 @@ export function WelcomeView({
 				</div>
 				<Divider />
 				<h2
-					css={{
+					className={css({
 						fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
 						fontWeight: 300,
 						fontSize: "24px",
-						margin: "0 0 16px",
-					}}
+						mb: 16,
+					})}
 				>
 					最近使ったファイル
 				</h2>
@@ -124,30 +138,32 @@ export function WelcomeView({
 					</AlertMessage>
 				)}
 				<ul
-					css={{
+					className={css({
 						listStyle: "none",
-						padding: 0,
-						margin: "16px 0",
+						my: 16,
 						width: "100%",
-					}}
+					})}
 				>
 					{recentFiles.map((entry, i) => (
 						<li
 							key={`${i}-${entry.fileName}`}
-							css={[
-								FlexLayout.column.start.start,
-								{
-									marginBottom: 16,
-								},
-							]}
+							className={cx(
+								flex({
+									direction: "column",
+									alignItems: "start",
+									justifyContent: "start",
+								}),
+								css({
+									mb: 16,
+								}),
+							)}
 						>
 							<button
 								type="button"
-								css={{
+								className={css({
 									width: "100%",
 									border: "none",
 									background: "none",
-									padding: 0,
 									font: "inherit",
 									textAlign: "left",
 									color: "inherit",
@@ -156,19 +172,26 @@ export function WelcomeView({
 									"&:hover": {
 										textDecoration: "underline",
 									},
-								}}
+								})}
 								onClick={() => onRecentFileEntryClick(entry)}
 							>
-								<span css={{ fontSize: "1.2em" }}>{entry.songTitle}</span>
+								<span className={css({ fontSize: "1.2em" })}>
+									{entry.songTitle}
+								</span>
 							</button>
 							<span
-								css={[
-									FlexLayout.row.center.start.gap(8),
-									{
+								className={cx(
+									flex({
+										direction: "row",
+										alignItems: "center",
+										justifyContent: "start",
+									}),
+									css({
+										gap: 8,
 										color: "var(--color-foreground-weak)",
 										fontSize: "0.9em",
-									},
-								]}
+									}),
+								)}
 							>
 								<span>{entry.fileName}</span>
 								<span>-</span>
@@ -180,27 +203,31 @@ export function WelcomeView({
 					))}
 					{recentFiles.length === 0 && (
 						<span
-							css={{
+							className={css({
 								color: "var(--color-foreground-weak)",
-							}}
+							})}
 						>
 							最近使ったファイルはありません
 						</span>
 					)}
 				</ul>
 			</div>
-
 			{PromiseState.isPending(loadingState) && (
 				<div
-					css={[
-						FlexLayout.row.center.center.gap(8),
-						{
+					className={cx(
+						flex({
+							direction: "row",
+							alignItems: "center",
+							justifyContent: "center",
+						}),
+						css({
+							gap: 8,
 							background: "rgba(0, 0, 0, 0.6)",
 							position: "absolute",
 							inset: 0,
 							lineHeight: 1,
-						},
-					]}
+						}),
+					)}
 				>
 					<Spinner />
 					<div>読み込み中...</div>

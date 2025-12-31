@@ -4,6 +4,7 @@ import {
 	type ReactNode,
 	useId,
 } from "react";
+import { css } from "../../styled-system/css";
 import { minmax } from "../lib.ts";
 import { Field } from "./Field.tsx";
 import { useFormValue } from "./useFormValue.ts";
@@ -35,17 +36,17 @@ export function Slider({
 
 	return (
 		<div
-			css={{
+			className={css({
 				display: "inline-flex",
 				alignItems: "center",
 				justifyContent: "center",
 				position: "relative",
 				height: "26px",
-			}}
+			})}
 		>
 			<input
 				id={id}
-				css={{
+				className={css({
 					opacity: 0,
 					cursor: "grab",
 					margin: 0,
@@ -57,7 +58,7 @@ export function Slider({
 					"&:focus-visible + svg": {
 						outline: "2px solid var(--color-primary-500)",
 					},
-				}}
+				})}
 				type="range"
 				min={min}
 				max={max}
@@ -70,7 +71,7 @@ export function Slider({
 				}}
 			/>
 			<svg
-				css={{
+				className={css({
 					position: "absolute",
 					inset: 0,
 					width: "100%",
@@ -78,38 +79,38 @@ export function Slider({
 					pointerEvents: "none",
 					borderRadius: 4,
 					overflow: "visible",
-				}}
+				})}
 				viewBox={`0 0 ${TOTAL_WIDTH} 1`}
 			>
 				<title>{title}</title>
 				<path
 					d={`M${MARKER_RADIUS} 0L${MARKER_RADIUS + TRACK_WIDTH} 0`}
-					css={{
+					className={css({
 						stroke: "var(--color-foreground-weak)",
 						strokeWidth: 2,
 						strokeLinecap: "round",
-					}}
+					})}
 				></path>
 				<path
 					d={`M${MARKER_RADIUS} 0H${MARKER_RADIUS + TRACK_WIDTH * rate}`}
-					css={{
+					className={css({
 						stroke: "var(--color-foreground)",
 						strokeWidth: 8,
 						strokeLinecap: "round",
-					}}
+					})}
 				></path>
 				<circle
 					cx={MARKER_RADIUS + TRACK_WIDTH * rate}
 					cy={0}
-					css={{
+					className={css({
 						fill: "var(--color-foreground)",
-						r: MARKER_RADIUS,
+						r: 16,
 						transition: "r 100ms",
 
-						":is(input:active + svg circle)": {
-							r: MARKER_RADIUS * 1.4,
+						"&:is(input:active + svg circle)": {
+							r: 16 * 1.4,
 						},
-					}}
+					})}
 				></circle>
 			</svg>
 		</div>
@@ -131,6 +132,7 @@ export function SliderField({
 		</Field>
 	);
 }
+
 const TOTAL_WIDTH = 300;
 const MARKER_RADIUS = 16;
 const TRACK_WIDTH = TOTAL_WIDTH - 2 * MARKER_RADIUS;

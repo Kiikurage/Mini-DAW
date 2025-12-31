@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
 import { MdContentCopy, MdContentCut, MdDelete } from "react-icons/md";
+import { css } from "../../../styled-system/css";
+import { cx } from "../../../styled-system/css/cx";
+import { flex } from "../../../styled-system/patterns";
 import { ClipboardManager } from "../../ClipboardManager.ts";
 import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { NUM_KEYS } from "../../constants.ts";
@@ -8,12 +11,8 @@ import { FileStore } from "../../FileStore.ts";
 import { addListener, EmptySet, minmax } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
-import { IconButton } from "../../react/IconButton.ts";
-import {
-	BoxShadowStyleBase,
-	FlexLayout,
-	UIControlStyleBase,
-} from "../../react/Styles.ts";
+import { IconButton } from "../../react/IconButton.tsx";
+import { BoxShadowStyleBase, UIControlStyleBase } from "../../react/Styles.ts";
 import { ResizeObserverWrapper } from "../../react/useResizeObserver.ts";
 import { SoundFontStore } from "../../SoundFontStore.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
@@ -181,22 +180,22 @@ export function PianoRollView({
 
 	return (
 		<div
-			css={{
+			className={css({
 				position: "absolute",
 				inset: 0,
 				width: "100%",
 				height: "100%",
 				background: "var(--color-key-background)",
-			}}
+			})}
 		>
 			<canvas
 				ref={canvasRef}
-				css={{
+				className={css({
 					position: "absolute",
 					inset: 0,
 					width: "100%",
 					height: "100%",
-				}}
+				})}
 			/>
 			<PianoRollSelectionActionPopup
 				pianoRoll={pianoRoll}
@@ -246,18 +245,18 @@ function PianoRollSelectionActionPopup({
 
 	return (
 		<div
-			css={[
+			className={cx(
 				BoxShadowStyleBase,
 				UIControlStyleBase,
-				FlexLayout.row.center.center.gap(8),
-				{
+				flex({ direction: "row", align: "center", justify: "center", gap: 8 }),
+				css({
 					position: "absolute",
 					bottom: selectionBottom,
 					right: selectionRight,
 					minHeight: "unset",
 					padding: "4px 8px",
-				},
-			]}
+				}),
+			)}
 		>
 			<IconButton
 				variant="normalInline"

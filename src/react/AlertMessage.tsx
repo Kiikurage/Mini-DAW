@@ -1,7 +1,7 @@
-import type { CSSObject } from "@emotion/styled";
 import type { ReactNode } from "react";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
-import { FlexLayout } from "./Styles.ts";
+import { css, cx, type Styles } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 
 const StyleVariant = {
 	error: {
@@ -10,7 +10,7 @@ const StyleVariant = {
 	success: {
 		color: "var(--color-success-1000)",
 	},
-} as const satisfies Record<string, CSSObject>;
+} as const satisfies Record<string, Styles>;
 
 const IconVariant = {
 	error: MdCancel,
@@ -28,17 +28,29 @@ export function AlertMessage({
 
 	return (
 		<div
-			css={[
-				FlexLayout.row.center.center.gap(16),
-				{
-					opacity: 0.6,
-				},
-				StyleVariant[variant],
-			]}
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "center",
+				}),
+				css(
+					{
+						gap: 16,
+						opacity: 0.6,
+					},
+					StyleVariant[variant],
+				),
+			)}
 		>
-			<Icon css={{ width: 24, height: 24 }} />
+			<Icon
+				className={css({
+					width: 24,
+					height: 24,
+				})}
+			/>
 
-			<div css={{ flex: "1 1 0" }}>{children}</div>
+			<div className={css({ flex: "1 1 0" })}>{children}</div>
 		</div>
 	);
 }

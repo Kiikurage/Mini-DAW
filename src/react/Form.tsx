@@ -1,52 +1,24 @@
-import styled, { type CSSObject } from "@emotion/styled";
-import type { ReactNode } from "react";
-import { FlexLayout } from "./Styles.ts";
+import type { ComponentProps } from "react";
+import { css, cx } from "../../styled-system/css";
+import { styled } from "../../styled-system/jsx";
+import { flex } from "../../styled-system/patterns";
 
-const FormRow = styled.div([
-	FlexLayout.row.center.start.gap(8),
-	{
-		margin: 0,
-	},
-]);
-
-function FormField({
-	label,
-	children,
-	flex,
-	css,
-}: {
-	label: string;
-	children: ReactNode;
-	flex?: boolean;
-	css?: CSSObject;
-}) {
+export function FormRow(props: ComponentProps<"div">) {
 	return (
-		<div
-			css={[
-				FlexLayout.column.stretch.start,
-				{
-					position: "relative",
-					maxWidth: "100%",
-				},
-				flex && {
-					flex: "1 1 0",
-					minWidth: 0,
-				},
-				css,
-			]}
-		>
-			<div css={{ margin: "0 0 4px", fontSize: "0.875em", userSelect: "none" }}>
-				{label}
-			</div>
-			{children}
-		</div>
+		<styled.div
+			{...props}
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "start",
+					gap: 8,
+				}),
+				css({
+					margin: 0,
+				}),
+				props.className,
+			)}
+		/>
 	);
 }
-
-export const Form = Object.assign(
-	styled.form([FlexLayout.column.stretch.start.gap(16)]),
-	{
-		Row: FormRow,
-		Field: FormField,
-	},
-);

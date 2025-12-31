@@ -1,14 +1,15 @@
 import { FaGithub, FaRedo, FaUndo } from "react-icons/fa";
 import { MdContentPaste, MdFullscreen } from "react-icons/md";
+import { css, cx } from "../styled-system/css";
+import { flex } from "../styled-system/patterns";
 import { ClipboardManager } from "./ClipboardManager.ts";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { EditHistoryManager } from "./EditHistory/EditHistoryManager.ts";
 import { OpenFileDialog } from "./OpenFileDialog.tsx";
-import { Button } from "./react/Button.ts";
-import { IconButton } from "./react/IconButton.ts";
-import { Link } from "./react/Link.ts";
+import { Button } from "./react/Button.tsx";
+import { IconButton } from "./react/IconButton.tsx";
+import { Link } from "./react/Link.tsx";
 import { OverlayPortal } from "./react/OverlayPortal.ts";
-import { FlexLayout } from "./react/Styles.ts";
 import { SaveFileDialog } from "./SaveFileDialog.tsx";
 import { useStateful } from "./Stateful/useStateful.tsx";
 import { type NewFile, NewFileKey } from "./usecases/NewFile.ts";
@@ -34,18 +35,32 @@ export function GlobalMenuBar({
 
 	return (
 		<div
-			css={[
-				FlexLayout.row.center.spaceBetween.gap(16),
-				{
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "space-between",
+					gap: 16,
+				}),
+				css({
 					width: "100%",
 					inset: 0,
 					padding: "48px 16px 8px",
 					boxSizing: "border-box",
 					background: "var(--color-gray-100)",
-				},
-			]}
+				}),
+			)}
 		>
-			<div css={[FlexLayout.row.center.start.gap(16)]}>
+			<div
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "start",
+						gap: 16,
+					}),
+				)}
+			>
 				<Button
 					size="sm"
 					variant="normalInline"
@@ -79,7 +94,16 @@ export function GlobalMenuBar({
 					開く
 				</Button>
 			</div>
-			<div css={[FlexLayout.row.center.start.gap(16)]}>
+			<div
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "start",
+						gap: 16,
+					}),
+				)}
+			>
 				<IconButton
 					variant="normalInline"
 					title="貼り付け"

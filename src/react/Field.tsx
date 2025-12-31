@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { FlexLayout } from "./Styles.ts";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 
 export function Field({
 	label,
@@ -12,16 +13,24 @@ export function Field({
 }) {
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.start,
-				{
-					position: "relative",
-					flex: "1 1 0",
-				},
-			]}
+			className={cx(
+				flex({
+					direction: "column",
+					alignItems: "stretch",
+					justifyContent: "start",
+				}),
+				css({
+					flex: "1 1 auto",
+					minWidth: 0,
+				}),
+			)}
 		>
 			<label
-				css={{ margin: "0 0 4px", fontSize: "0.875em", userSelect: "none" }}
+				className={css({
+					margin: "0 0 4px",
+					fontSize: "0.875em",
+					userSelect: "none",
+				})}
 				htmlFor={htmlFor}
 			>
 				{label}

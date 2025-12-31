@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { FlexLayout } from "../react/Styles.ts";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 
 function ContextMenuItem({
 	children,
@@ -14,7 +15,7 @@ function ContextMenuItem({
 		<li>
 			<button
 				type="button"
-				css={{
+				className={css({
 					display: "grid",
 					gridTemplate: `"icon content" auto / 16px 1fr`,
 					alignItems: "center",
@@ -35,29 +36,29 @@ function ContextMenuItem({
 					"&:hover": {
 						background: "var(--color-primary-200)",
 					},
-				}}
+				})}
 				onClick={onClick}
 			>
 				<div
-					css={{
+					className={css({
 						gridArea: "icon",
 						position: "relative",
 						width: "16px",
 						height: "16px",
 						flex: "0 0 auto",
 
-						svg: {
+						"& svg": {
 							width: "16px",
 							height: "16px",
 						},
-					}}
+					})}
 				>
 					{iconBefore}
 				</div>
 				<div
-					css={{
+					className={css({
 						gridArea: "content",
-					}}
+					})}
 				>
 					{children}
 				</div>
@@ -69,26 +70,26 @@ function ContextMenuItem({
 function ContextMenuSeparator() {
 	return (
 		<li
-			css={[
-				FlexLayout.row.center.stretch,
-				{
+			className={cx(
+				flex({ direction: "row", align: "center", justify: "stretch" }),
+				css({
 					cursor: "pointer",
 					pointerEvents: "none",
 					userSelect: "none",
 					padding: "4px 4px",
 					minHeight: "8px",
-				},
-			]}
+				}),
+			)}
 		>
 			<hr
-				css={{
+				className={css({
 					flex: "1 1 0",
 					border: "none",
 					borderBottom: "1px solid var(--color-gray-700)",
 					margin: 0,
 					padding: 0,
 					background: "none",
-				}}
+				})}
 			/>
 		</li>
 	);
@@ -108,10 +109,10 @@ export const ContextMenu = Object.assign(
 	}) {
 		return (
 			<div
-				css={{
+				className={css({
 					position: "fixed",
 					inset: 0,
-				}}
+				})}
 				onPointerDown={onOutsidePointerDown}
 			>
 				<ul
@@ -119,9 +120,9 @@ export const ContextMenu = Object.assign(
 						top: clientTop,
 						left: clientLeft,
 					}}
-					css={[
-						FlexLayout.column.stretch.start,
-						{
+					className={cx(
+						flex({ direction: "column", align: "stretch", justify: "start" }),
+						css({
 							borderRadius: "8px",
 							overflow: "clip",
 							position: "fixed",
@@ -132,8 +133,8 @@ export const ContextMenu = Object.assign(
 							listStyle: "none",
 							margin: 0,
 							padding: "6px 6px",
-						},
-					]}
+						}),
+					)}
 					onPointerDown={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();

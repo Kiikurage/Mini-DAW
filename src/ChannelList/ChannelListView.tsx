@@ -2,6 +2,8 @@ import { useState } from "react";
 import { IoMdEye } from "react-icons/io";
 import { IoVolumeMute } from "react-icons/io5";
 import { MdAdd, MdDelete } from "react-icons/md";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
@@ -12,9 +14,8 @@ import { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { PromiseState } from "../PromiseState.ts";
 import { EditableLabel } from "../react/EditableLabel.tsx";
-import { IconButton } from "../react/IconButton.ts";
+import { IconButton } from "../react/IconButton.tsx";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
-import { FlexLayout } from "../react/Styles.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -68,37 +69,52 @@ export function ChannelListView({
 
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.stretch,
-				{
+			className={cx(
+				flex({
+					direction: "column",
+					alignItems: "stretch",
+					justifyContent: "stretch",
+				}),
+				css({
 					position: "absolute",
 					inset: 0,
 					backgroundColor: "var(--color-sidepanel-background)",
 					borderRight: "1px solid var(--color-sidepanel-border)",
 					color: "var(--color-sidepanel-foreground)",
 					boxSizing: "border-box",
-				},
-			]}
+				}),
+			)}
 		>
 			<header
-				css={[
-					FlexLayout.row.center.spaceBetween,
-					{
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "space-between",
+					}),
+					css({
 						flex: "0 0 auto",
 						padding: "2px 12px",
 						borderBottom: "1px solid var(--color-channelList-border)",
-					},
-				]}
+					}),
+				)}
 			>
 				<span
-					css={{
+					className={css({
 						fontSize: "0.875em",
 						color: "var(--color-channelList-foreground)",
-					}}
+					})}
 				>
 					Channels
 				</span>
-				<div css={FlexLayout.row.center.center.gap(4)}>
+				<div
+					className={flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "center",
+						gap: "4px",
+					})}
+				>
 					<IconButton
 						variant="normalInline"
 						title="チャンネルを追加"
@@ -151,13 +167,13 @@ export function ChannelListView({
 				</div>
 			</header>
 			<ul
-				css={{
+				className={css({
 					listStyle: "none",
 					margin: 0,
 					padding: 0,
 					overflowY: "auto",
 					flex: "1 1 0",
-				}}
+				})}
 			>
 				{channels.map((channel) => (
 					<ChannelListItem
@@ -270,9 +286,14 @@ function ChannelListItem({
 					clientLeft: ev.clientX,
 				});
 			}}
-			css={[
-				FlexLayout.row.center.stretch.gap(12),
-				{
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "stretch",
+					gap: 12,
+				}),
+				css({
 					padding: "0 12px",
 					width: "100%",
 					boxSizing: "border-box",
@@ -290,10 +311,16 @@ function ChannelListItem({
 					"&[aria-selected='true']": {
 						backgroundColor: "var(--color-channelList-background-active)",
 					},
-				},
-			]}
+				}),
+			)}
 		>
-			<div css={FlexLayout.row.center.center}>
+			<div
+				className={flex({
+					direction: "row",
+					alignItems: "center",
+					justifyContent: "center",
+				})}
+			>
 				<i
 					style={{
 						background: channel.color.cssString,
@@ -304,13 +331,17 @@ function ChannelListItem({
 				/>
 			</div>
 			<div
-				css={[
-					FlexLayout.column.start.center,
-					{
+				className={cx(
+					flex({
+						direction: "column",
+						alignItems: "start",
+						justifyContent: "start",
+					}),
+					css({
 						flex: "1 1 0",
 						minWidth: "0",
-					},
-				]}
+					}),
+				)}
 			>
 				<EditableLabel
 					value={channel.labelOrDefault}
@@ -322,7 +353,7 @@ function ChannelListItem({
 					}}
 				/>
 				<div
-					css={{
+					className={css({
 						whiteSpace: "nowrap",
 						fontSize: "0.875em",
 						color: "var(--color-foreground-weak)",
@@ -330,18 +361,23 @@ function ChannelListItem({
 						textOverflow: "ellipsis",
 						width: "100%",
 						textAlign: "left",
-					}}
+					})}
 				>
 					<span>{instrumentName}</span>
 				</div>
 			</div>
 			<div
-				css={[
-					FlexLayout.row.start.center.gap(4),
-					{
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "start",
+						gap: 4,
+					}),
+					css({
 						flex: "0 0 auto",
-					},
-				]}
+					}),
+				)}
 			>
 				<IconButton
 					title="ミュート"

@@ -1,15 +1,15 @@
 import { FaSpinner } from "react-icons/fa";
+import { css } from "../../styled-system/css";
 
 export function Spinner() {
 	return (
 		<FaSpinner
-			css={{
-				animation: "spin 1s linear infinite",
-				"@keyframes spin": {
-					from: { transform: "rotate(0deg)" },
-					to: { transform: "rotate(360deg)" },
-				},
-			}}
+			className={css({
+				animationName: "spin",
+				animationDuration: "1s",
+				animationTimingFunction: "linear",
+				animationIterationCount: "infinite",
+			})}
 		/>
 	);
 }

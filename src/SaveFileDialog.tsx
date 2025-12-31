@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { MdDownload } from "react-icons/md";
+import { css, cx } from "../styled-system/css";
+import { flex } from "../styled-system/patterns";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { FileStore } from "./FileStore.ts";
 import type { GoogleDrive } from "./GoogleDriveAPI/GoogleAPIClient.ts";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
 import { PromiseState } from "./PromiseState.ts";
 import { AlertMessage } from "./react/AlertMessage.tsx";
-import { Button } from "./react/Button.ts";
+import { Button } from "./react/Button.tsx";
 import { Dialog } from "./react/Dialog.tsx";
-import { Form } from "./react/Form.tsx";
+import { FormRow } from "./react/Form.tsx";
 import { InputField } from "./react/Input.tsx";
 import { SelectField } from "./react/Select/Select.tsx";
 import { Spinner } from "./react/Spinner.tsx";
-import { FlexLayout } from "./react/Styles.ts";
 import { type SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
 
 type Method = "google-drive" | "local";
@@ -32,8 +33,15 @@ export function SaveFileDialog({
 		<Dialog open modal onClose={onClose}>
 			<Dialog.Header>保存</Dialog.Header>
 			<Dialog.Body>
-				<div css={[FlexLayout.column.stretch.stretch.gap(8)]}>
-					<Form.Row>
+				<div
+					className={flex({
+						direction: "column",
+						align: "stretch",
+						justify: "stretch",
+						gap: 8,
+					})}
+				>
+					<FormRow>
 						<SelectField
 							label="保存先"
 							selectProps={{
@@ -54,10 +62,10 @@ export function SaveFileDialog({
 									<div>
 										<div>{option.label}</div>
 										<div
-											css={{
+											className={css({
 												fontSize: "0.8em",
 												color: "var(--color-foreground-weak)",
-											}}
+											})}
 										>
 											{option.helperText}
 										</div>
@@ -66,9 +74,9 @@ export function SaveFileDialog({
 								onChange: (option) => setMethod(option.id),
 							}}
 						/>
-					</Form.Row>
+					</FormRow>
 					{method === "local" && (
-						<Form.Row>
+						<FormRow>
 							<Button
 								variant="primary"
 								size="lg"
@@ -76,15 +84,15 @@ export function SaveFileDialog({
 									saveFile({ type: "download" });
 									onClose();
 								}}
-								css={{
+								className={css({
 									marginTop: 48,
 									marginBottom: 24,
 									flex: "1 1 0",
-								}}
+								})}
 							>
 								ダウンロード <MdDownload />
 							</Button>
-						</Form.Row>
+						</FormRow>
 					)}
 					{method === "google-drive" && (
 						<GoogleDriveSection onComplete={() => onClose()} />
@@ -132,16 +140,21 @@ function GoogleDriveSection({
 
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.center.gap(16),
-				{
+			className={cx(
+				flex({
+					direction: "column",
+					align: "stretch",
+					justify: "center",
+					gap: 16,
+				}),
+				css({
 					marginBottom: 24,
-				},
-			]}
+				}),
+			)}
 		>
-			<Form.Row>
+			<FormRow>
 				<GoogleDriveFileTree onSelect={(id) => setParentIdId(id)} />
-			</Form.Row>
+			</FormRow>
 			<InputField
 				label="ファイル名"
 				inputProps={{
@@ -154,15 +167,22 @@ function GoogleDriveSection({
 				variant="primary"
 				size="lg"
 				onClick={onSaveButtonClick}
-				css={{
+				className={css({
 					marginTop: 32,
 					flex: "1 1 0",
-				}}
+				})}
 				disabled={PromiseState.isPending(uploadPS)}
 			>
 				{!PromiseState.isPending(uploadPS) && <span>保存</span>}
 				{PromiseState.isPending(uploadPS) && (
-					<div css={FlexLayout.row.center.center.gap(8)}>
+					<div
+						className={flex({
+							direction: "row",
+							align: "center",
+							justify: "center",
+							gap: 8,
+						})}
+					>
 						<Spinner />
 						保存中...
 					</div>

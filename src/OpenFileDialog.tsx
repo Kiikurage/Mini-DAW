@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { MdUpload } from "react-icons/md";
+import { css, cx } from "../styled-system/css";
+import { flex } from "../styled-system/patterns";
 import { useComponent } from "./Dependency/DIContainerProvider.tsx";
 import { GoogleDriveFileTree } from "./GoogleDriveFileTree.tsx";
 import { type SerializedSong, Song } from "./models/Song.ts";
 import { handlePromiseState, PromiseState } from "./PromiseState.ts";
 import { AlertMessage } from "./react/AlertMessage.tsx";
-import { Button } from "./react/Button.ts";
+import { Button } from "./react/Button.tsx";
 import { Dialog } from "./react/Dialog.tsx";
-import { Form } from "./react/Form.tsx";
+import { FormRow } from "./react/Form.tsx";
 import { SelectField } from "./react/Select/Select.tsx";
 import { Spinner } from "./react/Spinner.tsx";
-import { FlexLayout } from "./react/Styles.ts";
 import { type OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
 import { type PutFile, PutFileKey } from "./usecases/PutFile.ts";
 
@@ -23,8 +24,15 @@ export function OpenFileDialog({ onClose }: { onClose: () => void }) {
 		<Dialog open modal onClose={onClose}>
 			<Dialog.Header>開く</Dialog.Header>
 			<Dialog.Body>
-				<div css={[FlexLayout.column.stretch.stretch.gap(8)]}>
-					<Form.Row>
+				<div
+					className={flex({
+						direction: "column",
+						align: "stretch",
+						justify: "stretch",
+						gap: 8,
+					})}
+				>
+					<FormRow>
 						<SelectField
 							label="読み込み元"
 							selectProps={{
@@ -45,10 +53,10 @@ export function OpenFileDialog({ onClose }: { onClose: () => void }) {
 									<div>
 										<div>{option.label}</div>
 										<div
-											css={{
+											className={css({
 												fontSize: "0.8em",
 												color: "var(--color-foreground-weak)",
-											}}
+											})}
 										>
 											{option.helperText}
 										</div>
@@ -57,7 +65,7 @@ export function OpenFileDialog({ onClose }: { onClose: () => void }) {
 								onChange: (option) => setMethod(option.id),
 							}}
 						/>
-					</Form.Row>
+					</FormRow>
 					{method === "local" && (
 						<LocalFileSection onComplete={() => onClose()} />
 					)}
@@ -108,20 +116,20 @@ function LocalFileSection({
 	};
 
 	return (
-		<Form.Row>
+		<FormRow>
 			<Button
 				variant="primary"
 				size="lg"
 				onClick={onOpenButtonClick}
-				css={{
+				className={css({
 					marginTop: 48,
 					marginBottom: 24,
 					flex: "1 1 0",
-				}}
+				})}
 			>
 				ファイルを選択 <MdUpload />
 			</Button>
-		</Form.Row>
+		</FormRow>
 	);
 }
 
@@ -158,29 +166,41 @@ function GoogleDriveSection({
 
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.center.gap(16),
-				{
+			className={cx(
+				flex({
+					direction: "column",
+					align: "stretch",
+					justify: "center",
+					gap: 16,
+				}),
+				css({
 					marginBottom: 24,
-				},
-			]}
+				}),
+			)}
 		>
-			<Form.Row>
+			<FormRow>
 				<GoogleDriveFileTree onSelect={(id) => setFileId(id)} />
-			</Form.Row>
+			</FormRow>
 			<Button
 				variant="primary"
 				size="lg"
 				onClick={onOpenButtonClick}
-				css={{
+				className={css({
 					marginTop: 32,
 					flex: "1 1 0",
-				}}
+				})}
 				disabled={PromiseState.isPending(uploadPS)}
 			>
 				{!PromiseState.isPending(uploadPS) && <span>ファイルを取得する</span>}
 				{PromiseState.isPending(uploadPS) && (
-					<div css={FlexLayout.row.center.center.gap(8)}>
+					<div
+						className={flex({
+							direction: "row",
+							align: "center",
+							justify: "center",
+							gap: 8,
+						})}
+					>
 						<Spinner />
 						ファイルを取得中...
 					</div>

@@ -1,7 +1,8 @@
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { ChannelListView } from "../ChannelList/ChannelListView.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Select } from "../react/Select/Select.tsx";
-import { FlexLayout } from "../react/Styles.ts";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
 import { Splitter } from "../Splitter/Splitter.tsx";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -22,14 +23,14 @@ export function EditorView({ editor }: { editor?: Editor }) {
 
 	return (
 		<div
-			css={[
-				FlexLayout.column.stretch.stretch,
-				{ position: "absolute", inset: 0 },
-			]}
+			className={cx(
+				flex({ direction: "column", align: "stretch", justify: "stretch" }),
+				css({ position: "absolute", inset: 0 }),
+			)}
 		>
 			<ToolBar />
 
-			<div css={{ position: "relative", flex: "1 1 0" }}>
+			<div className={css({ position: "relative", flex: "1 1 0" })}>
 				<Splitter direction="row">
 					<Splitter.Area defaultSize={240}>
 						<ChannelListView />
@@ -37,10 +38,10 @@ export function EditorView({ editor }: { editor?: Editor }) {
 					<Splitter.Area flex>
 						<div
 							ref={resizeObserverRef}
-							css={{
+							className={css({
 								position: "absolute",
 								inset: 0,
-							}}
+							})}
 						>
 							<Splitter>
 								<Splitter.Area flex>
@@ -48,26 +49,35 @@ export function EditorView({ editor }: { editor?: Editor }) {
 								</Splitter.Area>
 								<Splitter.Area defaultSize={200}>
 									<div
-										css={[
-											FlexLayout.column.stretch.stretch,
-											{
+										className={cx(
+											flex({
+												direction: "column",
+												align: "stretch",
+												justify: "stretch",
+											}),
+											css({
 												position: "absolute",
 												inset: 0,
-											},
-										]}
+											}),
+										)}
 									>
 										<div
-											css={[
-												FlexLayout.row.baseline.start.gap(16),
-												{
+											className={cx(
+												flex({
+													direction: "row",
+													align: "baseline",
+													justify: "start",
+													gap: 16,
+												}),
+												css({
 													position: "relative",
 													background: "var(--color-background)",
 													flex: "0 0 12px",
 													borderTop: "1px solid var(--color-border)",
 													borderBottom: "1px solid var(--color-border)",
 													padding: "4px 8px",
-												},
-											]}
+												}),
+											)}
 										>
 											<Select
 												value={parameterType.label}
@@ -85,7 +95,9 @@ export function EditorView({ editor }: { editor?: Editor }) {
 												}}
 											/>
 										</div>
-										<div css={{ position: "relative", flex: "1 1 0" }}>
+										<div
+											className={css({ position: "relative", flex: "1 1 0" })}
+										>
 											<ParameterEditorView />
 										</div>
 									</div>

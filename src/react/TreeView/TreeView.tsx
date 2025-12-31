@@ -7,12 +7,10 @@ import {
 	useState,
 } from "react";
 import { FaChevronDown } from "react-icons/fa";
+import { css, cx } from "../../../styled-system/css";
+import { flex } from "../../../styled-system/patterns";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import {
-	FlexLayout,
-	ListBoxItemStyleBase,
-	UIControlStyleBase,
-} from "../Styles.ts";
+import { ListBoxItemStyleBase, UIControlStyleBase } from "../Styles.ts";
 import { TreeViewController } from "./TreeViewController.ts";
 
 const context = createContext<TreeViewController>(null as never);
@@ -39,15 +37,15 @@ export function TreeView({
 	return (
 		<context.Provider value={controller}>
 			<div
-				css={[
+				className={cx(
 					UIControlStyleBase,
-					{
+					css({
 						height: 240,
 						width: "100%",
 						overflowY: "scroll",
 						flex: "1 1 0",
-					},
-				]}
+					}),
+				)}
 				role="tree"
 				tabIndex={isFocusedNothing ? 0 : -1}
 				onKeyDown={(ev) => {
@@ -150,10 +148,10 @@ export namespace TreeView {
 				tabIndex={isFocused ? 0 : -1}
 				aria-selected={isSelected}
 				aria-expanded={isExpanded}
-				css={{
+				className={css({
 					listStyle: "none",
 					outline: "none",
-				}}
+				})}
 				onDoubleClick={(ev) => {
 					controller.toggleExpand(id);
 					ev.stopPropagation();
@@ -180,9 +178,9 @@ export namespace TreeView {
 				}}
 			>
 				<div
-					css={[
+					className={cx(
 						ListBoxItemStyleBase,
-						{
+						css({
 							paddingLeft: 16 + depth * 44,
 							display: "grid",
 							gridTemplate: '"chevron icon content" auto / 24px 16px 1fr',
@@ -194,15 +192,15 @@ export namespace TreeView {
 							"&:is([aria-selected='true'] > *)": {
 								background: "var(--color-primary-200)",
 							},
-						},
-					]}
+						}),
+					)}
 				>
 					{expandable && (
 						<button
 							type="button"
-							css={[
-								FlexLayout.row.center.center,
-								{
+							className={cx(
+								flex({ direction: "row", align: "center", justify: "center" }),
+								css({
 									gridArea: "chevron",
 									background: "none",
 									border: "none",
@@ -212,8 +210,8 @@ export namespace TreeView {
 									width: "24px",
 									height: "24px",
 									cursor: "pointer",
-								},
-							]}
+								}),
+							)}
 							onClick={(ev) => {
 								ev.stopPropagation();
 								ev.preventDefault();
@@ -221,23 +219,23 @@ export namespace TreeView {
 							}}
 						>
 							<FaChevronDown
-								css={{
+								className={css({
 									transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
 									transition: "transform 60ms ease-out",
-								}}
+								})}
 							/>
 						</button>
 					)}
-					<div css={{ gridArea: "icon" }}>{icon}</div>
+					<div className={css({ gridArea: "icon" })}>{icon}</div>
 					<div
-						css={{
+						className={css({
 							gridArea: "content",
 							flex: "1 1 0",
 							minWidth: 0,
 							overflow: "clip",
 							textOverflow: "ellipsis",
 							whiteSpace: "nowrap",
-						}}
+						})}
 					>
 						{children}
 					</div>

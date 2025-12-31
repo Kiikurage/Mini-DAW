@@ -1,18 +1,18 @@
-import styled from "@emotion/styled";
 import { MdSearch } from "react-icons/md";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { FileStore } from "../FileStore.ts";
 import { formatDuration } from "../lib.ts";
 import { Player } from "../Player/Player.ts";
-import { Button } from "../react/Button.ts";
-import { FlexLayout } from "../react/Styles.ts";
+import { Button } from "../react/Button.tsx";
 import { useStateful } from "../Stateful/useStateful.tsx";
 import { type UpdateSong, UpdateSongKey } from "../usecases/UpdateSong.ts";
 import { StatusBar } from "./StatusBar.tsx";
 
-const StatusBarButton = styled(Button)({
+const statusBarButtonClass = css({
 	borderRadius: 0,
 	fontSize: "0.9em",
 	height: "100%",
@@ -59,21 +59,29 @@ export function StatusBarView({
 
 	return (
 		<div
-			css={[
-				FlexLayout.row.stretch.spaceBetween.gap(16),
-				{
+			className={cx(
+				flex({
+					direction: "row",
+					align: "stretch",
+					justify: "space-between",
+					gap: 16,
+				}),
+				css({
 					height: 24,
 					borderTop: "1px solid var(--color-StatusBar-border)",
 					background: "var(--color-StatusBar-background)",
 					color: "var(--color-StatusBar-foreground)",
 					fontSize: "0.9em",
 					padding: "0 12px",
-				},
-			]}
+				}),
+			)}
 		>
-			<div css={FlexLayout.row.center}>{statusMessage}</div>
-			<div css={FlexLayout.row.center}>
-				<StatusBarButton
+			<div className={flex({ direction: "row", align: "center" })}>
+				{statusMessage}
+			</div>
+			<div className={flex({ direction: "row", align: "center" })}>
+				<Button
+					className={statusBarButtonClass}
 					variant="normalInline"
 					onClick={() => {
 						player.setAutoScrollEnabled(!isAutoScrollEnabled);
@@ -81,8 +89,9 @@ export function StatusBarView({
 					tabIndex={-1}
 				>
 					<span>自動スクロール: {isAutoScrollEnabled ? "ON" : "OFF"}</span>
-				</StatusBarButton>
-				<StatusBarButton
+				</Button>
+				<Button
+					className={statusBarButtonClass}
 					variant="normalInline"
 					onClick={() => {
 						const newTimelineGridUnit =
@@ -94,8 +103,9 @@ export function StatusBarView({
 					tabIndex={-1}
 				>
 					<span>グリッド単位:{formatDuration(timelineGridUnit)}</span>
-				</StatusBarButton>
-				<StatusBarButton
+				</Button>
+				<Button
+					className={statusBarButtonClass}
 					variant="normalInline"
 					onClick={() => {
 						const newQuantizeUnit =
@@ -107,8 +117,9 @@ export function StatusBarView({
 					tabIndex={-1}
 				>
 					<span>操作単位:{formatDuration(quantizeUnit)}</span>
-				</StatusBarButton>
-				<StatusBarButton
+				</Button>
+				<Button
+					className={statusBarButtonClass}
 					variant="normalInline"
 					onClick={() => {
 						const newBPM = Number.parseInt(prompt("BPMを入力") ?? "NaN", 10);
@@ -119,11 +130,16 @@ export function StatusBarView({
 					tabIndex={-1}
 				>
 					<span>BPM:{bpm}</span>
-				</StatusBarButton>
-				<StatusBarButton variant="normalInline" tabIndex={-1}>
+				</Button>
+				<Button
+					className={statusBarButtonClass}
+					variant="normalInline"
+					tabIndex={-1}
+				>
 					<span>入力サイズ:{formatDuration(newNoteDuration)}</span>
-				</StatusBarButton>
-				<StatusBarButton
+				</Button>
+				<Button
+					className={statusBarButtonClass}
 					variant="normalInline"
 					onClick={() => {
 						const newZoom = zoom >= 16 ? 0.125 : zoom * 2;
@@ -133,7 +149,7 @@ export function StatusBarView({
 				>
 					<MdSearch />
 					<span>{(zoom * 100).toFixed(0)}%</span>
-				</StatusBarButton>
+				</Button>
 			</div>
 		</div>
 	);

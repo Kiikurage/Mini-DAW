@@ -1,4 +1,6 @@
 import { MdMoreVert, MdPause, MdPlayArrow } from "react-icons/md";
+import { css, cx } from "../../styled-system/css";
+import { flex } from "../../styled-system/patterns";
 import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
@@ -8,10 +10,9 @@ import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PromiseState } from "../PromiseState.ts";
 import { Field } from "../react/Field.tsx";
-import { IconButton } from "../react/IconButton.ts";
+import { IconButton } from "../react/IconButton.tsx";
 import { OverlayPortal } from "../react/OverlayPortal.ts";
 import { SliderField } from "../react/Slider.tsx";
-import { FlexLayout } from "../react/Styles.ts";
 import { SoundFontDialog } from "../SoundFontDialog/SoundFontDialog.tsx";
 import { SoundFontStore } from "../SoundFontStore.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -73,25 +74,25 @@ export function ToolBar({
 
 	return (
 		<div
-			css={[
-				FlexLayout.row.end.center,
-				{
+			className={cx(
+				flex({ direction: "row", align: "center", justify: "space-between" }),
+				css({
 					background: "var(--color-toolbar-background)",
 					color: "var(--color-toolbar-foreground)",
 					borderBottom: "1px solid var(--color-toolbar-border)",
 					height: 64,
 					padding: "8px 8px",
 					boxSizing: "border-box",
-				},
-			]}
+				}),
+			)}
 		>
 			<div
-				css={[
-					FlexLayout.row.end.start.gap(8),
-					{
+				className={cx(
+					flex({ direction: "row", align: "end", justify: "start", gap: 8 }),
+					css({
 						flex: "1 1 0",
-					},
-				]}
+					}),
+				)}
 			>
 				{activeChannel !== null && soundFont !== null && (
 					<>
@@ -145,12 +146,17 @@ export function ToolBar({
 				)}
 			</div>
 			<div
-				css={[
-					FlexLayout.row.center.stretch.gap(8),
-					{
+				className={cx(
+					flex({
+						direction: "row",
+						align: "stretch",
+						justify: "center",
+						gap: 8,
+					}),
+					css({
 						flex: "0 0 auto",
-					},
-				]}
+					}),
+				)}
 			>
 				<div>
 					<SliderField
@@ -172,9 +178,9 @@ export function ToolBar({
 					{isPlaying ? <MdPause /> : <MdPlayArrow />}
 				</IconButton>
 				<div
-					css={[
-						FlexLayout.column.center.center,
-						{
+					className={cx(
+						flex({ direction: "column", align: "center", justify: "center" }),
+						css({
 							position: "relative",
 							width: 200,
 							height: 48,
@@ -185,19 +191,19 @@ export function ToolBar({
 							boxSizing: "border-box",
 							userSelect: "none",
 							border: "1px solid var(--color-border)",
-						},
-					]}
+						}),
+					)}
 				>
 					{/** biome-ignore lint/a11y/noStaticElementInteractions: <explanation> */}
 					{/** biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 					<span
-						css={{
+						className={css({
 							fontSize: "10px",
 							fontWeight: "normal",
 							margin: 0,
 							padding: 0,
 							whiteSpace: "nowrap",
-						}}
+						})}
 						onClick={() => {
 							const newTitle = prompt(
 								"曲のタイトルを入力してください",
@@ -212,7 +218,7 @@ export function ToolBar({
 					>
 						{songTitle}
 					</span>
-					<span css={{ fontFamily: "monospace" }}>
+					<span className={css({ fontFamily: "monospace" })}>
 						{Math.floor(playHeadTick / TICK_PER_MEASURE) + 1}.
 						{Math.floor((playHeadTick % TICK_PER_MEASURE) / TICK_PER_BEAT) + 1}.
 						{(playHeadTick % TICK_PER_BEAT).toString().padStart(3, "0")}

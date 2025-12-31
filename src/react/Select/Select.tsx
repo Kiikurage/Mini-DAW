@@ -9,6 +9,8 @@ import {
 	useState,
 } from "react";
 import { MdArrowDropDown } from "react-icons/md";
+import { css, cx } from "../../../styled-system/css";
+import { flex } from "../../../styled-system/patterns";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { Field } from "../Field.tsx";
 import { ListBox, type ListBoxOption } from "../ListBox/ListBox.tsx";
@@ -17,7 +19,6 @@ import {
 	type ListBoxState,
 } from "../ListBox/ListBoxController.tsx";
 import { PopUp, PopUpController } from "../Popup/PopUp.tsx";
-import { FlexLayout } from "../Styles.ts";
 
 type OptionRenderer<T> = (option: T) => ReactNode;
 
@@ -154,9 +155,13 @@ export function Select<T extends ListBoxOption>({
 			role="combobox"
 			aria-expanded={popupController.state.open}
 			ref={comboBoxRef}
-			css={[
-				FlexLayout.row.stretch.stretch,
-				{
+			className={cx(
+				flex({
+					direction: "row",
+					alignItems: "stretch",
+					justifyContent: "stretch",
+				}),
+				css({
 					border: "1px solid var(--color-gray-600)",
 					background: "var(--color-background)",
 					borderRadius: 4,
@@ -168,33 +173,41 @@ export function Select<T extends ListBoxOption>({
 					"&:focus": {
 						outline: "2px solid var(--color-primary-500)",
 					},
-				},
-			]}
+				}),
+			)}
 			tabIndex={0}
 			onClick={() => openPopup()}
 			onKeyDown={handleKeyDown}
 			onBlur={handleBlur}
 		>
 			<div
-				css={[
-					FlexLayout.row.center.start,
-					{
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "start",
+					}),
+					css({
 						flex: "1 1 0",
 						padding: "2px 12px",
 						lineHeight: 1,
-					},
-				]}
+					}),
+				)}
 			>
 				{selectedOption?.label ?? ""}
 			</div>
 			<div
-				css={[
-					FlexLayout.row.center.center,
-					{
+				className={cx(
+					flex({
+						direction: "row",
+						alignItems: "center",
+						justifyContent: "center",
+					}),
+					css({
 						flex: "0 0 auto",
 						padding: "0 4px",
-					},
-				]}
+					}),
+				)}
 			>
 				<MdArrowDropDown size="24" />
 			</div>

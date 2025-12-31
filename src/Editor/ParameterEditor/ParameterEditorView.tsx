@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { css } from "../../../styled-system/css";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { FileStore } from "../../FileStore.ts";
 import { addListener } from "../../lib.ts";
@@ -120,13 +121,13 @@ export function ParameterEditorView({
 	return (
 		<canvas
 			ref={canvasRef}
-			css={{
+			className={css({
 				position: "absolute",
 				inset: 0,
 				width: "100%",
 				height: "100%",
 				background: "var(--color-key-background)",
-			}}
+			})}
 		/>
 	);
 }
