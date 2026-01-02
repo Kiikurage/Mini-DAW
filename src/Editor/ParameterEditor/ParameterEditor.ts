@@ -1,21 +1,12 @@
-import type { FileStore } from "../../FileStore.ts";
-import { EmptySet } from "../../lib.ts";
-import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
-import type { PointerEventManagerInteractionHandleResolver } from "../../PointerEventManager/PointerEventManagerInteractionHandleResolver.ts";
-import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
-import type { PutControlChange } from "../../usecases/PutControlChange.ts";
-import type { RemoveControlChanges } from "../../usecases/RemoveControlChanges.ts";
-import type { UpdateNotes } from "../../usecases/UpdateNotes.ts";
-import type { Editor } from "../Editor.ts";
-import { ControlChangeDelegate } from "./ControlChangeDelegate.ts";
-import type {
-	ParameterEditorSampleDelegate,
-	ParameterSample,
-} from "./ParameterEditorSampleDelegate.ts";
-import { VelocityDelegate } from "./VelocityDelegate.ts";
+import { type ParameterType, VelocityParameterType } from "../ParameterType.ts";
 
 export interface ParameterEditorState {
+	/**
+	 * 幅 [px]
+	 */
+	readonly width: number;
+
 	/**
 	 * 高さ [px]
 	 */
@@ -25,25 +16,46 @@ export interface ParameterEditorState {
 	 * 現在のカーソル状態
 	 */
 	readonly cursor: string;
+
+	/**
+	 * 現在表示しているパラメータの種類
+	 */
+	readonly parameterType: ParameterType;
+
+	/**
+	 * 現在のツールモード
+	 */
+	readonly toolMode: "select" | "draw" | "erase";
 }
 
-export class ParameterEditor
-	extends Stateful<ParameterEditorState>
-	implements PointerEventManagerInteractionHandleResolver
-{
-	private delegate: ParameterEditorSampleDelegate | null = null;
+export class ParameterEditor extends Stateful<ParameterEditorState> {
+	static readonly ToolMode = {
+		Select: "select",
+		Draw: "draw",
+	} as const;
 
-	constructor(
-		private readonly editor: Editor,
-		private readonly fileStore: FileStore,
-		private readonly updateNotes: UpdateNotes,
-		private readonly putControlChange: PutControlChange,
-		private readonly removeControlChange: RemoveControlChanges,
-	) {
-		super({ height: 0, cursor: "default" });
+	constructor() {
+		super({
+			width: 0,
+			height: 0,
+			cursor: "default",
+			parameterType: VelocityParameterType,
+			toolMode: ParameterEditor.ToolMode.Select,
+		});
+	}
 
-		this.updateDelegate();
-		this.editor.addChangeListener(() => this.updateDelegate());
+	setToolMode(toolMode: ParameterEditor.ToolMode) {
+		this.updateState((state) => {
+			if (state.toolMode === toolMode) return state;
+			return { ...state, toolMode };
+		});
+	}
+
+	setWidth(width: number) {
+		this.updateState((state) => {
+			if (state.width === width) return state;
+			return { ...state, width };
+		});
 	}
 
 	setHeight(height: number) {
@@ -53,52 +65,15 @@ export class ParameterEditor
 		});
 	}
 
-	setCursor(cursor: string) {
+	setParameterType(parameterType: ParameterType) {
 		this.updateState((state) => {
-			if (state.cursor === cursor) return state;
-			return { ...state, cursor };
+			if (state.parameterType === parameterType) return state;
+			return { ...state, parameterType };
 		});
 	}
+}
 
-	getAllSamples(): Iterable<ParameterSample> {
-		return this.delegate?.getAllSamples() ?? EmptySet;
-	}
-
-	getSelectedSamples(): Iterable<ParameterSample> {
-		return this.delegate?.getSelectedSamples() ?? EmptySet;
-	}
-
-	updateDelegate() {
-		if (this.delegate?.parameterType === this.editor.state.parameterType)
-			return;
-
-		switch (this.editor.state.parameterType.type) {
-			case "velocity": {
-				this.delegate = new VelocityDelegate(
-					this.fileStore,
-					this.editor,
-					this,
-					this.updateNotes,
-				);
-				break;
-			}
-			case "controlChange": {
-				this.delegate = new ControlChangeDelegate(
-					this.editor.state.parameterType,
-					this.fileStore,
-					this.editor,
-					this,
-					this.putControlChange,
-					this.removeControlChange,
-				);
-				break;
-			}
-		}
-	}
-
-	resolveHandle(
-		canvasPosition: PositionSnapshot,
-	): PointerEventManagerInteractionHandle | null {
-		return this.delegate?.resolveHandle?.(canvasPosition) ?? null;
-	}
+export namespace ParameterEditor {
+	export type ToolMode =
+		(typeof ParameterEditor.ToolMode)[keyof typeof ParameterEditor.ToolMode];
 }

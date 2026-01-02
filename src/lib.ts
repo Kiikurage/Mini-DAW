@@ -1,4 +1,3 @@
-import type { ClassAttributes, ComponentType, JSX, RefAttributes } from "react";
 import { TICK_PER_MEASURE } from "./constants.ts";
 
 export function isNullish(x: unknown): x is null | undefined {
@@ -13,9 +12,17 @@ export function assertNotNullish<T>(
 	value: T | null | undefined,
 	message = "Value is null or undefined",
 ): asserts value is T {
-	if (value === null || value === undefined) {
+	if (isNullish(value)) {
 		throw new Error(message);
 	}
+}
+
+export function getNonNull<T>(
+	value: T | null | undefined,
+	message = "Value is null or undefined",
+): T {
+	assertNotNullish(value, message);
+	return value;
 }
 
 export function sleep(ms: number) {
@@ -75,6 +82,15 @@ export function addListener<K extends keyof DocumentEventMap>(
 	options?: AddEventListenerOptions,
 ): () => void;
 export function addListener<
+	E extends SVGElement,
+	K extends keyof SVGElementEventMap,
+>(
+	target: E,
+	type: K,
+	listener: (this: E, ev: SVGElementEventMap[K]) => void,
+	options?: AddEventListenerOptions,
+): () => void;
+export function addListener<
 	E extends HTMLElement,
 	K extends keyof HTMLElementEventMap,
 >(
@@ -93,8 +109,10 @@ export function addListener(
 	return () => target.removeEventListener(type, listener, options);
 }
 
+export const EmptyArray: readonly never[] = [];
 export const EmptySet: ReadonlySet<never> = new Set<never>();
 export const EmptyMap: ReadonlyMap<never, never> = new Map<never, never>();
+export const NoOp: (...args: never[]) => void = () => {};
 
 export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
 	if (iterable instanceof Set) {
@@ -106,6 +124,14 @@ export function toSet<T>(iterable: Iterable<T>): ReadonlySet<T> {
 
 export function toMutableSet<T>(iterable: Iterable<T>): Set<T> {
 	return new Set(iterable);
+}
+
+export function toMutableMap<K, V>(map: ReadonlyMap<K, V>): Map<K, V> {
+	return new Map(map);
+}
+
+export function toMutableArray<T>(array: readonly T[]): T[] {
+	return array.slice();
 }
 
 export function formatTimestamp(timestamp: number): string {
@@ -125,3 +151,20 @@ export function formatDate(date: Date): string {
 export function neverReachable(x: never): never {
 	throw new Error(`This code should never be reachable. (${x})`);
 }
+
+export function randomId(length: number): string {
+	return "x"
+		.repeat(length)
+		.replace(/x/g, () => ((Math.random() * 16) | 0).toString(16));
+}
+
+/**
+ * ブランド付き型のブランドシンボル
+ *
+ * @example
+ *
+ * type NoteKey = number & { [Brand]: 'NoteKey' };
+ */
+const Brand = Symbol("Brand");
+
+export type Branded<T, B extends string> = T & { [Brand]: B };

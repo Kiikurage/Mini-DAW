@@ -2,6 +2,7 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { FileStore } from "../FileStore.ts";
 import type { GoogleAPIClient } from "../GoogleDriveAPI/GoogleAPIClient.ts";
 import type { FileLocation } from "../models/FileLocation.ts";
+import { Song } from "../models/Song.ts";
 import type { RecentFileService } from "../RecentFileService.ts";
 
 export const SaveFileKey = ComponentKey<SaveFile>("SaveFile");
@@ -89,7 +90,7 @@ function SaveAsNewFileToGoogleDrive({
 		fileName: string;
 	}) => {
 		const song = fileStore.state.song;
-		const serializedSong = song.serialize();
+		const serializedSong = Song.serialize(song);
 		const json = JSON.stringify(serializedSong);
 
 		const file = await googleAPIClient.postFile({
@@ -104,7 +105,7 @@ function SaveAsNewFileToGoogleDrive({
 			fileId: file.id,
 		};
 		recentFileService.upsertEntry({
-			songTitle: song.title,
+			songTitle: song.metadata.title,
 			fileName: file.name,
 			location,
 		});
@@ -123,12 +124,12 @@ function SaveFileToGoogleDrive({
 }) {
 	return async ({ fileId }: { fileId: string }) => {
 		const song = fileStore.state.song;
-		const serializedSong = song.serialize();
+		const serializedSong = Song.serialize(song);
 		const json = JSON.stringify(serializedSong);
 
 		const file = await googleAPIClient.patchFile({
 			fileId,
-			file: new File([json], song.title + ".json", {
+			file: new File([json], song.metadata.title + ".json", {
 				type: "application/json",
 			}),
 		});
@@ -138,7 +139,7 @@ function SaveFileToGoogleDrive({
 			fileId: file.id,
 		};
 		recentFileService.upsertEntry({
-			songTitle: song.title,
+			songTitle: song.metadata.title,
 			fileName: file.name,
 			location,
 		});
@@ -149,12 +150,12 @@ function SaveFileToGoogleDrive({
 function DownloadFile({ fileStore }: { fileStore: FileStore }) {
 	return () => {
 		const song = fileStore.state.song;
-		const serializedSong = song.serialize();
+		const serializedSong = Song.serialize(song);
 		const json = JSON.stringify(serializedSong);
 
 		downloadText({
 			body: json,
-			fileName: `${song.title}.json`,
+			fileName: `${song.metadata.title}.json`,
 			mimeType: "application/json",
 		});
 	};

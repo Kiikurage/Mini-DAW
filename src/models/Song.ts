@@ -1,118 +1,133 @@
-import { Channel, type SerializedChannel } from "./Channel.ts";
-import type { Note } from "./Note.ts";
+import { assertNotNullish, toMutableMap } from "../lib.ts";
+import { Channel, type ChannelId, type SerializedChannel } from "./Channel.ts";
+import type { Note, NoteId } from "./Note.ts";
 
-export class Song {
-	readonly title: string;
-	readonly bpm: number;
-	readonly channels: readonly Channel[];
+export interface Song {
+	readonly metadata: {
+		readonly title: string;
+		readonly bpm: number;
+		readonly channelIds: readonly ChannelId[];
+	};
+	readonly channels: ReadonlyMap<ChannelId, Channel>;
+}
 
-	constructor(
-		props: {
-			title: string;
-			channels: readonly Channel[];
-			bpm: number;
-		} = {
-			title: "Untitled",
-			channels: [],
-			bpm: 120,
-		},
-	) {
-		this.title = props.title;
-		this.channels = props.channels;
-		this.bpm = props.bpm;
-	}
-
-	getChannel(channelId: number): Channel | null {
-		return this.channels.find((ch) => ch.id === channelId) ?? null;
-	}
-
-	putChannel(channel: Channel) {
-		const channels = [...this.channels];
-		const index = channels.findIndex((ch) => ch.id === channel.id);
-		if (index === -1) {
-			channels.push(channel);
-			return new Song({ ...this, channels });
-		} else {
-			if (channels[index] === channel) return this;
-			channels[index] = channel;
-			return new Song({ ...this, channels });
-		}
-	}
-
-	removeChannel(channelId: number) {
-		const channels = this.channels.filter((ch) => ch.id !== channelId);
-		if (channels.length === this.channels.length) return this;
-
-		return new Song({ ...this, channels });
-	}
-
-	replaceChannel(channel: Channel) {
-		const index = this.channels.findIndex((ch) => ch.id === channel.id);
-		if (index === -1) return this;
-		if (this.channels[index] === channel) return this;
-
-		const channels = [...this.channels];
-		channels[index] = channel;
-
-		return new Song({ ...this, channels });
-	}
-
-	putNotes(channelId: number, newNotes: Iterable<Note>) {
-		const channel = this.channels.find((ch) => ch.id === channelId);
-		if (channel === undefined) return this;
-
-		return this.replaceChannel(channel.putNotes(newNotes));
-	}
-
-	removeNotes(channelId: number, ids: Iterable<number>) {
-		const channel = this.channels.find((ch) => ch.id === channelId);
-		if (channel === undefined) return this;
-
-		return this.replaceChannel(channel.removeNotes(ids));
-	}
-
-	setTitle(title: string) {
-		if (this.title === title) return this;
-		return new Song({ ...this, title });
-	}
-
-	setBPM(bpm: number) {
-		if (this.bpm === bpm) return this;
-		return new Song({ ...this, bpm });
-	}
-
-	applyPatch(patch: SongPatch) {
-		let song: Song = this;
-		if (patch.bpm !== undefined) {
-			song = song.setBPM(patch.bpm);
-		}
-		if (patch.title !== undefined) {
-			song = song.setTitle(patch.title);
-		}
-		return song;
-	}
-
-	serialize(): SerializedSong {
+export const Song = {
+	create(): Song {
+		return {
+			metadata: {
+				title: "Untitled",
+				bpm: 120,
+				channelIds: [],
+			},
+			channels: new Map(),
+		};
+	},
+	serialize(song: Song): SerializedSong {
 		return {
 			version: 1,
-			title: this.title,
-			bpm: this.bpm,
-			channels: this.channels.map((ch) => ch.serialize()),
+			title: song.metadata.title,
+			bpm: song.metadata.bpm,
+			channels: song.metadata.channelIds.map((channelId) => {
+				const channel = song.channels.get(channelId);
+				assertNotNullish(channel);
+				return Channel.serialize(channel);
+			}),
 		};
-	}
-
-	static deserialize(data: SerializedSong): Song {
+	},
+	deserialize(data: SerializedSong): Song {
 		if (data.version !== 1) {
 			throw new Error(`非対応のバージョンです (version: ${data.version})`);
 		}
 
-		return new Song({
-			title: data.title,
-			bpm: data.bpm,
-			channels: data.channels.map((ch) => Channel.deserialize(ch)),
-		});
-	}
-}
+		return {
+			metadata: {
+				title: data.title,
+				bpm: data.bpm,
+				channelIds: data.channels.map((ch) => ch.id),
+			},
+			channels: new Map(
+				data.channels.map((ch) => {
+					const channel = Channel.deserialize(ch);
+					return [channel.metadata.id, channel] as const;
+				}),
+			),
+		};
+	},
+	getChannel(song: Song, channelId: ChannelId): Channel | null {
+		return song.channels.get(channelId) ?? null;
+	},
+	putChannel(song: Song, channel: Channel) {
+		const channels = toMutableMap(song.channels);
+		channels.set(channel.metadata.id, channel);
+
+		if (channels.size === song.channels.size) {
+			return { ...song, channels };
+		} else {
+			return {
+				...song,
+				metadata: {
+					...song.metadata,
+					channelIds: [...song.metadata.channelIds, channel.metadata.id],
+				},
+				channels,
+			};
+		}
+	},
+	removeChannel(song: Song, channelId: ChannelId) {
+		if (!song.channels.has(channelId)) return song;
+
+		const channels = toMutableMap(song.channels);
+		channels.delete(channelId);
+
+		return {
+			...song,
+			metadata: {
+				...song.metadata,
+				channelIds: song.metadata.channelIds.filter((id) => id !== channelId),
+			},
+			channels,
+		};
+	},
+	replaceChannel(song: Song, channel: Channel) {
+		const existingChannel = song.channels.get(channel.metadata.id);
+		if (existingChannel === undefined) return song;
+		if (existingChannel === channel) return song;
+
+		const channels = toMutableMap(song.channels);
+		channels.set(channel.metadata.id, channel);
+
+		return { ...song, channels };
+	},
+	putNotes(song: Song, channelId: ChannelId, newNotes: Iterable<Note>) {
+		const channel = song.channels.get(channelId);
+		if (channel === undefined) return song;
+
+		return Song.replaceChannel(song, Channel.putNotes(channel, newNotes));
+	},
+	removeNotes(song: Song, channelId: ChannelId, ids: Iterable<NoteId>) {
+		const channel = song.channels.get(channelId);
+		if (channel === undefined) return song;
+
+		return Song.replaceChannel(song, Channel.removeNotes(channel, ids));
+	},
+	setTitle(song: Song, title: string): Song {
+		if (song.metadata.title === title) return song;
+		return { ...song, metadata: { ...song.metadata, title } };
+	},
+	setBPM(song: Song, bpm: number): Song {
+		if (song.metadata.bpm === bpm) return song;
+		return { ...song, metadata: { ...song.metadata, bpm } };
+	},
+	applyPatch(song: Song, patch: SongPatch): Song {
+		if (patch.bpm !== undefined) {
+			song = Song.setBPM(song, patch.bpm);
+		}
+		if (patch.title !== undefined) {
+			song = Song.setTitle(song, patch.title);
+		}
+		return song;
+	},
+} as const;
 
 export interface SongPatch {
 	title?: string;

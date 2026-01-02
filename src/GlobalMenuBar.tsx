@@ -33,6 +33,8 @@ export function GlobalMenuBar({
 	const canUndo = useStateful(history, (state) => state.canUndo);
 	const canRedo = useStateful(history, (state) => state.canRedo);
 
+	console.count("GlobalMenuBar Render");
+
 	return (
 		<div
 			className={cx(

@@ -1,7 +1,9 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { FileStore } from "../FileStore.ts";
 import { isNotNullish } from "../lib.ts";
-import { Note } from "../models/Note.ts";
+import type { ChannelId } from "../models/Channel.ts";
+import { Note, type NoteId } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
 import type { PutNotes } from "./PutNotes.ts";
 
 export const MoveNotesKey = ComponentKey<MoveNotes>("MoveNotes");
@@ -14,12 +16,12 @@ export function MoveNotes({
 	setNotes: PutNotes;
 }) {
 	return (
-		channelId: number,
-		noteIds: Iterable<number>,
+		channelId: ChannelId,
+		noteIds: Iterable<NoteId>,
 		keyOffset: number,
 		tickOffset: number,
 	) => {
-		const channel = fileStore.state.song.getChannel(channelId);
+		const channel = Song.getChannel(fileStore.state.song, channelId);
 		if (channel === null) return;
 
 		setNotes(
@@ -35,6 +37,7 @@ export function MoveNotes({
 						tickTo: note.tickTo + tickOffset,
 					}),
 				),
+			true,
 		);
 	};
 }

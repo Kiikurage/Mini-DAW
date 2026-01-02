@@ -5,7 +5,10 @@ import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { FileStore } from "../FileStore.ts";
-import { getActiveChannel } from "../getActiveChannel.ts";
+import {
+	useActiveChannel,
+	useActiveChannelMetadata,
+} from "../getActiveChannel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PromiseState } from "../PromiseState.ts";
@@ -44,6 +47,8 @@ export function ToolBar({
 	overlayPortal?: OverlayPortal;
 	synthesizer?: Synthesizer;
 }) {
+	console.count("ToolBar Render");
+
 	player = useComponent(Player.Key, player);
 	fileStore = useComponent(FileStore.Key, fileStore);
 	updateSong = useComponent(UpdateSongKey, updateSong);
@@ -55,17 +60,18 @@ export function ToolBar({
 
 	const playHeadTick = useStateful(player, (state) => state.currentTick);
 	const isPlaying = useStateful(player, (state) => state.isPlaying);
-	const songTitle = useStateful(fileStore, (state) => state.song.title);
+	const songTitle = useStateful(
+		fileStore,
+		(state) => state.song.metadata.title,
+	);
 
-	const song = useStateful(fileStore, (state) => state.song);
-	const editorState = useStateful(editor);
-	const activeChannel = getActiveChannel(song, editorState);
+	const activeChannelMetadata = useActiveChannelMetadata(fileStore, editor);
 
 	const soundFontStoreState = useStateful(soundFontStore);
 
 	const soundFont = (() => {
-		if (activeChannel === null) return null;
-		const instrumentKey = activeChannel.instrumentKey;
+		if (activeChannelMetadata === null) return null;
+		const instrumentKey = activeChannelMetadata.instrumentKey;
 		const soundFont = soundFontStoreState.get(instrumentKey.url);
 		if (soundFont === undefined) return null;
 		if (!PromiseState.isFulfilled(soundFont.state)) return null;
@@ -94,20 +100,20 @@ export function ToolBar({
 					}),
 				)}
 			>
-				{activeChannel !== null && soundFont !== null && (
+				{activeChannelMetadata !== null && soundFont !== null && (
 					<>
 						<div>
 							<Field label="プリセット">
 								<PresetSelect
 									soundFont={soundFont}
-									value={activeChannel.instrumentKey.presetNumber}
+									value={activeChannelMetadata.instrumentKey.presetNumber}
 									onChange={(presetNumber) => {
 										const instrumentKey = new InstrumentKey(
-											activeChannel.instrumentKey.name,
+											activeChannelMetadata.instrumentKey.name,
 											presetNumber,
 											0,
 										);
-										updateChannel(activeChannel.id, { instrumentKey });
+										updateChannel(activeChannelMetadata.id, { instrumentKey });
 									}}
 								/>
 							</Field>
@@ -115,15 +121,17 @@ export function ToolBar({
 						<div>
 							<Field label="バンク">
 								<BankSelect
-									presetNumber={activeChannel.instrumentKey.presetNumber}
+									presetNumber={
+										activeChannelMetadata.instrumentKey.presetNumber
+									}
 									soundFont={soundFont}
 									onChange={(bankNumber) => {
 										const instrumentKey = new InstrumentKey(
-											activeChannel.instrumentKey.name,
-											activeChannel.instrumentKey.presetNumber,
+											activeChannelMetadata.instrumentKey.name,
+											activeChannelMetadata.instrumentKey.presetNumber,
 											bankNumber,
 										);
-										updateChannel(activeChannel.id, { instrumentKey });
+										updateChannel(activeChannelMetadata.id, { instrumentKey });
 									}}
 								/>
 							</Field>
@@ -136,7 +144,7 @@ export function ToolBar({
 									synthesizer,
 									soundFontStore,
 									updateChannel,
-									activeChannel,
+									activeChannelMetadata,
 								).open();
 							}}
 						>

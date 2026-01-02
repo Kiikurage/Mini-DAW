@@ -1,4 +1,3 @@
-import { start } from "happy-dom/lib/PropertySymbol";
 import { MouseEventButton } from "../constants.ts";
 import { EventEmitter } from "../EventEmitter.ts";
 import { addListener } from "../lib.ts";

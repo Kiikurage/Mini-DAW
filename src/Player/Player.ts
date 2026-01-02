@@ -2,7 +2,9 @@ import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import type { FileStore } from "../FileStore.ts";
-import { EmptySet, minmax } from "../lib.ts";
+import { EmptySet, minmax, toMutableSet, toSet } from "../lib.ts";
+import { CCList } from "../models/CC.ts";
+import { Channel, type ChannelId } from "../models/Channel.ts";
 import { ControlType } from "../models/ControlType.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
@@ -22,7 +24,7 @@ export interface PlayerState {
 	/**
 	 * ミュートされているチャンネルIDの集合
 	 */
-	mutedChannelIds: ReadonlySet<number>;
+	mutedChannelIds: ReadonlySet<ChannelId>;
 
 	/**
 	 * ピアノロールの自動スクロールが有効かどうか
@@ -56,12 +58,12 @@ export class Player extends Stateful<PlayerState> {
 			this.syncSongFromFileStore();
 		});
 		bus.on("channel.add.after", (channel) => {
-			this.syncChannelFromFileStore(channel.id);
+			this.syncChannelFromFileStore(channel.metadata.id);
 		});
 		bus.on("channel.update.after", (channelId) => {
 			this.syncChannelFromFileStore(channelId);
 		});
-		bus.on("channel.remove.before", (channelId: number) => {
+		bus.on("channel.remove.before", (channelId: ChannelId) => {
 			this.unmuteChannels([channelId]);
 		});
 	}
@@ -70,24 +72,22 @@ export class Player extends Stateful<PlayerState> {
 		this.synthesizer.resetAll();
 		this.clearMutedChannels();
 
-		for (const channel of this.fileStore.state.song.channels) {
-			this.syncChannelFromFileStore(channel.id);
+		for (const channelId of this.fileStore.state.song.metadata.channelIds) {
+			this.syncChannelFromFileStore(channelId);
 		}
 	}
 
-	private syncChannelFromFileStore(channelId: number) {
-		const channel = this.fileStore.state.song.channels.find(
-			(ch) => ch.id === channelId,
-		);
+	private syncChannelFromFileStore(channelId: ChannelId) {
+		const channel = this.fileStore.state.song.channels.get(channelId);
 		if (channel === undefined) return;
 
 		this.synthesizer.setBank({
-			channel: channel.id,
-			bankNumber: channel.instrumentKey.bankNumber,
+			channel: channel.metadata.id,
+			bankNumber: channel.metadata.instrumentKey.bankNumber,
 		});
 		this.synthesizer.setPreset({
-			channel: channel.id,
-			programNumber: channel.instrumentKey.presetNumber,
+			channel: channel.metadata.id,
+			programNumber: channel.metadata.instrumentKey.presetNumber,
 		});
 	}
 
@@ -122,7 +122,7 @@ export class Player extends Stateful<PlayerState> {
 		this.unmuteChannels([]);
 	}
 
-	toggleMuteChannel(channelId: number) {
+	toggleMuteChannel(channelId: ChannelId) {
 		if (this.state.mutedChannelIds.has(channelId)) {
 			this.unmuteChannels([channelId]);
 		} else {
@@ -131,9 +131,7 @@ export class Player extends Stateful<PlayerState> {
 	}
 
 	toggleMuteAllChannels() {
-		const allChannelIds = new Set(
-			this.fileStore.state.song.channels.map((ch) => ch.id),
-		);
+		const allChannelIds = toSet(this.fileStore.state.song.metadata.channelIds);
 		const areAllMuted = [...allChannelIds].every((id) =>
 			this.state.mutedChannelIds.has(id),
 		);
@@ -144,8 +142,8 @@ export class Player extends Stateful<PlayerState> {
 		}
 	}
 
-	muteChannels(channelIds: Iterable<number>) {
-		const mutedChannelIds = new Set(this.state.mutedChannelIds);
+	muteChannels(channelIds: Iterable<ChannelId>) {
+		const mutedChannelIds = toMutableSet(this.state.mutedChannelIds);
 
 		for (const channelId of channelIds) {
 			if (this.state.mutedChannelIds.has(channelId)) continue;
@@ -160,9 +158,9 @@ export class Player extends Stateful<PlayerState> {
 		});
 	}
 
-	unmuteChannels(channelIds: Iterable<number>) {
+	unmuteChannels(channelIds: Iterable<ChannelId>) {
 		this.updateState((state) => {
-			const mutedChannelIds = new Set(state.mutedChannelIds);
+			const mutedChannelIds = toMutableSet(state.mutedChannelIds);
 
 			for (const channelId of channelIds) {
 				mutedChannelIds.delete(channelId);
@@ -197,7 +195,9 @@ export class Player extends Stateful<PlayerState> {
 		const PRE_ENQUEUE_SIZE_IN_SEC = 1 / 30;
 
 		const audioLastTickFrom = Math.max(
-			...this.fileStore.state.song.channels.map((ch) => ch.lastTickFrom),
+			...this.fileStore.state.song.channels
+				.values()
+				.map((ch) => Channel.getLastTickFrom(ch)),
 		);
 		if (this.state.currentTick > audioLastTickFrom) {
 			this.pause();
@@ -206,20 +206,23 @@ export class Player extends Stateful<PlayerState> {
 			return;
 		}
 
-		for (const channel of this.fileStore.state.song.channels) {
+		for (const channel of this.fileStore.state.song.channels.values()) {
 			this.synthesizer.setBank({
-				channel: channel.id,
-				bankNumber: channel.instrumentKey.bankNumber,
+				channel: channel.metadata.id,
+				bankNumber: channel.metadata.instrumentKey.bankNumber,
 			});
 			this.synthesizer.setPreset({
-				channel: channel.id,
-				programNumber: channel.instrumentKey.presetNumber,
+				channel: channel.metadata.id,
+				programNumber: channel.metadata.instrumentKey.presetNumber,
 			});
 		}
 
 		const tickEnd =
-			Math.max(...this.fileStore.state.song.channels.map((ch) => ch.tickTo)) +
-			TICK_PER_BEAT;
+			Math.max(
+				...this.fileStore.state.song.channels
+					.values()
+					.map((ch) => Channel.getTickTo(ch)),
+			) + TICK_PER_BEAT;
 
 		let lastEnqueuedTick = this.startedFromInTick;
 		const update = () => {
@@ -235,8 +238,8 @@ export class Player extends Stateful<PlayerState> {
 
 			const nextEnqueueTick =
 				this.currentTick + PRE_ENQUEUE_SIZE_IN_SEC / this.secondPerTick;
-			for (const channel of this.fileStore.state.song.channels) {
-				if (this.state.mutedChannelIds.has(channel.id)) continue;
+			for (const channel of this.fileStore.state.song.channels.values()) {
+				if (this.state.mutedChannelIds.has(channel.metadata.id)) continue;
 
 				for (const note of channel.notes.values()) {
 					if (
@@ -244,7 +247,7 @@ export class Player extends Stateful<PlayerState> {
 						note.tickFrom < nextEnqueueTick
 					) {
 						this.synthesizer.noteOn({
-							channel: channel.id,
+							channel: channel.metadata.id,
 							key: note.key,
 							velocity: note.velocity,
 							time: this.getContextTimeByTick(note.tickFrom),
@@ -256,25 +259,23 @@ export class Player extends Stateful<PlayerState> {
 						note.tickTo < nextEnqueueTick
 					) {
 						this.synthesizer.noteOff({
-							channel: channel.id,
+							channel: channel.metadata.id,
 							key: note.key,
 							time: this.getContextTimeByTick(note.tickTo),
 						});
 					}
 				}
 
-				for (const [type, cc] of channel.controlChanges) {
+				for (const [type, list] of channel.ccLists) {
 					if (type !== ControlType.PITCH_BEND) continue;
 
-					for (const message of cc.messages) {
-						if (
-							lastEnqueuedTick <= message.tick &&
-							message.tick < nextEnqueueTick
-						) {
+					const ccs = [...(list?.ccs?.values() ?? [])];
+					for (const cc of ccs) {
+						if (lastEnqueuedTick <= cc.tick && cc.tick < nextEnqueueTick) {
 							this.synthesizer.setPitchBend(
-								channel.id,
-								message.value,
-								this.getContextTimeByTick(message.tick),
+								channel.metadata.id,
+								cc.value,
+								this.getContextTimeByTick(cc.tick),
 							);
 						}
 					}
@@ -300,7 +301,7 @@ export class Player extends Stateful<PlayerState> {
 	private startedAtApplicationTime: number = 0;
 
 	private get secondPerTick(): number {
-		const secondPerMeasure = (60 / this.fileStore.state.song.bpm) * 4;
+		const secondPerMeasure = (60 / this.fileStore.state.song.metadata.bpm) * 4;
 		return secondPerMeasure / TICK_PER_MEASURE;
 	}
 

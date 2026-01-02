@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { css, cx } from "../../styled-system/css";
 import { styled } from "../../styled-system/jsx";
 import { flex } from "../../styled-system/patterns";
@@ -26,16 +26,16 @@ const ButtonVariantStyles = {
 		background: "none",
 		color: "var(--color-foreground)",
 		transition: "background 100ms ease",
-		"&:hover": {
+		"&:hover:not([aria-pressed='true'])": {
 			background: "var(--color-background-hover)",
 			transition: "background 0s",
 		},
-		"&:active": {
+		"&:active:not([aria-pressed='true'])": {
 			background: "var(--color-background-active)",
 			transition: "background 0s",
 		},
 		"&[aria-pressed='true']": {
-			color: "var(--color-background-active)",
+			background: "var(--color-gray-800)",
 			transition: "background 0s",
 		},
 	}),
@@ -150,9 +150,6 @@ export function Button({
 					},
 					"&:focus-visible": {
 						outline: "2px solid var(--color-primary-500)",
-					},
-					"&[aria-pressed='false']": {
-						opacity: 0.3,
 					},
 				}),
 				props.className,

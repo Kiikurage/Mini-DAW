@@ -9,7 +9,7 @@ import {
 } from "react";
 import { css, cx } from "../../styled-system/css";
 import { flex } from "../../styled-system/patterns";
-import { assertNotNullish } from "../lib.ts";
+import { assertNotNullish, EmptyMap, toMutableMap } from "../lib.ts";
 import { useResizeObserver } from "../react/useResizeObserver.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import { useStateful } from "../Stateful/useStateful.tsx";
@@ -57,7 +57,7 @@ class SplitterController extends Stateful<State> {
 	private containerRect: DOMRect | null = null;
 
 	constructor(public direction: "row" | "column" = "column") {
-		super({ layouts: new Map(), handles: [] });
+		super({ layouts: EmptyMap, handles: [] });
 	}
 
 	setContainerRect(rect: DOMRect) {
@@ -82,7 +82,7 @@ class SplitterController extends Stateful<State> {
 		}
 
 		this.updateState((state) => {
-			const layouts = new Map(state.layouts);
+			const layouts = toMutableMap(state.layouts);
 			layouts.set(area.id, {
 				id: area.id,
 				base: area.flex ? 0 : (area.defaultSize ?? 0),
@@ -100,7 +100,7 @@ class SplitterController extends Stateful<State> {
 		this.areas.splice(index, 1);
 
 		this.updateState((state) => {
-			const layouts = new Map(state.layouts);
+			const layouts = toMutableMap(state.layouts);
 			layouts.delete(id);
 			return { ...state, layouts };
 		});
@@ -152,7 +152,7 @@ class SplitterController extends Stateful<State> {
 		const newFlex1 = area1.flex ? oldLayout1.flex + delta / pixelPerFlex : 0;
 		const newFlex2 = area2.flex ? oldLayout2.flex - delta / pixelPerFlex : 0;
 
-		const layouts = new Map(diff.initialLayouts);
+		const layouts = toMutableMap(diff.initialLayouts);
 		layouts.set(area1.id, {
 			id: area1.id,
 			base: Math.max(0, newBase1),

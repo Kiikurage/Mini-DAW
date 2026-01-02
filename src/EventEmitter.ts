@@ -1,5 +1,5 @@
 export class EventEmitter<
-	E extends Record<keyof E, unknown[]> = Record<string, any>,
+	E extends Record<keyof E, unknown[]> = Record<string, never>,
 > {
 	private readonly callbackMap = new Map<
 		string,

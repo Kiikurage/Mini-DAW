@@ -116,7 +116,7 @@ function GoogleDriveSection({
 
 	const [parentId, setParentIdId] = useState<string | null>(null);
 	const [fileName, setFileName] = useState(
-		`${fileStore.state.song.title}.json`,
+		`${fileStore.state.song.metadata.title}.json`,
 	);
 	const [uploadPS, setUploadPS] = useState<PromiseState<GoogleDrive.File>>(
 		PromiseState.initial(),

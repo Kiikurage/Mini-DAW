@@ -1,4 +1,9 @@
-import { assertNotNullish, isNullish } from "../../lib.ts";
+import {
+	assertNotNullish,
+	EmptySet,
+	isNullish,
+	toMutableSet,
+} from "../../lib.ts";
 import { Stateful } from "../../Stateful/Stateful.ts";
 
 export interface TreeViewState {
@@ -18,7 +23,7 @@ export class TreeViewController extends Stateful<TreeViewState> {
 		super({
 			selectedItemId: null,
 			focusedItemId: null,
-			expandedItemIds: new Set(),
+			expandedItemIds: EmptySet,
 			items: [],
 		});
 	}
@@ -27,7 +32,7 @@ export class TreeViewController extends Stateful<TreeViewState> {
 
 	toggleExpand(folderId: string) {
 		this.updateState((state) => {
-			const expandedItemIds = new Set(state.expandedItemIds);
+			const expandedItemIds = toMutableSet(state.expandedItemIds);
 			if (expandedItemIds.has(folderId)) {
 				expandedItemIds.delete(folderId);
 			} else {
@@ -84,7 +89,7 @@ export class TreeViewController extends Stateful<TreeViewState> {
 			state = { ...state, items };
 
 			if (state.expandedItemIds.has(id)) {
-				const expandedItemIds = new Set(state.expandedItemIds);
+				const expandedItemIds = toMutableSet(state.expandedItemIds);
 				expandedItemIds.delete(id);
 				state = { ...state, expandedItemIds };
 			}
@@ -147,7 +152,7 @@ export class TreeViewController extends Stateful<TreeViewState> {
 			if (!focusedItem.isParent) return state;
 
 			if (state.expandedItemIds.has(focusedItem.id)) return state;
-			const expandedItemIds = new Set(state.expandedItemIds);
+			const expandedItemIds = toMutableSet(state.expandedItemIds);
 			expandedItemIds.add(focusedItem.id);
 			return { ...state, expandedItemIds };
 		});
@@ -167,7 +172,7 @@ export class TreeViewController extends Stateful<TreeViewState> {
 			if (focusedItem === undefined) return state;
 
 			if (focusedItem.isParent && state.expandedItemIds.has(focusedItem.id)) {
-				const expandedItemIds = new Set(state.expandedItemIds);
+				const expandedItemIds = toMutableSet(state.expandedItemIds);
 				expandedItemIds.delete(focusedItem.id);
 				return { ...state, expandedItemIds };
 			} else {

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { css, cx } from "../../styled-system/css";
 import { Button } from "./Button.tsx";
 
@@ -20,12 +20,7 @@ const SizeVariants = {
 	}),
 } as const satisfies Record<string, string>;
 
-export function IconButton({
-	size = "md",
-	...props
-}: {
-	size?: keyof typeof SizeVariants;
-} & ComponentProps<typeof Button>) {
+export function IconButton(props: ComponentProps<typeof Button>) {
 	return (
 		<Button
 			{...props}
@@ -33,7 +28,7 @@ export function IconButton({
 				css({
 					padding: "2px 2px",
 				}),
-				SizeVariants[size],
+				SizeVariants[props.size ?? "md"],
 			)}
 		/>
 	);

@@ -7,8 +7,9 @@ import { flex } from "../../styled-system/patterns";
 import { ContextMenuManager } from "../ContextMenu/ContextMenuManager.tsx";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
-import { FileStore } from "../FileStore.ts";
-import { Channel } from "../models/Channel.ts";
+import { FileStore, useChannel } from "../FileStore.ts";
+import { assertNotNullish } from "../lib.ts";
+import { Channel, type ChannelId } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
@@ -64,8 +65,10 @@ export function ChannelListView({
 	editor = useComponent(Editor.Key, editor);
 	player = useComponent(Player.Key, player);
 
-	const channels = useStateful(fileStore, (state) => state.song.channels);
-	const activeChannelId = useStateful(editor, (state) => state.activeChannelId);
+	const channelIds = useStateful(
+		fileStore,
+		(state) => state.song.metadata.channelIds,
+	);
 
 	return (
 		<div
@@ -120,26 +123,11 @@ export function ChannelListView({
 						title="チャンネルを追加"
 						size="sm"
 						onClick={() => {
-							const instrumentKey = new InstrumentKey(
-								PreInstalledSouindFonts[0]!.name,
-								0,
-								0,
+							addChannel(
+								Channel.create(
+									new InstrumentKey(PreInstalledSouindFonts[0]!.name, 0, 0),
+								),
 							);
-
-							const id =
-								Math.max(
-									-1,
-									...fileStore.state.song.channels.map((ch) => ch.id),
-								) + 1;
-							const channel = new Channel({
-								id,
-								label: `Channel ${id + 1}`,
-								instrumentKey,
-								notes: new Map(),
-								controlChanges: new Map(),
-								color: Channel.COLORS[id % Channel.COLORS.length]!,
-							});
-							addChannel(channel);
 						}}
 					>
 						<MdAdd />
@@ -175,11 +163,10 @@ export function ChannelListView({
 					flex: "1 1 0",
 				})}
 			>
-				{channels.map((channel) => (
+				{channelIds.map((channelId) => (
 					<ChannelListItem
-						key={channel.id}
-						channel={channel}
-						active={channel.id === activeChannelId}
+						key={channelId}
+						channelId={channelId}
 						updateChannel={updateChannel}
 						removeChannel={removeChannel}
 						contextMenu={contextMenu}
@@ -196,8 +183,7 @@ export function ChannelListView({
 }
 
 function ChannelListItem({
-	channel,
-	active,
+	channelId,
 	contextMenu,
 	removeChannel,
 	updateChannel,
@@ -207,8 +193,7 @@ function ChannelListItem({
 	editor,
 	player,
 }: {
-	channel: Channel;
-	active?: boolean;
+	channelId: ChannelId;
 	contextMenu: ContextMenuManager;
 	removeChannel: RemoveChannel;
 	updateChannel: UpdateChannel;
@@ -218,6 +203,11 @@ function ChannelListItem({
 	editor: Editor;
 	player: Player;
 }) {
+	const fileStore = useComponent(FileStore.Key);
+	const channelMetadata = useChannel(fileStore, channelId);
+	const activeChannelId = useStateful(editor, (state) => state.activeChannelId);
+	const active = activeChannelId === channelId;
+
 	const mutedChannelIds = useStateful(player, (state) => state.mutedChannelIds);
 	const previewChannelIds = useStateful(
 		editor,
@@ -226,33 +216,37 @@ function ChannelListItem({
 
 	const soundFontStoreState = useStateful(soundFontStore);
 
+	const [edit, setEdit] = useState(false);
+
+	if (channelMetadata === null) return null;
+
 	const instrumentName = (() => {
-		const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+		const soundFontPromise = soundFontStoreState.get(
+			channelMetadata.instrumentKey.url,
+		);
 		if (soundFontPromise === undefined) return "#N/A";
 		if (!PromiseState.isFulfilled(soundFontPromise.state)) return "#N/A";
 
 		const sf = soundFontPromise.state;
 		const preset = sf.getPreset(
-			channel.instrumentKey.presetNumber,
-			channel.instrumentKey.bankNumber,
+			channelMetadata.instrumentKey.presetNumber,
+			channelMetadata.instrumentKey.bankNumber,
 		);
 		if (preset === null) return "#N/A";
 
 		return preset.name;
 	})();
 
-	const [edit, setEdit] = useState(false);
-
 	return (
 		// biome-ignore lint/a11y/useAriaPropsSupportedByRole: <explanation>
 		<li
 			aria-selected={active}
-			onClick={() => editor.setActiveChannel(channel.id)}
+			onClick={() => editor.setActiveChannel(channelId)}
 			onKeyDown={(ev) => {
 				if (ev.key === " ") {
 					ev.preventDefault();
 					ev.stopPropagation();
-					editor.setActiveChannel(channel.id);
+					editor.setActiveChannel(channelId);
 				}
 			}}
 			onContextMenu={(ev) => {
@@ -265,12 +259,15 @@ function ChannelListItem({
 							type: "action",
 							label: "楽器を変更",
 							onClick: () => {
+								const channel = fileStore.state.song.channels.get(channelId);
+								assertNotNullish(channel);
+
 								new SoundFontDialog(
 									overlayPortal,
 									synthesizer,
 									soundFontStore,
 									updateChannel,
-									channel,
+									channel.metadata,
 								).open();
 							},
 						},
@@ -279,7 +276,7 @@ function ChannelListItem({
 							type: "action",
 							label: "削除",
 							iconBefore: <MdDelete />,
-							onClick: () => removeChannel(channel.id),
+							onClick: () => removeChannel(channelId),
 						},
 					],
 					clientTop: ev.clientY,
@@ -323,7 +320,7 @@ function ChannelListItem({
 			>
 				<i
 					style={{
-						background: channel.color.cssString,
+						background: channelMetadata.color.cssString,
 						width: 8,
 						height: 8,
 						borderRadius: "50%",
@@ -344,11 +341,11 @@ function ChannelListItem({
 				)}
 			>
 				<EditableLabel
-					value={channel.labelOrDefault}
+					value={Channel.getLabelOrDefault(channelMetadata)}
 					edit={edit}
 					onStartEdit={() => setEdit(true)}
 					onSubmit={(newValue) => {
-						updateChannel(channel.id, { label: newValue });
+						updateChannel(channelId, { label: newValue });
 						setEdit(false);
 					}}
 				/>
@@ -385,9 +382,9 @@ function ChannelListItem({
 					onClick={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();
-						player.toggleMuteChannel(channel.id);
+						player.toggleMuteChannel(channelId);
 					}}
-					aria-pressed={mutedChannelIds.has(channel.id)}
+					aria-pressed={mutedChannelIds.has(channelId)}
 					variant="errorInline"
 				>
 					<IoVolumeMute />
@@ -398,9 +395,9 @@ function ChannelListItem({
 					onClick={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();
-						editor.togglePreviewChannel(channel.id);
+						editor.togglePreviewChannel(channelId);
 					}}
-					aria-pressed={previewChannelIds.has(channel.id)}
+					aria-pressed={previewChannelIds.has(channelId)}
 					variant="primaryInline"
 				>
 					<IoMdEye />

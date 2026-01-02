@@ -20,19 +20,14 @@ import { InitializeApp, InitializeAppKey } from "./usecases/initializeApp.ts";
 import { MoveNotes, MoveNotesKey } from "./usecases/MoveNotes.ts";
 import { NewFile, NewFileKey } from "./usecases/NewFile.ts";
 import { OpenFile, OpenFileKey } from "./usecases/OpenFile.ts";
-import {
-	PutControlChange,
-	PutControlChangeKey,
-} from "./usecases/PutControlChange.ts";
+import { PutCCs, PutCCsKey } from "./usecases/PutCCs.ts";
 import { PutFile, PutFileKey } from "./usecases/PutFile.ts";
 import { PutNotes, PutNotesKey } from "./usecases/PutNotes.ts";
+import { RemoveCCs, RemoveCCsKey } from "./usecases/RemoveCCs.ts";
 import { RemoveChannel, RemoveChannelKey } from "./usecases/RemoveChannel.ts";
-import {
-	RemoveControlChanges,
-	RemoveControlChangesKey,
-} from "./usecases/RemoveControlChanges.ts";
 import { RemoveNotes, RemoveNotesKey } from "./usecases/RemoveNotes.ts";
 import { SaveFile, SaveFileKey } from "./usecases/SaveFile.ts";
+import { UpdateCCs, UpdateCCsKey } from "./usecases/UpdateCCs.ts";
 import { UpdateChannel, UpdateChannelKey } from "./usecases/UpdateChannel.ts";
 import { UpdateNotes, UpdateNotesKey } from "./usecases/UpdateNotes.ts";
 import { UpdateSong, UpdateSongKey } from "./usecases/UpdateSong.ts";
@@ -50,7 +45,7 @@ export function configureDeps() {
 					deps.get(EventBus.Key),
 					deps.get(RemoveNotesKey),
 					deps.get(MoveNotesKey),
-					deps.get(RemoveControlChangesKey),
+					deps.get(RemoveCCsKey),
 				);
 			})
 			.set(EventBus.Key, () => {
@@ -158,7 +153,7 @@ export function configureDeps() {
 			.set(UpdateNotesKey, (deps) => {
 				return UpdateNotes({
 					fileStore: deps.get(FileStore.Key),
-					setNotes: deps.get(PutNotesKey),
+					putNotes: deps.get(PutNotesKey),
 				});
 			})
 			.set(RemoveNotesKey, (deps) => {
@@ -176,16 +171,24 @@ export function configureDeps() {
 			})
 
 			// UseCases - Control
-			.set(PutControlChangeKey, (deps) => {
-				return PutControlChange({
-					bus: deps.get(EventBus.Key),
-				});
-			})
-			.set(RemoveControlChangesKey, (deps) => {
-				return RemoveControlChanges({
+			.set(PutCCsKey, (deps) => {
+				return PutCCs({
 					bus: deps.get(EventBus.Key),
 					history: deps.get(EditHistoryManager.Key),
 					fileStore: deps.get(FileStore.Key),
+				});
+			})
+			.set(RemoveCCsKey, (deps) => {
+				return RemoveCCs({
+					bus: deps.get(EventBus.Key),
+					history: deps.get(EditHistoryManager.Key),
+					fileStore: deps.get(FileStore.Key),
+				});
+			})
+			.set(UpdateCCsKey, (deps) => {
+				return UpdateCCs({
+					fileStore: deps.get(FileStore.Key),
+					putCCs: deps.get(PutCCsKey),
 				});
 			})
 

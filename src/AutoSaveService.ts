@@ -31,7 +31,6 @@ export class AutoSaveService {
 
 	enableAutoSave() {
 		this.disableAutoSave();
-		console.log("[AutoSaveService] Auto save enabled.");
 		const mainLoop = async () => {
 			try {
 				const { song, metadata } = this.fileStore.state;

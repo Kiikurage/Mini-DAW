@@ -42,7 +42,7 @@ export function StatusBarView({
 
 	const statusMessage = useStateful(statusBar, (state) => state.message);
 	const zoom = useStateful(editor, (state) => state.zoom);
-	const bpm = useStateful(fileStore, (state) => state.song.bpm);
+	const bpm = useStateful(fileStore, (state) => state.song.metadata.bpm);
 	const newNoteDuration = useStateful(
 		editor,
 		(state) => state.newNoteDurationInTick,

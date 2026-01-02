@@ -2,7 +2,7 @@ import { MouseEventButton, NUM_KEYS } from "../../constants.ts";
 import type { FileStore } from "../../FileStore.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import { minmax, quantize } from "../../lib.ts";
-import { Note } from "../../models/Note.ts";
+import { Note, type NoteId } from "../../models/Note.ts";
 import type { PEMPointerEvent } from "../../PointerEventManager/PointerEventManager.ts";
 import type { PointerEventManagerInteractionHandle } from "../../PointerEventManager/PointerEventManagerInteractionHandle.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
@@ -93,7 +93,7 @@ export function moveNotesFeature(context: {
 						tickTo: note.tickTo + tickDiff,
 					}),
 				);
-				setNotes(activeChannelId, newNotes);
+				setNotes(activeChannelId, newNotes, true);
 
 				if (currentPreviewKey !== position.key) {
 					previewManager.startPreviewNotes(newNotes);
@@ -126,7 +126,7 @@ function resizeNotes(
 		pianoRoll: PianoRoll;
 		fileStore: FileStore;
 		setNotes: PutNotes;
-		noteIdForNewNoteDuration: number | null;
+		noteIdForNewNoteDuration: NoteId | null;
 	},
 	updateNote: (note: Note, tickDiff: number) => Note,
 ) {
@@ -170,6 +170,7 @@ function resizeNotes(
 				}
 				return note;
 			}),
+			true,
 		);
 	});
 	ev.sessionEvents.on("pointerUp", () => {
@@ -190,7 +191,7 @@ export function resizeNoteStartFeature(context: {
 	pianoRoll: PianoRoll;
 	fileStore: FileStore;
 	setNotes: PutNotes;
-	noteIdForNewNoteDuration: number | null;
+	noteIdForNewNoteDuration: NoteId | null;
 }): PointerEventManagerInteractionHandle {
 	return {
 		handlePointerDown: (ev) => {
@@ -224,7 +225,7 @@ export function resizeNoteEndFeature(context: {
 	pianoRoll: PianoRoll;
 	fileStore: FileStore;
 	setNotes: PutNotes;
-	noteIdForNewNoteDuration: number | null;
+	noteIdForNewNoteDuration: NoteId | null;
 }): PointerEventManagerInteractionHandle {
 	return {
 		handlePointerDown: (ev) => {

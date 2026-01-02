@@ -111,14 +111,16 @@ export function getLoopKeys(
 	channel: Channel,
 	soundFontStoreState: SoundFontStoreState,
 ): ReadonlySet<number> {
-	const soundFontPromise = soundFontStoreState.get(channel.instrumentKey.url);
+	const soundFontPromise = soundFontStoreState.get(
+		channel.metadata.instrumentKey.url,
+	);
 	if (soundFontPromise === undefined) return EmptySet;
 	if (!PromiseState.isFulfilled(soundFontPromise?.state)) return EmptySet;
 
 	const soundFont = soundFontPromise.state;
 	const preset = soundFont.getPreset(
-		channel.instrumentKey.presetNumber,
-		channel.instrumentKey.bankNumber,
+		channel.metadata.instrumentKey.presetNumber,
+		channel.metadata.instrumentKey.bankNumber,
 	);
 	if (preset === null) return EmptySet;
 

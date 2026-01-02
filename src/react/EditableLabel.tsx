@@ -1,6 +1,6 @@
 import { type MouseEventHandler, useRef } from "react";
-import { assertNotNullish } from "../lib.ts";
 import { css } from "../../styled-system/css";
+import { assertNotNullish } from "../lib.ts";
 
 export function EditableLabel({
 	edit,

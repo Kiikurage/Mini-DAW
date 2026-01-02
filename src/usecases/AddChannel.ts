@@ -20,11 +20,11 @@ export function AddChannel({
 				bus.emitPhasedEvents("channel.add", channel);
 			},
 			undo: () => {
-				bus.emitPhasedEvents("channel.remove", channel.id);
+				bus.emitPhasedEvents("channel.remove", channel.metadata.id);
 			},
 		});
 		history.markCheckpoint();
-		editor.setActiveChannel(channel.id);
+		editor.setActiveChannel(channel.metadata.id);
 	};
 }
 export type AddChannel = ReturnType<typeof AddChannel>;

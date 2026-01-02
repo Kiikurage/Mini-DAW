@@ -5,16 +5,17 @@ import type { FileStore } from "../FileStore.ts";
 import { getActiveChannel } from "../getActiveChannel.ts";
 import { getMarqueeArea } from "../getMarqueeArea.ts";
 import { EmptySet, minmax, toMutableSet, toSet } from "../lib.ts";
+import type { CCId } from "../models/CC.ts";
+import type { ChannelId } from "../models/Channel.ts";
 import type { ControlType } from "../models/ControlType.ts";
-import type { Note } from "../models/Note.ts";
+import type { Note, NoteId } from "../models/Note.ts";
 import type { Player } from "../Player/Player.ts";
 import { Stateful } from "../Stateful/Stateful.ts";
 import type { MoveNotes } from "../usecases/MoveNotes.ts";
-import type { RemoveControlChanges } from "../usecases/RemoveControlChanges.ts";
+import type { RemoveCCs } from "../usecases/RemoveCCs.ts";
 import type { RemoveNotes } from "../usecases/RemoveNotes.ts";
 import { EditorSelection } from "./EditorSelection.ts";
 import { widthPerTick } from "./ParameterEditor/ParameterEditorViewRenderer.ts";
-import { ParameterType } from "./ParameterType.ts";
 
 /**
  * PianoRollとParameterEditorとで共有される状態。
@@ -35,12 +36,12 @@ export interface EditorState {
 	/**
 	 * 参照用に表示するチャンネルID一覧
 	 */
-	readonly previewChannelIds: ReadonlySet<number>;
+	readonly previewChannelIds: ReadonlySet<ChannelId>;
 
 	/**
 	 * 編集中のチャンネルID
 	 */
-	readonly activeChannelId: number | null;
+	readonly activeChannelId: ChannelId | null;
 
 	/**
 	 * ズーム率
@@ -87,11 +88,6 @@ export interface EditorState {
 	 * この値とは異なる可能性がある。
 	 */
 	readonly marqueeAreaTo: null | { key: number; tick: number };
-
-	/**
-	 * 現在表示しているパラメータの種類
-	 */
-	readonly parameterType: ParameterType;
 }
 
 export function clearSelection(state: EditorState): EditorState {
@@ -100,21 +96,21 @@ export function clearSelection(state: EditorState): EditorState {
 	return { ...state, selection: EditorSelection.void };
 }
 
-export function getSelectedControlChangeTicks(
+export function getSelectedCCIds(
 	state: EditorState,
 	controlType: ControlType,
-): ReadonlySet<number> {
+): ReadonlySet<CCId> {
 	if (
 		state.selection.type === "control" &&
 		state.selection.controlType === controlType
 	) {
-		return state.selection.ticks;
+		return state.selection.ids;
 	} else {
 		return EmptySet;
 	}
 }
 
-export function getSelectedNoteIds(state: EditorState): ReadonlySet<number> {
+export function getSelectedNoteIds(state: EditorState): ReadonlySet<NoteId> {
 	if (state.selection.type === "note") {
 		return state.selection.noteIds;
 	} else {
@@ -122,13 +118,13 @@ export function getSelectedNoteIds(state: EditorState): ReadonlySet<number> {
 	}
 }
 
-export function setSelectedControlChanges(
+export function setSelectedCCs(
 	state: EditorState,
 	controlType: ControlType,
-	ticks: Iterable<number>,
+	ids: Iterable<CCId>,
 ): EditorState {
-	const tickSet = toSet(ticks);
-	if (tickSet.size === 0) {
+	const idSet = toSet(ids);
+	if (idSet.size === 0) {
 		return {
 			...state,
 			selection: EditorSelection.void,
@@ -140,14 +136,14 @@ export function setSelectedControlChanges(
 		selection: {
 			type: "control",
 			controlType,
-			ticks: tickSet,
+			ids: idSet,
 		},
 	};
 }
 
 export function setAllSelectedNotesWithoutMutationCheck(
 	state: EditorState,
-	selectedNoteIds: Iterable<number>,
+	selectedNoteIds: Iterable<NoteId>,
 ): EditorState {
 	const selectedNoteIdSet = toSet(selectedNoteIds);
 	if (selectedNoteIdSet.size === 0) {
@@ -168,7 +164,7 @@ export function setAllSelectedNotesWithoutMutationCheck(
 
 export function setSelectedNotes(
 	state: EditorState,
-	selectedNoteIds: Iterable<number>,
+	selectedNoteIds: Iterable<NoteId>,
 ): EditorState {
 	const oldSelectedNoteIds = getSelectedNoteIds(state);
 	const newSelectedNoteIds = toSet(selectedNoteIds);
@@ -184,7 +180,7 @@ export function setSelectedNotes(
 
 export function putNotesToSelection(
 	state: EditorState,
-	noteIds: Iterable<number>,
+	noteIds: Iterable<NoteId>,
 ): EditorState {
 	const selectedNoteIds = toMutableSet(getSelectedNoteIds(state));
 	const oldSelectedNoteCount = selectedNoteIds.size;
@@ -199,7 +195,7 @@ export function putNotesToSelection(
 
 function removeNotesFromSelection(
 	state: EditorState,
-	noteIds: Iterable<number>,
+	noteIds: Iterable<NoteId>,
 ): EditorState {
 	const selectedNoteIds = toMutableSet(getSelectedNoteIds(state));
 	const oldSelectedNoteCount = selectedNoteIds.size;
@@ -208,6 +204,23 @@ function removeNotesFromSelection(
 		selectedNoteIds.delete(noteId);
 	}
 	if (selectedNoteIds.size === oldSelectedNoteCount) return state;
+
+	return setAllSelectedNotesWithoutMutationCheck(state, selectedNoteIds);
+}
+
+function toggleNotesSelection(
+	state: EditorState,
+	noteIds: Iterable<NoteId>,
+): EditorState {
+	const selectedNoteIds = toMutableSet(getSelectedNoteIds(state));
+
+	for (const noteId of noteIds) {
+		if (selectedNoteIds.has(noteId)) {
+			selectedNoteIds.delete(noteId);
+		} else {
+			selectedNoteIds.add(noteId);
+		}
+	}
 
 	return setAllSelectedNotesWithoutMutationCheck(state, selectedNoteIds);
 }
@@ -221,12 +234,12 @@ export class Editor extends Stateful<EditorState> {
 		bus: EventBus,
 		private readonly removeNotes: RemoveNotes,
 		private readonly moveNotes: MoveNotes,
-		private readonly removeControlChanges: RemoveControlChanges,
+		private readonly removeCCs: RemoveCCs,
 	) {
 		super({
 			showWelcomeView: true,
 			newNoteDurationInTick: TICK_PER_MEASURE / 4,
-			previewChannelIds: new Set<number>(),
+			previewChannelIds: EmptySet,
 			activeChannelId: null,
 			zoom: 1,
 			width: 0,
@@ -236,7 +249,6 @@ export class Editor extends Stateful<EditorState> {
 			quantizeUnitInTick: TICK_PER_MEASURE / 16,
 			marqueeAreaFrom: null,
 			marqueeAreaTo: null,
-			parameterType: ParameterType[0],
 		});
 
 		player.addChangeListener((state) => {
@@ -262,12 +274,12 @@ export class Editor extends Stateful<EditorState> {
 					previewChannelIds: EmptySet,
 				});
 
-				const firstChannel = file.song.channels.at(0);
-				if (firstChannel !== undefined) {
-					this.setActiveChannel(firstChannel.id);
+				const firstChannelId = file.song.metadata.channelIds.at(0);
+				if (firstChannelId !== undefined) {
+					this.setActiveChannel(firstChannelId);
 				}
 			})
-			.on("channel.remove.before", (channelId: number) => {
+			.on("channel.remove.before", (channelId: ChannelId) => {
 				if (this.state.activeChannelId === channelId) {
 					this.setActiveChannel(null);
 				}
@@ -294,23 +306,16 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
-	setParameterType(parameterType: ParameterType) {
-		this.updateState((state) => {
-			if (state.parameterType === parameterType) return state;
-			return { ...state, parameterType };
-		});
-	}
-
-	setActiveChannel(activeChannelId: number | null) {
+	setActiveChannel(activeChannelId: ChannelId | null) {
 		this.updateState((state) => {
 			if (state.activeChannelId === activeChannelId) return state;
 			return { ...state, activeChannelId };
 		});
 	}
 
-	togglePreviewChannel(channelId: number) {
+	togglePreviewChannel(channelId: ChannelId) {
 		this.updateState((state) => {
-			const previewChannelIds = new Set(state.previewChannelIds);
+			const previewChannelIds = toMutableSet(state.previewChannelIds);
 			if (previewChannelIds.has(channelId)) {
 				previewChannelIds.delete(channelId);
 			} else {
@@ -322,24 +327,24 @@ export class Editor extends Stateful<EditorState> {
 
 	togglePreviewAllChannels() {
 		this.updateState((state) => {
-			const allChannelIds = new Set(
-				this.fileStore.state.song.channels.map((ch) => ch.id),
+			const allChannelIds = toMutableSet(
+				this.fileStore.state.song.metadata.channelIds,
 			);
 			const areAllPreviewed = [...allChannelIds].every((id) =>
 				state.previewChannelIds.has(id),
 			);
 			if (areAllPreviewed) {
-				return { ...state, previewChannelIds: new Set() };
+				return { ...state, previewChannelIds: EmptySet };
 			} else {
 				return { ...state, previewChannelIds: allChannelIds };
 			}
 		});
 	}
 
-	cancelPreviewChannel(channelId: number) {
+	cancelPreviewChannel(channelId: ChannelId) {
 		this.updateState((state) => {
 			if (!state.previewChannelIds.has(channelId)) return state;
-			const previewChannelIds = new Set(state.previewChannelIds);
+			const previewChannelIds = toMutableSet(state.previewChannelIds);
 			previewChannelIds.delete(channelId);
 			return { ...state, previewChannelIds };
 		});
@@ -412,20 +417,15 @@ export class Editor extends Stateful<EditorState> {
 		});
 	}
 
-	setSelectedControlChanges(
-		controlType: ControlType,
-		selectedTicks: Iterable<number>,
-	) {
-		this.updateState((state) =>
-			setSelectedControlChanges(state, controlType, selectedTicks),
-		);
+	setSelectedCCs(controlType: ControlType, ids: Iterable<CCId>) {
+		this.updateState((state) => setSelectedCCs(state, controlType, ids));
 	}
 
-	setSelectedNotes(selectedNoteIds: Iterable<number>) {
+	setSelectedNotes(selectedNoteIds: Iterable<NoteId>) {
 		this.updateState((state) => setSelectedNotes(state, selectedNoteIds));
 	}
 
-	putNotesToSelection(noteIds: readonly number[]) {
+	putNotesToSelection(noteIds: readonly NoteId[]) {
 		this.updateState((state) => putNotesToSelection(state, noteIds));
 	}
 
@@ -439,7 +439,11 @@ export class Editor extends Stateful<EditorState> {
 		this.setSelectedNotes(activeChannel.notes.values().map((note) => note.id));
 	}
 
-	removeNotesFromSelection(noteIds: Iterable<number>) {
+	toggleNotesSelection(noteIds: Iterable<NoteId>) {
+		this.updateState((state) => toggleNotesSelection(state, noteIds));
+	}
+
+	removeNotesFromSelection(noteIds: Iterable<NoteId>) {
 		this.updateState((state) => removeNotesFromSelection(state, noteIds));
 	}
 
@@ -501,16 +505,14 @@ export class Editor extends Stateful<EditorState> {
 				return;
 			}
 			case "note": {
-				if (this.state.selection.noteIds.size === 0) return false;
 				this.removeNotes(activeChannelId, this.state.selection.noteIds);
 				return;
 			}
 			case "control": {
-				if (this.state.selection.ticks.size === 0) return false;
-				this.removeControlChanges({
+				this.removeCCs({
 					channelId: activeChannelId,
 					type: this.state.selection.controlType,
-					ticks: this.state.selection.ticks,
+					ids: this.state.selection.ids,
 				});
 				return;
 			}

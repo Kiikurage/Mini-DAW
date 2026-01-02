@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MdOpenInNew } from "react-icons/md";
 import { css, cx } from "../../styled-system/css";
 import { flex } from "../../styled-system/patterns";
-import type { Channel } from "../models/Channel.ts";
+import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { PreInstalledSouindFonts } from "../PreInstalledSouindFonts.ts";
 import { PromiseState } from "../PromiseState.ts";
@@ -27,7 +27,7 @@ export class SoundFontDialog {
 		private readonly synthesizer: Synthesizer,
 		private readonly soundFontStore: SoundFontStore,
 		private readonly updateChannel: UpdateChannel,
-		readonly channel: Channel,
+		readonly channelMetadata: Channel["metadata"],
 	) {}
 
 	open() {
@@ -49,7 +49,7 @@ export class SoundFontDialog {
 	}
 }
 
-const PREVIEW_CHANNEL_NUMBER = 999;
+const PREVIEW_CHANNEL_ID = Channel.generateId();
 
 function SoundFontDialogView({
 	synthesizer,
@@ -65,16 +65,16 @@ function SoundFontDialogView({
 	updateChannel: UpdateChannel;
 }) {
 	const [instrumentKey, _setInstrumentKey] = useState(
-		controller.channel.instrumentKey,
+		controller.channelMetadata.instrumentKey,
 	);
 	const setInstrumentKey = (key: InstrumentKey) => {
 		_setInstrumentKey(key);
 		synthesizer.setBank({
-			channel: PREVIEW_CHANNEL_NUMBER,
+			channel: PREVIEW_CHANNEL_ID,
 			bankNumber: key.bankNumber,
 		});
 		synthesizer.setPreset({
-			channel: PREVIEW_CHANNEL_NUMBER,
+			channel: PREVIEW_CHANNEL_ID,
 			programNumber: key.presetNumber,
 		});
 	};
@@ -87,15 +87,15 @@ function SoundFontDialogView({
 	);
 
 	const handleKeyboardPointerDown = (key: number) => {
-		synthesizer.noteOn({ channel: PREVIEW_CHANNEL_NUMBER, key, velocity: 100 });
+		synthesizer.noteOn({ channel: PREVIEW_CHANNEL_ID, key, velocity: 100 });
 	};
 
 	const handleKeyboardPointerUp = (key: number) => {
-		synthesizer.noteOff({ channel: PREVIEW_CHANNEL_NUMBER, key });
+		synthesizer.noteOff({ channel: PREVIEW_CHANNEL_ID, key });
 	};
 
 	const onSubmit = () => {
-		updateChannel(controller.channel.id, {
+		updateChannel(controller.channelMetadata.id, {
 			instrumentKey,
 		});
 
@@ -103,13 +103,13 @@ function SoundFontDialogView({
 	};
 
 	useEffect(() => {
-		synthesizer.reset(PREVIEW_CHANNEL_NUMBER);
+		synthesizer.reset(PREVIEW_CHANNEL_ID);
 	}, [synthesizer]);
 
 	return (
 		<Dialog open modal onClose={onClose}>
 			<Dialog.Header>
-				楽器を変更: {controller.channel.labelOrDefault}
+				楽器を変更: {Channel.getLabelOrDefault(controller.channelMetadata)}
 			</Dialog.Header>
 			<Dialog.Body>
 				<div

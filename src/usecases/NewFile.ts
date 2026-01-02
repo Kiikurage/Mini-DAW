@@ -1,4 +1,5 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
+import { EmptyMap } from "../lib.ts";
 import { Channel } from "../models/Channel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Song } from "../models/Song.ts";
@@ -20,49 +21,18 @@ export function NewFile({ putFile }: { putFile: PutFile }) {
 			}
 		}
 
+		const instrumentKey = new InstrumentKey(
+			PreInstalledSouindFonts[0]!.name,
+			0,
+			0,
+		);
+		let song = Song.create();
+		song = Song.putChannel(song, Channel.create(instrumentKey));
+		song = Song.putChannel(song, Channel.create(instrumentKey));
+		song = Song.putChannel(song, Channel.create(instrumentKey));
+
 		putFile({
-			song: new Song({
-				title: "Untitled",
-				bpm: 120,
-				channels: [
-					new Channel({
-						id: 0,
-						label: "",
-						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
-							0,
-							0,
-						),
-						notes: new Map(),
-						controlChanges: new Map(),
-						color: Channel.COLORS[0],
-					}),
-					new Channel({
-						id: 1,
-						label: "",
-						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
-							0,
-							0,
-						),
-						notes: new Map(),
-						controlChanges: new Map(),
-						color: Channel.COLORS[1],
-					}),
-					new Channel({
-						id: 2,
-						label: "",
-						instrumentKey: new InstrumentKey(
-							PreInstalledSouindFonts[0]!.name,
-							0,
-							0,
-						),
-						notes: new Map(),
-						controlChanges: new Map(),
-						color: Channel.COLORS[2],
-					}),
-				],
-			}),
+			song,
 			metadata: null,
 		});
 	};

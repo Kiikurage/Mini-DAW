@@ -1,7 +1,8 @@
 import type { FileStore } from "../../FileStore.ts";
 import { getActiveChannel } from "../../getActiveChannel.ts";
-import { EmptySet, isNotNullish } from "../../lib.ts";
+import { EmptySet, isNotNullish, toSet } from "../../lib.ts";
 import type { Channel } from "../../models/Channel.ts";
+import type { NoteId } from "../../models/Note.ts";
 import type { Song } from "../../models/Song.ts";
 import type { PositionSnapshot } from "../../PointerEventManager/PositionSnapshot.ts";
 import type {
@@ -20,7 +21,7 @@ import {
 import { HEIGHT_PER_KEY } from "./PianoRollViewRenderer.ts";
 
 export interface PianoRollHoverNotesManagerState {
-	hoverNoteIds: ReadonlySet<number>;
+	hoverNoteIds: ReadonlySet<NoteId>;
 }
 
 /**
@@ -95,7 +96,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 		this.#isUpdateDisabled = false;
 	}
 
-	private setHoverNoteIds(nextHoverNoteIds: ReadonlySet<number>) {
+	private setHoverNoteIds(nextHoverNoteIds: ReadonlySet<NoteId>) {
 		if (this.isUpdateDisabled) return;
 
 		const prevHoverNoteIds = this.state.hoverNoteIds;
@@ -106,7 +107,7 @@ export class PianoRollHoverNotesManager extends Stateful<PianoRollHoverNotesMana
 
 		if (!changed) return;
 
-		this.setState({ hoverNoteIds: new Set(nextHoverNoteIds) });
+		this.setState({ hoverNoteIds: toSet(nextHoverNoteIds) });
 	}
 }
 
@@ -120,7 +121,7 @@ function computeHoverNoteIds(
 ) {
 	const loopKeys = getLoopKeys(channel, soundFontStoreState);
 
-	return new Set(
+	return toSet(
 		pointerPositions
 			.map((pointerPosition) => {
 				const position = toPianoRollPosition(

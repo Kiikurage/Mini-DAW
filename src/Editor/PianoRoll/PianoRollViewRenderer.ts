@@ -5,7 +5,7 @@ import { getMarqueeArea } from "../../getMarqueeArea.ts";
 import { getSelectedNotes } from "../../getSelectedNotes.ts";
 import { EmptySet } from "../../lib.ts";
 import type { Note } from "../../models/Note.ts";
-import type { Song } from "../../models/Song.ts";
+import { Song } from "../../models/Song.ts";
 import type { PlayerState } from "../../Player/Player.ts";
 import type { SoundFontStoreState } from "../../SoundFontStore.ts";
 import { addLinePath, addRectPath } from "../canvasUtil.ts";
@@ -161,7 +161,7 @@ export function renderCanvas({
 
 	// region プレビューチャンネルのノート
 	for (const channelId of editorState.previewChannelIds) {
-		const channel = song.getChannel(channelId);
+		const channel = Song.getChannel(song, channelId);
 		if (channel === null) {
 			console.warn("Dangling channel ID in previewChannelIds:", channelId);
 			continue;
@@ -185,7 +185,7 @@ export function renderCanvas({
 			tickTo,
 			loopKeys,
 		});
-		ctx.fillStyle = channel.color.setAlpha(0.3).cssString;
+		ctx.fillStyle = channel.metadata.color.setAlpha(0.3).cssString;
 		ctx.fill();
 		ctx.strokeStyle = "#000";
 		ctx.stroke();
@@ -215,7 +215,9 @@ export function renderCanvas({
 			scrollTop,
 			loopKeys,
 		});
-		ctx.fillStyle = activeChannel.color.setAlpha(note.velocity / 127).cssString;
+		ctx.fillStyle = activeChannel.metadata.color.setAlpha(
+			note.velocity / 127,
+		).cssString;
 		ctx.fill();
 		ctx.strokeStyle = "#000";
 		ctx.stroke();
@@ -248,11 +250,11 @@ export function renderCanvas({
 			scrollTop,
 			loopKeys,
 		});
-		ctx.fillStyle = activeChannel.color
+		ctx.fillStyle = activeChannel.metadata.color
 			.setL(0.7)
 			.setAlpha(note.velocity / 127).cssString;
 		ctx.fill();
-		ctx.strokeStyle = activeChannel.color.setL(0.2).cssString;
+		ctx.strokeStyle = activeChannel.metadata.color.setL(0.2).cssString;
 		ctx.stroke();
 	}
 	// endregion

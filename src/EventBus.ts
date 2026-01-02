@@ -1,10 +1,10 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
 import { EventEmitter } from "./EventEmitter.ts";
-import type { Channel, ChannelPatch } from "./models/Channel.ts";
-import type { ControlChange } from "./models/ControlChange.ts";
+import type { CC, CCId } from "./models/CC.ts";
+import type { Channel, ChannelId, ChannelPatch } from "./models/Channel.ts";
 import type { ControlType } from "./models/ControlType.ts";
 import type { MDFile } from "./models/MDFile.ts";
-import type { Note, NotePatch } from "./models/Note.ts";
+import type { Note, NoteId, NotePatch } from "./models/Note.ts";
 import type { SongPatch } from "./models/Song.ts";
 
 interface EventBusEventMap {
@@ -26,17 +26,17 @@ interface EventBusEventMap {
 	/**
 	 * チャンネルの削除
 	 */
-	"channel.remove": [channelId: number];
+	"channel.remove": [channelId: ChannelId];
 
 	/**
 	 * チャンネルのプロパティの変更
 	 */
-	"channel.update": [channelId: number, patch: ChannelPatch];
+	"channel.update": [channelId: ChannelId, patch: ChannelPatch];
 
 	/**
 	 * ノートの追加または置換
 	 */
-	"notes.put": [channelId: number, notes: Iterable<Note>];
+	"notes.put": [channelId: ChannelId, notes: Iterable<Note>];
 
 	/**
 	 * ノートの更新
@@ -46,16 +46,16 @@ interface EventBusEventMap {
 	/**
 	 * ノートの削除
 	 */
-	"notes.remove": [channelId: number, noteIds: Iterable<number>];
+	"notes.remove": [channelId: ChannelId, noteIds: Iterable<NoteId>];
 
 	/**
 	 * コントロールチェンジの追加または置換
 	 */
 	"control.put": [
 		args: {
-			channelId: number;
+			channelId: ChannelId;
 			type: ControlType;
-			changes: Iterable<ControlChange>;
+			ccs: Iterable<CC>;
 		},
 	];
 
@@ -64,9 +64,9 @@ interface EventBusEventMap {
 	 */
 	"control.remove": [
 		args: {
-			channelId: number;
+			channelId: ChannelId;
 			type: ControlType;
-			ticks: Iterable<number>;
+			ids: Iterable<CCId>;
 		},
 	];
 }

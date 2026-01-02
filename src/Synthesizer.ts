@@ -1,24 +1,25 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
+import type { ChannelId } from "./models/Channel.ts";
 import { Envelope } from "./SoundFont/Envelope.ts";
 import type { InstrumentZone } from "./SoundFont/InstrumentZone.ts";
 import type { Preset } from "./SoundFont/Preset.ts";
 import type { SoundFont } from "./SoundFont/SoundFont.ts";
 
 export interface NoteOnMessage {
-	channel: number;
+	channel: ChannelId;
 	key: number;
 	velocity: number;
 	time?: number;
 }
 
 export interface NoteOffMessage {
-	channel: number;
+	channel: ChannelId;
 	key: number;
 	time?: number;
 }
 
 export interface ProgramChangeMessage {
-	channel: number;
+	channel: ChannelId;
 	programNumber: number;
 }
 
@@ -27,7 +28,7 @@ export class Synthesizer {
 
 	private readonly masterVolumeNode: GainNode;
 
-	private readonly channels = new Map<number, ChannelSynthesizer>();
+	private readonly channels = new Map<ChannelId, ChannelSynthesizer>();
 
 	private soundFont: SoundFont | null = null;
 
@@ -82,14 +83,14 @@ export class Synthesizer {
 	/**
 	 * 音色バンクを変更する
 	 */
-	setBank(message: { channel: number; bankNumber: number }) {
+	setBank(message: { channel: ChannelId; bankNumber: number }) {
 		this.getOrCreateChannel(message.channel).setBankNumber(message.bankNumber);
 	}
 
 	/*
 	 * 指定したチャンネルの発音中の音を全てリリースする。
 	 */
-	channelNoteOffAll(channel: number) {
+	channelNoteOffAll(channel: ChannelId) {
 		this.getChannel(channel)?.noteOffAll();
 	}
 
@@ -105,7 +106,7 @@ export class Synthesizer {
 	/**
 	 * 指定したチャンネルの状態を初期化する。再生中の音はリリースなく直ちに停止する。
 	 */
-	reset(channel: number): void {
+	reset(channel: ChannelId): void {
 		this.getChannel(channel)?.reset();
 		this.channels.delete(channel);
 	}
@@ -126,23 +127,23 @@ export class Synthesizer {
 	 * @param cents セント単位のピッチベンド量。正の値で音が高く、負の値で音が低くなる。
 	 * @param time ピッチベンドを適用するAudioContext時刻 [sec]。省略した場合は即座に適用される。
 	 */
-	setPitchBend(channel: number, cents: number, time?: number): void {
+	setPitchBend(channel: ChannelId, cents: number, time?: number): void {
 		this.getOrCreateChannel(channel).setPitchBend(cents, time);
 	}
 
-	private getChannel(channelNumber: number): ChannelSynthesizer | null {
-		return this.channels.get(channelNumber) ?? null;
+	private getChannel(channelId: ChannelId): ChannelSynthesizer | null {
+		return this.channels.get(channelId) ?? null;
 	}
 
-	private getOrCreateChannel(channelNumber: number): ChannelSynthesizer {
-		let channel = this.getChannel(channelNumber);
+	private getOrCreateChannel(channelId: ChannelId): ChannelSynthesizer {
+		let channel = this.getChannel(channelId);
 		if (channel === null) {
 			channel = new ChannelSynthesizer(
 				this.context,
 				this.masterVolumeNode,
 				this.soundFont,
 			);
-			this.channels.set(channelNumber, channel);
+			this.channels.set(channelId, channel);
 		}
 		return channel;
 	}

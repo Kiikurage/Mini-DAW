@@ -1,5 +1,5 @@
 import { ComponentKey } from "./Dependency/DIContainer.ts";
-import { assertNotNullish } from "./lib.ts";
+import { assertNotNullish, EmptyMap, toMutableMap } from "./lib.ts";
 import { PromiseState } from "./PromiseState.ts";
 import { SoundFont } from "./SoundFont/SoundFont.ts";
 import { Stateful } from "./Stateful/Stateful.ts";
@@ -16,7 +16,7 @@ export class SoundFontStoreState {
 		props: {
 			entries: ReadonlyMap<string, SoundFontStateAndPromise>;
 		} = {
-			entries: new Map(),
+			entries: EmptyMap,
 		},
 	) {
 		this.entries = props.entries;
@@ -27,7 +27,7 @@ export class SoundFontStoreState {
 	}
 
 	set(url: string, value: SoundFontStateAndPromise) {
-		const newEntries = new Map(this.entries);
+		const newEntries = toMutableMap(this.entries);
 		newEntries.set(url, value);
 
 		return new SoundFontStoreState({ entries: newEntries });

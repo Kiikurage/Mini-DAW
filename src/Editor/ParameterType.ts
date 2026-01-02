@@ -6,22 +6,22 @@ export const VelocityParameterType = {
 } as const;
 export type VelocityParametrType = typeof VelocityParameterType;
 
-export interface ControlChangeParametrType {
-	type: "controlChange";
+export interface CCParametrType {
+	type: "cc";
 	label: string;
 	controlType: ControlType;
 }
-export type ParameterType = VelocityParametrType | ControlChangeParametrType;
+export type ParameterType = VelocityParametrType | CCParametrType;
 
 export const ParameterType = [
 	VelocityParameterType,
 	{
-		type: "controlChange",
+		type: "cc",
 		label: "Pitch Bend",
 		controlType: ControlType.PITCH_BEND,
 	},
 	{
-		type: "controlChange",
+		type: "cc",
 		label: "Pan",
 		controlType: ControlType.PAN,
 	},

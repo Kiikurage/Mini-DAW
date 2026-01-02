@@ -1,5 +1,9 @@
+import { type Branded, randomId } from "../lib.ts";
+
+export type NoteId = Branded<string, "NoteId">;
+
 export interface Note {
-	readonly id: number;
+	readonly id: NoteId;
 	readonly key: number;
 	readonly tickFrom: number;
 	readonly tickTo: number;
@@ -11,7 +15,7 @@ export interface Note {
 }
 
 export interface NotePatch {
-	id: number;
+	id: NoteId;
 	key?: number;
 	tickFrom?: number;
 	tickTo?: number;
@@ -19,8 +23,11 @@ export interface NotePatch {
 }
 
 export const Note = {
+	generateId(): NoteId {
+		return randomId(16) as NoteId;
+	},
 	create(props: {
-		id: number;
+		id: NoteId;
 		key: number;
 		tickFrom: number;
 		tickTo: number;

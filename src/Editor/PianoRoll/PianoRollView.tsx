@@ -222,10 +222,14 @@ function PianoRollSelectionActionPopup({
 	const song = useStateful(fileStore, (state) => state.song);
 	const pianoRollState = useStateful(pianoRoll);
 
-	const selection = editorState.selection;
+	const zoom = useStateful(editor, (state) => state.zoom);
+	const scrollLeft = useStateful(editor, (state) => state.scrollLeft);
+	const width = useStateful(editor, (state) => state.width);
+	const marqueeAreaFrom = useStateful(editor, (state) => state.marqueeAreaFrom);
+	const selection = useStateful(editor, (state) => state.selection);
 	if (selection.type !== "note") return null;
 	if (selection.noteIds.size <= 1) return null;
-	if (editorState.marqueeAreaFrom !== null) return null;
+	if (marqueeAreaFrom !== null) return null;
 
 	const selectionArea = computeSelectionArea(EmptySet, song, editorState);
 	if (selectionArea == null) return null;
@@ -237,10 +241,8 @@ function PianoRollSelectionActionPopup({
 			TIMELINE_HEIGHT) +
 		8;
 	const selectionRight =
-		editorState.width -
-		(selectionArea.tickTo * widthPerTick(editorState.zoom) -
-			editorState.scrollLeft +
-			SIDEBAR_WIDTH) -
+		width -
+		(selectionArea.tickTo * widthPerTick(zoom) - scrollLeft + SIDEBAR_WIDTH) -
 		16;
 
 	return (
@@ -251,18 +253,19 @@ function PianoRollSelectionActionPopup({
 				flex({ direction: "row", align: "center", justify: "center", gap: 8 }),
 				css({
 					position: "absolute",
-					bottom: selectionBottom,
-					right: selectionRight,
 					minHeight: "unset",
 					padding: "4px 8px",
 				}),
 			)}
+			style={{
+				bottom: selectionBottom,
+				right: selectionRight,
+			}}
 		>
 			<IconButton
 				variant="normalInline"
 				size="sm"
 				onClick={() => {
-					console.log("切り取り！");
 					clipboard.cut();
 				}}
 			>

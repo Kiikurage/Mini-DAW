@@ -2,7 +2,9 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EditHistoryManager } from "../EditHistory/EditHistoryManager.ts";
 import type { EventBus } from "../EventBus.ts";
 import type { FileStore } from "../FileStore.ts";
-import type { Note } from "../models/Note.ts";
+import type { ChannelId } from "../models/Channel.ts";
+import type { Note, NoteId } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
 
 export const PutNotesKey = ComponentKey<PutNotes>("PutNotes");
 
@@ -15,12 +17,16 @@ export function PutNotes({
 	history: EditHistoryManager;
 	bus: EventBus;
 }) {
-	return (channelId: number, notes: Iterable<Note>) => {
-		const channel = fileStore.state.song.getChannel(channelId);
+	return (
+		channelId: ChannelId,
+		notes: Iterable<Note>,
+		markCheckpoint: boolean,
+	) => {
+		const channel = Song.getChannel(fileStore.state.song, channelId);
 		if (channel === null) return;
 
 		const oldNotes: Note[] = [];
-		const addedNoteIds: number[] = [];
+		const addedNoteIds: NoteId[] = [];
 
 		for (const note of notes) {
 			const oldNote = channel.notes.get(note.id);
@@ -40,7 +46,9 @@ export function PutNotes({
 				bus.emitPhasedEvents("notes.put", channelId, oldNotes);
 			},
 		});
-		history.markCheckpoint();
+		if (markCheckpoint) {
+			history.markCheckpoint();
+		}
 	};
 }
 export type PutNotes = ReturnType<typeof PutNotes>;

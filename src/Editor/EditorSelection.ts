@@ -1,3 +1,6 @@
+import type { CCId } from "../models/CC.ts";
+import type { NoteId } from "../models/Note.ts";
+
 /**
  * 何も選択していない状態
  */
@@ -11,22 +14,19 @@ export type VoidSelection = typeof VoidSelection;
  */
 export interface NoteSelection {
 	type: "note";
-	noteIds: ReadonlySet<number>;
+	noteIds: ReadonlySet<NoteId>;
 }
 
 /**
  * コントロールチェンジの特定の位置が選択されている状態
  */
-export interface ControlChangeSelection {
+export interface CCSelection {
 	type: "control";
 	controlType: number;
-	ticks: ReadonlySet<number>;
+	ids: ReadonlySet<CCId>;
 }
 
-export type EditorSelection =
-	| VoidSelection
-	| NoteSelection
-	| ControlChangeSelection;
+export type EditorSelection = VoidSelection | NoteSelection | CCSelection;
 
 export const EditorSelection = {
 	void: VoidSelection,

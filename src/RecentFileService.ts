@@ -28,7 +28,7 @@ export class RecentFileService extends Stateful<RecentFileServiceState> {
 		bus.on("file.put.after", (file) => {
 			if (file.metadata !== null) {
 				this.upsertEntry({
-					songTitle: file.song.title,
+					songTitle: file.song.metadata.title,
 					fileName: file.metadata.name,
 					location: file.metadata.location,
 				});

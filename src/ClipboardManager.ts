@@ -52,7 +52,6 @@ export class ClipboardManager {
 		let notes: Note[];
 		try {
 			const originalNotes = JSON.parse(text) as Note[];
-			let nextNoteId = Date.now();
 
 			const pasteTickOffset =
 				this.player.state.currentTick -
@@ -61,7 +60,7 @@ export class ClipboardManager {
 			notes = originalNotes.map((note) =>
 				Note.create({
 					...note,
-					id: nextNoteId++,
+					id: Note.generateId(),
 					tickFrom: note.tickFrom + pasteTickOffset,
 					tickTo: note.tickTo + pasteTickOffset,
 				}),
@@ -73,7 +72,7 @@ export class ClipboardManager {
 		const channelId = this.editor.state.activeChannelId;
 		if (channelId === null) return;
 
-		this.setNotes(channelId, notes);
+		this.setNotes(channelId, notes, true);
 		this.editor.setSelectedNotes(notes.map((note) => note.id));
 	}
 }

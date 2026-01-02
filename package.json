@@ -5,7 +5,9 @@
 	"scripts": {
 		"prepare": "panda codegen",
 		"dev": "vite",
-		"build": "vite build",
+		"build:panda": "NODE_ENV=production panda codegen",
+		"build:vite": "NODE_ENV=production vite build",
+		"build": "bun build:panda && bun build:vite",
 		"test": "bun test",
 		"lint": "biome check . --write"
 	},

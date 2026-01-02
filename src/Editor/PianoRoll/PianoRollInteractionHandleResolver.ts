@@ -153,7 +153,7 @@ export class PianoRollInteractionHandleResolver
 								: 1;
 
 							const note = Note.create({
-								id: Date.now(),
+								id: Note.generateId(),
 								key: position.key,
 								tickFrom,
 								tickTo: tickFrom + tickDuration,
@@ -164,7 +164,7 @@ export class PianoRollInteractionHandleResolver
 								[note],
 								PianoRollInteractionHandleResolver.NOTE_PREVIEW_DURATION_IN_MS,
 							);
-							this.setNotes(this.editor.state.activeChannelId, [note]);
+							this.setNotes(this.editor.state.activeChannelId, [note], true);
 
 							if (ev.metaKey) {
 								this.editor.putNotesToSelection([note.id]);

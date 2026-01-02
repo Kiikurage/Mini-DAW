@@ -1,20 +1,26 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { FileStore } from "../FileStore.ts";
 import { isNotNullish } from "../lib.ts";
+import type { ChannelId } from "../models/Channel.ts";
 import { Note, type NotePatch } from "../models/Note.ts";
+import { Song } from "../models/Song.ts";
 import type { PutNotes } from "./PutNotes.ts";
 
 export const UpdateNotesKey = ComponentKey<UpdateNotes>("UpdateNotes");
 
 export function UpdateNotes({
 	fileStore,
-	setNotes,
+	putNotes,
 }: {
 	fileStore: FileStore;
-	setNotes: PutNotes;
+	putNotes: PutNotes;
 }) {
-	return (channelId: number, patches: Iterable<NotePatch>) => {
-		const channel = fileStore.state.song.getChannel(channelId);
+	return (
+		channelId: ChannelId,
+		patches: Iterable<NotePatch>,
+		markCheckpoint: boolean,
+	) => {
+		const channel = Song.getChannel(fileStore.state.song, channelId);
 		if (channel === null) return;
 
 		const notes = [...patches]
@@ -25,7 +31,7 @@ export function UpdateNotes({
 			})
 			.filter(isNotNullish);
 
-		setNotes(channelId, notes);
+		putNotes(channelId, notes, markCheckpoint);
 	};
 }
 

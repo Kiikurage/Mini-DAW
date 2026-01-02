@@ -1,15 +1,29 @@
 import { Color, type SerializedColor } from "../Color.ts";
-import type { ControlChange } from "./ControlChange.ts";
-import { ControlChangeList } from "./ControlChangeList.ts";
+import { type Branded, EmptyMap, randomId, toMutableMap } from "../lib.ts";
+import { type CC, type CCId, CCList, type SerializedCCList } from "./CC.ts";
 import type { ControlType } from "./ControlType.ts";
 import {
 	InstrumentKey,
 	type SerializedInstrumentKey,
 } from "./InstrumentKey.ts";
-import type { Note } from "./Note.ts";
+import type { Note, NoteId } from "./Note.ts";
 
-export class Channel {
-	static readonly COLORS = [
+export type ChannelId = Branded<string, "ChannelId">;
+
+export interface Channel {
+	readonly metadata: {
+		readonly id: ChannelId;
+		readonly label: string;
+		readonly instrumentKey: InstrumentKey;
+		readonly color: Color;
+		readonly noteIds: readonly NoteId[];
+	};
+	readonly notes: ReadonlyMap<NoteId, Note>;
+	readonly ccLists: ReadonlyMap<ControlType, CCList>;
+}
+
+export const Channel = {
+	COLORS: [
 		Color.hsl(350, 0.45, 0.5),
 		Color.hsl(155, 0.45, 0.5),
 		Color.hsl(270, 0.45, 0.5),
@@ -18,165 +32,161 @@ export class Channel {
 		Color.hsl(315, 0.45, 0.5),
 		Color.hsl(60, 0.45, 0.5),
 		Color.hsl(225, 0.45, 0.5),
-	] as const;
-
-	readonly id: number;
-	readonly label: string;
-	readonly instrumentKey: InstrumentKey;
-	readonly notes: ReadonlyMap<number, Note>;
-	readonly controlChanges: ReadonlyMap<ControlType, ControlChangeList>;
-	readonly color: Color;
-
-	constructor(props: {
-		readonly id: number;
-		readonly label: string;
-		readonly instrumentKey: InstrumentKey;
-		readonly notes: ReadonlyMap<number, Note>;
-		readonly controlChanges: ReadonlyMap<ControlType, ControlChangeList>;
-		readonly color: Color;
-	}) {
-		this.id = props.id;
-		this.label = props.label;
-		this.instrumentKey = props.instrumentKey;
-		this.notes = props.notes;
-		this.controlChanges = props.controlChanges;
-		this.color = props.color;
-	}
-
+	] as const,
+	create(instrumentKey: InstrumentKey): Channel {
+		return {
+			metadata: {
+				id: Channel.generateId(),
+				label: "Channel",
+				instrumentKey,
+				color:
+					Channel.COLORS[Math.floor(Math.random() * Channel.COLORS.length)]!,
+				noteIds: [],
+			},
+			notes: EmptyMap,
+			ccLists: EmptyMap,
+		};
+	},
+	generateId(): ChannelId {
+		return randomId(16) as ChannelId;
+	},
 	/**
 	 * 最後のノートの開始位置 [tick]
 	 */
-	get lastTickFrom(): number {
+	getLastTickFrom(channel: Channel) {
 		return Math.max(
 			0,
-			...[...this.notes.values()].map((note) => note.tickFrom),
+			...[...channel.notes.values()].map((note) => note.tickFrom),
 		);
-	}
-
-	get tickTo(): number {
-		return Math.max(0, ...[...this.notes.values()].map((note) => note.tickTo));
-	}
-
-	get labelOrDefault(): string {
-		return this.label.trim() === "" ? `Channel ${this.id + 1}` : this.label;
-	}
-
-	removeNotes(ids: Iterable<number>): Channel {
-		const newNotes = new Map(this.notes);
+	},
+	getTickTo(channel: Channel): number {
+		return Math.max(
+			0,
+			...[...channel.notes.values()].map((note) => note.tickTo),
+		);
+	},
+	getLabelOrDefault(channelMetadata: Channel["metadata"]): string {
+		return channelMetadata.label.trim() === ""
+			? "Channel"
+			: channelMetadata.label;
+	},
+	removeNotes(channel: Channel, ids: Iterable<NoteId>): Channel {
+		const notes = toMutableMap(channel.notes);
 		for (const id of ids) {
-			newNotes.delete(id);
+			notes.delete(id);
 		}
-		if (newNotes.size === this.notes.size) return this;
+		if (notes.size === channel.notes.size) return channel;
 
-		return new Channel({ ...this, notes: newNotes });
-	}
+		return {
+			...channel,
+			metadata: {
+				...channel.metadata,
+				noteIds: [...notes.keys()],
+			},
+			notes,
+		};
+	},
+	putNotes(channel: Channel, newNotes: Iterable<Note>): Channel {
+		const notes = toMutableMap(channel.notes);
 
-	putNotes(newNotes: Iterable<Note>): Channel {
-		const oldNotesMap = this.notes;
-		const newNotesMap = new Map(oldNotesMap);
-
-		let flagMutated = false;
+		let isMutated = false;
+		let isAdded = false;
 		for (const newNote of newNotes) {
-			const oldNote = oldNotesMap.get(newNote.id);
+			const oldNote = channel.notes.get(newNote.id);
 			if (oldNote === newNote) continue;
 
-			newNotesMap.set(newNote.id, newNote);
-			flagMutated = true;
+			notes.set(newNote.id, newNote);
+			isMutated ||= true;
+			isAdded ||= oldNote === undefined;
 		}
 
-		if (!flagMutated) return this;
+		if (!isMutated) return channel;
 
-		return new Channel({ ...this, notes: newNotesMap });
-	}
+		let metadata = channel.metadata;
+		if (isAdded) {
+			metadata = { ...metadata, noteIds: [...notes.keys()] };
+		}
 
-	setLabel(label: string): Channel {
-		if (this.label === label) return this;
-		return new Channel({ ...this, label });
-	}
-
-	setInstrumentKey(instrumentKey: InstrumentKey): Channel {
-		if (this.instrumentKey === instrumentKey) return this;
-		return new Channel({ ...this, instrumentKey });
-	}
-
-	putControlChange(
+		return { ...channel, metadata, notes };
+	},
+	setLabel(channel: Channel, label: string): Channel {
+		if (channel.metadata.label === label) return channel;
+		return { ...channel, metadata: { ...channel.metadata, label } };
+	},
+	setInstrumentKey(channel: Channel, instrumentKey: InstrumentKey): Channel {
+		if (channel.metadata.instrumentKey === instrumentKey) return channel;
+		return { ...channel, metadata: { ...channel.metadata, instrumentKey } };
+	},
+	putCCs(
+		channel: Channel,
 		controlType: ControlType,
-		changes: Iterable<ControlChange>,
+		ccs: Iterable<CC>,
 	): Channel {
-		let oldControlChangeList = this.controlChanges.get(controlType);
-		if (oldControlChangeList === undefined) {
-			oldControlChangeList = ControlChangeList.create();
-		}
+		const oldCCs =
+			channel.ccLists.get(controlType) ?? CCList.create(controlType);
 
-		const newControlChangeList = oldControlChangeList.put(changes);
-		if (newControlChangeList === oldControlChangeList) return this;
+		const ccMap = toMutableMap(channel.ccLists);
+		ccMap.set(controlType, CCList.put(oldCCs, ccs));
 
-		const controlChanges = new Map(this.controlChanges);
-		controlChanges.set(controlType, newControlChangeList);
-
-		return new Channel({ ...this, controlChanges });
-	}
-
-	removeControlChange(
+		return { ...channel, ccLists: ccMap };
+	},
+	removeCCs(
+		channel: Channel,
 		controlType: ControlType,
-		ticks: Iterable<number>,
+		ids: Iterable<CCId>,
 	): Channel {
-		let oldControlChangeList = this.controlChanges.get(controlType);
-		if (oldControlChangeList === undefined) {
-			oldControlChangeList = ControlChangeList.create();
-		}
+		const oldCCs = channel.ccLists.get(controlType);
+		if (oldCCs === undefined) return channel;
 
-		const newControlChangeList = oldControlChangeList.remove(ticks);
-		if (newControlChangeList === oldControlChangeList) return this;
+		const ccMap = toMutableMap(channel.ccLists);
+		ccMap.set(controlType, CCList.delete(oldCCs, ids));
 
-		const controlChanges = new Map(this.controlChanges);
-		controlChanges.set(controlType, newControlChangeList);
-
-		return new Channel({ ...this, controlChanges });
-	}
-
-	applyPatch(patch: ChannelPatch): Channel {
-		let channel: Channel = this;
+		return { ...channel, ccLists: ccMap };
+	},
+	applyPatch(channel: Channel, patch: ChannelPatch): Channel {
 		if (patch.label !== undefined) {
-			channel = channel.setLabel(patch.label);
+			channel = Channel.setLabel(channel, patch.label);
 		}
 		if (patch.instrumentKey !== undefined) {
-			channel = channel.setInstrumentKey(patch.instrumentKey);
+			channel = Channel.setInstrumentKey(channel, patch.instrumentKey);
 		}
 		return channel;
-	}
-
-	serialize(): SerializedChannel {
-		const serializedNotes: Record<number, Note> = {};
-		for (const [key, note] of this.notes) {
+	},
+	serialize(channel: Channel): SerializedChannel {
+		const serializedNotes: Record<NoteId, Note> = {};
+		for (const [key, note] of channel.notes) {
 			serializedNotes[key] = note;
 		}
 
 		return {
-			id: this.id,
-			label: this.label,
-			instrumentKey: this.instrumentKey.serialize(),
-			notes: serializedNotes,
-			color: this.color.serialize(),
+			id: channel.metadata.id,
+			label: channel.metadata.label,
+			instrumentKey: channel.metadata.instrumentKey.serialize(),
+			notes: [...channel.notes.values()],
+			ccLists: [...channel.ccLists.values()].map((list) =>
+				CCList.serialize(list),
+			),
+			color: channel.metadata.color.serialize(),
 		};
-	}
-
-	static deserialize(data: SerializedChannel): Channel {
-		const notes = new Map<number, Note>();
-		for (const [keyStr, note] of Object.entries(data.notes)) {
-			notes.set(Number(keyStr), note);
-		}
-
-		return new Channel({
-			id: data.id,
-			label: data.label,
-			instrumentKey: InstrumentKey.deserialize(data.instrumentKey),
-			notes,
-			controlChanges: new Map(), // TODO
-			color: Color.deserialize(data.color),
-		});
-	}
-}
+	},
+	deserialize(data: SerializedChannel): Channel {
+		return {
+			metadata: {
+				id: data.id,
+				label: data.label,
+				instrumentKey: InstrumentKey.deserialize(data.instrumentKey),
+				color: Color.deserialize(data.color),
+				noteIds: data.notes.map((note) => note.id),
+			},
+			notes: new Map(data.notes.map((note) => [note.id, note] as const)),
+			ccLists: new Map(
+				data.ccLists
+					.map((list) => CCList.deserialize(list))
+					.map((list) => [list.type, list] as const),
+			),
+		};
+	},
+} as const;
 
 export interface ChannelPatch {
 	label?: string;
@@ -184,9 +194,10 @@ export interface ChannelPatch {
 }
 
 export interface SerializedChannel {
-	readonly id: number;
+	readonly id: ChannelId;
 	readonly label: string;
 	readonly instrumentKey: SerializedInstrumentKey;
-	readonly notes: Record<number, Note>;
+	readonly notes: readonly Note[];
+	readonly ccLists: readonly SerializedCCList[];
 	readonly color: SerializedColor;
 }

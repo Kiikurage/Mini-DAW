@@ -33,7 +33,7 @@ export class PianoRollPreviewManager {
 			if (note.tickFrom !== minTickFrom) continue;
 
 			this.synthesizer.noteOn({
-				channel: activeChannel.id,
+				channel: activeChannel.metadata.id,
 				key: note.key,
 				velocity: note.velocity,
 			});
@@ -55,7 +55,10 @@ export class PianoRollPreviewManager {
 		if (activeChannel === null) return;
 
 		for (const note of this.currentPreviewingNotes) {
-			this.synthesizer.noteOff({ channel: activeChannel.id, key: note.key });
+			this.synthesizer.noteOff({
+				channel: activeChannel.metadata.id,
+				key: note.key,
+			});
 		}
 		this.currentPreviewingNotes.clear();
 	}

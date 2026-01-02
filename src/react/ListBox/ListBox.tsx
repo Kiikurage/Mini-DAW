@@ -49,6 +49,7 @@ export function ListBox({
 	const onChangeListener = useEffectEvent((state: ListBoxState) =>
 		onChange?.(state.selectedId),
 	);
+
 	useEffect(() => {
 		controller.on("change", onChangeListener);
 		return () => {
