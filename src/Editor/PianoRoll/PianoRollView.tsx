@@ -100,8 +100,9 @@ export function PianoRollView({
 				const startZoom = editor.state.zoom;
 
 				ev.sessionEvents.on("gestureChange", (ev) => {
-					const scale = Math.hypot(ev.scale.x, ev.scale.y);
-					const newZoom = minmax(0.25, startZoom * scale, 16);
+					// const scale = Math.hypot(ev.scale.x, ev.scale.y);
+					// const newZoom = minmax(0.25, startZoom * scale, 16);
+					const newZoom = startZoom;
 
 					// ジェスチャ中心のティック位置は維持
 					// tick

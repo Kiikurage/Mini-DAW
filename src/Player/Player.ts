@@ -274,7 +274,7 @@ export class Player extends Stateful<PlayerState> {
 						if (lastEnqueuedTick <= cc.tick && cc.tick < nextEnqueueTick) {
 							this.synthesizer.setPitchBend(
 								channel.metadata.id,
-								cc.value,
+								cc.value - 64,
 								this.getContextTimeByTick(cc.tick),
 							);
 						}

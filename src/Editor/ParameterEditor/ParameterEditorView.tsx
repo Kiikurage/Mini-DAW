@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { PiPencil, PiSelectionPlus } from "react-icons/pi";
+import {
+	PiGitCommit,
+	PiPencil,
+	PiSelectionPlus,
+	PiSolarRoof,
+} from "react-icons/pi";
 import { css, cx } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
+import { CC } from "../../models/CC.ts";
+import { ControlType } from "../../models/ControlType.ts";
 import { Player } from "../../Player/Player.ts";
 import { IconButton } from "../../react/IconButton.tsx";
 import { Select } from "../../react/Select/Select.tsx";
 import { useStateful } from "../../Stateful/useStateful.tsx";
+import { PutCCs, PutCCsKey } from "../../usecases/PutCCs.ts";
 import { Editor } from "../Editor.ts";
 import { ParameterType } from "../ParameterType.ts";
 import { CCEditorView } from "./CCEditorView.tsx";
@@ -23,6 +31,7 @@ export function ParameterEditorView({
 }) {
 	editor = useComponent(Editor.Key, editor);
 	player = useComponent(Player.Key, player);
+	const putCCs = useComponent(PutCCsKey);
 
 	const [parameterEditor] = useState(() => new ParameterEditor());
 	const parameterType = useStateful(
@@ -111,6 +120,34 @@ export function ParameterEditorView({
 				>
 					<PiPencil />
 				</IconButton>
+				{parameterType.type === "cc" && (
+					<IconButton
+						variant="normalInline"
+						size="sm"
+						title="現在時刻で初期値へリセット"
+						onClick={(ev) => {
+							const channelId = editor.state.activeChannelId;
+							if (channelId === null) return;
+
+							putCCs(
+								channelId,
+								parameterType.controlType,
+								[
+									{
+										id: CC.generateId(),
+										tick: player.state.currentTick,
+										value: 64,
+									},
+								],
+								true,
+							);
+							ev.preventDefault();
+							ev.stopPropagation();
+						}}
+					>
+						<PiGitCommit />
+					</IconButton>
+				)}
 			</div>
 			<div
 				className={css({
