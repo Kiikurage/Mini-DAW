@@ -212,15 +212,23 @@ export function Select<T extends ListBoxOption>({
 				<MdArrowDropDown size="24" />
 			</div>
 			<PopUp controller={popupController}>
-				<ListBox.Provider controller={listBoxController}>
-					<ListBox.OptionList>
-						{options.map((option) => (
-							<ListBox.Option key={option.id} id={option.id}>
-								{renderOption(option)}
-							</ListBox.Option>
-						))}
-					</ListBox.OptionList>
-				</ListBox.Provider>
+				<div
+					className={css({
+						height: "100%",
+						display: "flex",
+						flexDirection: "column",
+					})}
+				>
+					<ListBox.Provider controller={listBoxController}>
+						<ListBox.OptionList>
+							{options.map((option) => (
+								<ListBox.Option key={option.id} id={option.id}>
+									{renderOption(option)}
+								</ListBox.Option>
+							))}
+						</ListBox.OptionList>
+					</ListBox.Provider>
+				</div>
 			</PopUp>
 		</div>
 	);

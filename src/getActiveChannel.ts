@@ -39,6 +39,7 @@ export function useActiveChannelMetadata(
 			return;
 		}
 
+		setActiveChannelMetadata(fileStore.getChannel(activeChannelId));
 		return fileStore.subscribeChannel(
 			activeChannelId,
 			setActiveChannelMetadata,

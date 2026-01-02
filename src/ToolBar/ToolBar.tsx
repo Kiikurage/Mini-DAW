@@ -47,8 +47,6 @@ export function ToolBar({
 	overlayPortal?: OverlayPortal;
 	synthesizer?: Synthesizer;
 }) {
-	console.count("ToolBar Render");
-
 	player = useComponent(Player.Key, player);
 	fileStore = useComponent(FileStore.Key, fileStore);
 	updateSong = useComponent(UpdateSongKey, updateSong);
