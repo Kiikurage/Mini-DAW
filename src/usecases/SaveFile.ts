@@ -129,7 +129,7 @@ function SaveFileToGoogleDrive({
 
 		const file = await googleAPIClient.patchFile({
 			fileId,
-			file: new File([json], song.metadata.title + ".json", {
+			file: new File([json], `${song.metadata.title}.json`, {
 				type: "application/json",
 			}),
 		});

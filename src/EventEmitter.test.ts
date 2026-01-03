@@ -143,7 +143,7 @@ describe("EventEmitter", () => {
 			const emitter = new EventEmitter<{ test: [number] }>();
 			const callback = mock(() => {});
 
-			const result = emitter.on("test", callback).emit("test", 42);
+			const _result = emitter.on("test", callback).emit("test", 42);
 
 			expect(callback).toBeCalledWith(42);
 		});

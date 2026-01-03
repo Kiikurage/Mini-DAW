@@ -8,7 +8,7 @@ import { computeSelectionArea } from "../../computeSelectionArea.tsx";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { FileStore } from "../../FileStore.ts";
-import { addListener, EmptySet, minmax } from "../../lib.ts";
+import { addListener, EmptySet } from "../../lib.ts";
 import { Player } from "../../Player/Player.ts";
 import { PointerEventManager } from "../../PointerEventManager/PointerEventManager.ts";
 import { IconButton } from "../../react/IconButton.tsx";

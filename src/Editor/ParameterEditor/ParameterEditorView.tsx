@@ -1,20 +1,14 @@
 import { useState } from "react";
-import {
-	PiGitCommit,
-	PiPencil,
-	PiSelectionPlus,
-	PiSolarRoof,
-} from "react-icons/pi";
+import { PiGitCommit, PiPencil, PiSelectionPlus } from "react-icons/pi";
 import { css, cx } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
 import { CC } from "../../models/CC.ts";
-import { ControlType } from "../../models/ControlType.ts";
 import { Player } from "../../Player/Player.ts";
 import { IconButton } from "../../react/IconButton.tsx";
 import { Select } from "../../react/Select/Select.tsx";
 import { useStateful } from "../../Stateful/useStateful.tsx";
-import { PutCCs, PutCCsKey } from "../../usecases/PutCCs.ts";
+import { PutCCsKey } from "../../usecases/PutCCs.ts";
 import { Editor } from "../Editor.ts";
 import { ParameterType } from "../ParameterType.ts";
 import { CCEditorView } from "./CCEditorView.tsx";

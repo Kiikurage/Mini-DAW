@@ -3,7 +3,6 @@ import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { EventBus } from "../EventBus.ts";
 import type { FileStore } from "../FileStore.ts";
 import { EmptySet, minmax, toMutableSet, toSet } from "../lib.ts";
-import { CCList } from "../models/CC.ts";
 import { Channel, type ChannelId } from "../models/Channel.ts";
 import { ControlType } from "../models/ControlType.ts";
 import type { StateOnly } from "../Stateful/Stateful.ts";

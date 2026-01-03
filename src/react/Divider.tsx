@@ -1,4 +1,4 @@
-import type { ComponentProps, HTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { css, cx } from "../../styled-system/css";
 import { styled } from "../../styled-system/jsx";
 

@@ -49,7 +49,7 @@ describe("Color", () => {
 
 		it("should handle gray colors", () => {
 			const color = new Color(0.5, 0.5, 0.5, 1);
-			const [h, s, l] = color.hsl;
+			const [_h, s, l] = color.hsl;
 
 			expect(s).toBe(0);
 			expect(l).toBeCloseTo(0.5);
@@ -57,7 +57,7 @@ describe("Color", () => {
 
 		it("should handle black", () => {
 			const color = new Color(0, 0, 0, 1);
-			const [h, s, l] = color.hsl;
+			const [_h, s, l] = color.hsl;
 
 			expect(l).toBe(0);
 			expect(s).toBe(0);
@@ -65,7 +65,7 @@ describe("Color", () => {
 
 		it("should handle white", () => {
 			const color = new Color(1, 1, 1, 1);
-			const [h, s, l] = color.hsl;
+			const [_h, _s, l] = color.hsl;
 
 			expect(l).toBe(1);
 		});
@@ -142,7 +142,7 @@ describe("Color", () => {
 
 		it("should create gray color", () => {
 			const color = Color.hsl(0, 0, 0.5); // Gray
-			const [h, s, l] = color.hsl;
+			const [_h, s, l] = color.hsl;
 
 			expect(s).toBe(0);
 			expect(l).toBeCloseTo(0.5);
@@ -185,8 +185,8 @@ describe("Color", () => {
 
 			// イミュータビリティパターン
 			expect(color1).not.toBe(color2);
-			const [h1, s1, l1] = color1.hsl;
-			const [h2, s2, l2] = color2.hsl;
+			const [_h1, _s1, l1] = color1.hsl;
+			const [_h2, _s2, l2] = color2.hsl;
 
 			// Hue may change slightly when converting back, just verify lightness changed
 			expect(l1).not.toBe(l2);

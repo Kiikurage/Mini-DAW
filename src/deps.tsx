@@ -100,7 +100,7 @@ export function configureDeps() {
 					deps.get(SaveFileKey),
 				);
 			})
-			.set(GoogleAPIClient.Key, (deps) => {
+			.set(GoogleAPIClient.Key, (_deps) => {
 				return new GoogleAPIClient();
 			})
 			.set(RecentFileService.Key, (deps) => {

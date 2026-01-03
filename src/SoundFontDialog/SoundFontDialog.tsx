@@ -206,7 +206,7 @@ function SoundFontDialogView({
 											setInstrumentKey(
 												new InstrumentKey(
 													instrumentKey.name,
-													Number.parseInt(presetNumber),
+													Number.parseInt(presetNumber, 10),
 													0,
 												),
 											);
@@ -238,7 +238,7 @@ function SoundFontDialogView({
 												new InstrumentKey(
 													instrumentKey.name,
 													instrumentKey.presetNumber,
-													Number.parseInt(bankNumber),
+													Number.parseInt(bankNumber, 10),
 												),
 											);
 										}}

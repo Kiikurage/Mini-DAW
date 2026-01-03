@@ -44,7 +44,7 @@ export function useActiveChannelMetadata(
 			activeChannelId,
 			setActiveChannelMetadata,
 		);
-	}, [activeChannelId]);
+	}, [activeChannelId, fileStore.getChannel, fileStore.subscribeChannel]);
 
 	return activeChannelMetadata;
 }

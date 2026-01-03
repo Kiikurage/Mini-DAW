@@ -6,6 +6,10 @@
 	},
 	"linter": {
 		"includes": ["./src/**/*.{js,jsx,ts,tsx,json,css,md}"],
-		"rules": {}
+		"rules": {
+			"style": {
+				"noNonNullAssertion": "off"
+			}
+		}
 	}
 }

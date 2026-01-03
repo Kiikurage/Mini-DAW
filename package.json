@@ -9,7 +9,7 @@
 		"build:vite": "NODE_ENV=production vite build",
 		"build": "bun build:panda && bun build:vite",
 		"test": "bun test",
-		"lint": "biome check . --write"
+		"lint": "biome check . --write --unsafe"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",

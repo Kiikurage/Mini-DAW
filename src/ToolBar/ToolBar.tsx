@@ -5,10 +5,7 @@ import { TICK_PER_BEAT, TICK_PER_MEASURE } from "../constants.ts";
 import { useComponent } from "../Dependency/DIContainerProvider.tsx";
 import { Editor } from "../Editor/Editor.ts";
 import { FileStore } from "../FileStore.ts";
-import {
-	useActiveChannel,
-	useActiveChannelMetadata,
-} from "../getActiveChannel.ts";
+import { useActiveChannelMetadata } from "../getActiveChannel.ts";
 import { InstrumentKey } from "../models/InstrumentKey.ts";
 import { Player } from "../Player/Player.ts";
 import { PromiseState } from "../PromiseState.ts";
