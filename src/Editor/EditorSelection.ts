@@ -1,4 +1,5 @@
 import type { CCId } from "../models/CC.ts";
+import type { ControlType } from "../models/ControlType.ts";
 import type { NoteId } from "../models/Note.ts";
 
 /**
@@ -22,7 +23,7 @@ export interface NoteSelection {
  */
 export interface CCSelection {
 	type: "control";
-	controlType: number;
+	controlType: ControlType;
 	ids: ReadonlySet<CCId>;
 }
 

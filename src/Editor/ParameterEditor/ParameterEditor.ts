@@ -25,7 +25,7 @@ export interface ParameterEditorState {
 	/**
 	 * 現在のツールモード
 	 */
-	readonly toolMode: "select" | "draw" | "erase";
+	readonly toolMode: "select" | "draw";
 }
 
 export class ParameterEditor extends Stateful<ParameterEditorState> {

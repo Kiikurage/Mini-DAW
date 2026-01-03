@@ -513,6 +513,7 @@ export class Editor extends Stateful<EditorState> {
 					channelId: activeChannelId,
 					type: this.state.selection.controlType,
 					ids: this.state.selection.ids,
+					markCheckpoint: true,
 				});
 				return;
 			}

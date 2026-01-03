@@ -148,7 +148,7 @@ export function formatDate(date: Date): string {
 	return `${YYYY}/${MM}/${DD} ${hh}:${mm}`;
 }
 
-export function neverReachable(x: never): never {
+export function unreachable(x: never): never {
 	throw new Error(`This code should never be reachable. (${x})`);
 }
 

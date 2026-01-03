@@ -23,6 +23,7 @@ export function RemoveCCs({
 		channelId: ChannelId;
 		type: ControlType;
 		ids: Iterable<CCId>;
+		markCheckpoint: boolean;
 	}) => {
 		const channel = Song.getChannel(fileStore.state.song, args.channelId);
 		if (channel === null) return;
@@ -46,7 +47,9 @@ export function RemoveCCs({
 				});
 			},
 		});
-		history.markCheckpoint();
+		if (args.markCheckpoint) {
+			history.markCheckpoint();
+		}
 	};
 }
 

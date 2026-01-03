@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from "react";
+import { memo, type ReactNode, useRef, useState } from "react";
 import { css } from "../../../styled-system/css";
 import { NUM_KEYS } from "../../constants.ts";
 import { useComponent } from "../../Dependency/DIContainerProvider.tsx";
@@ -11,22 +11,39 @@ import {
 	EmptySet,
 	getNonNull,
 	minmax,
+	quantize,
 	toMutableSet,
 } from "../../lib.ts";
 import { CC, type CCId, CCList } from "../../models/CC.ts";
-import type { ControlType } from "../../models/ControlType.ts";
+import {
+	type ControlType,
+	ControlTypeInitialValues,
+} from "../../models/ControlType.ts";
 import { useResizeObserver } from "../../react/useResizeObserver.ts";
 import { useStateful } from "../../Stateful/useStateful.tsx";
 import { type PutCCs, PutCCsKey } from "../../usecases/PutCCs.ts";
+import { type RemoveCCs, RemoveCCsKey } from "../../usecases/RemoveCCs.ts";
 import { Editor, getSelectedCCIds } from "../Editor.ts";
 import type { ParameterEditor } from "./ParameterEditor.ts";
 import { widthPerTick } from "./ParameterEditorViewRenderer.ts";
 import {
 	type DragSessionContext,
 	type GestureSessionContext,
-	type PointerEventsManager,
 	usePointerEvents,
 } from "./PointerEventsManager.ts";
+
+function computePath(
+	points: { tick: number; value: number }[],
+	widthPerTick: number,
+	height: number,
+) {
+	if (points.length === 0) return "";
+	const pointStrings = points.map(
+		({ tick, value }) => `${tick * widthPerTick} ${(1 - value / 127) * height}`,
+	);
+
+	return `M${pointStrings.join("L")}`;
+}
 
 export function CCEditorView({
 	parameterEditor,
@@ -34,11 +51,13 @@ export function CCEditorView({
 	fileStore,
 	controlType,
 	putCCs,
+	removeCCs,
 }: {
 	parameterEditor: ParameterEditor;
 	editor?: Editor;
 	fileStore?: FileStore;
 	putCCs?: PutCCs;
+	removeCCs?: RemoveCCs;
 	controlType: ControlType;
 }) {
 	const resizeObserverRef = useResizeObserver((entry) => {
@@ -48,22 +67,165 @@ export function CCEditorView({
 
 	editor = useComponent(Editor.Key, editor);
 	putCCs = useComponent(PutCCsKey, putCCs);
+	removeCCs = useComponent(RemoveCCsKey, removeCCs);
 	fileStore = useComponent(FileStore.Key, fileStore);
 
 	const scrollLeft = useStateful(editor, (state) => state.scrollLeft);
 	const width = useStateful(parameterEditor, (state) => state.width);
 	const height = useStateful(parameterEditor, (state) => state.height);
 
+	const [points, setPoints] = useState<
+		{
+			tick: number;
+			value: number;
+		}[]
+	>([]);
+
+	// onDragEndで最新のpointsを参照できるように。
+	// TODO: より良い方法があればそちらに変更する。
+	const latestPointsRef = useRef(points);
+	latestPointsRef.current = points;
+
 	const ref = usePointerEvents<SVGElement>((manager) => {
 		manager
-			.onMouseDown((ctx) =>
-				addCC(editor, parameterEditor, controlType, putCCs, ctx),
-			)
-			.onMouseDown((ctx) =>
-				selectByMarquee(editor, fileStore, controlType, ctx),
-			)
-			.onGestureStart((ctx) => scrollBySwipe(editor, ctx));
+			.onMouseDown((ctx) => {
+				switch (parameterEditor.state.toolMode) {
+					case "select": {
+						addCC(editor, parameterEditor, controlType, putCCs, ctx);
+						selectByMarquee(editor, fileStore, controlType, ctx);
+						break;
+					}
+					case "draw": {
+						drawLine(
+							editor,
+							parameterEditor,
+							(tick, value) => {
+								setPoints([{ tick, value }]);
+							},
+							(tick, value) => {
+								setPoints((points) => {
+									if (points.length < 2) return [...points, { tick, value }];
+
+									const firstPoint = points[0];
+									const lastPoint = points[Math.min(points.length - 1, 1)];
+
+									const isRTL =
+										firstPoint !== undefined &&
+										lastPoint !== undefined &&
+										firstPoint.tick > lastPoint.tick;
+
+									let pointsLength = points.length;
+									if (isRTL) {
+										while (pointsLength > 0) {
+											const lastPoint = points[pointsLength - 1];
+											if (lastPoint === undefined) break;
+											if (lastPoint.tick > tick) break;
+
+											pointsLength--;
+										}
+									} else {
+										while (pointsLength > 0) {
+											const lastPoint = points[pointsLength - 1];
+											if (lastPoint === undefined) break;
+											if (lastPoint.tick < tick) break;
+
+											pointsLength--;
+										}
+									}
+
+									return [...points.slice(0, pointsLength), { tick, value }];
+								});
+							},
+							() => {
+								const channelId = editor.state.activeChannelId;
+								if (channelId === null) return;
+
+								const channel = fileStore.state.song.channels.get(channelId);
+								if (channel === undefined) return;
+
+								const points = latestPointsRef.current;
+								if (points.length === 0) return;
+
+								setPoints([]);
+
+								const firstPoint = getNonNull(points.at(0));
+								const lastPoint = getNonNull(points.at(-1));
+								const firstTick = firstPoint.tick;
+								const lastTick = lastPoint.tick;
+								const tickFrom = Math.min(firstTick, lastTick);
+								const tickTo = Math.max(firstTick, lastTick) + 1;
+
+								const normalizedPoints: { tick: number; value: number }[] = [];
+
+								normalizedPoints.push(firstPoint);
+								const tickStep = editor.state.quantizeUnitInTick;
+								let tick = quantize(tickFrom + tickStep, tickStep);
+								let lastPointIndex = 0; // 現在時刻以前の最後の点
+								while (tick < tickTo) {
+									while (
+										(points.at(lastPointIndex + 1)?.tick ??
+											Number.POSITIVE_INFINITY) <= tick
+									) {
+										lastPointIndex++;
+									}
+
+									const p1 = getNonNull(points.at(lastPointIndex));
+									const p2 = getNonNull(points.at(lastPointIndex + 1));
+
+									// 線形補間
+									const ratio = (tick - p1.tick) / (p2.tick - p1.tick);
+									const value = p1.value * (1 - ratio) + p2.value * ratio;
+									normalizedPoints.push({ tick, value });
+									tick += tickStep;
+								}
+								normalizedPoints.push(lastPoint);
+								normalizedPoints.push({
+									tick: tickTo,
+									value: ControlTypeInitialValues[controlType],
+								});
+
+								const existingCCIds = [
+									...(channel.ccLists
+										.get(controlType)
+										?.ccs?.values()
+										?.filter((cc) => tickFrom <= cc.tick && cc.tick < tickTo)
+										?.map((cc) => cc.id) ?? []),
+								];
+								// 初期
+								removeCCs({
+									channelId,
+									type: controlType,
+									ids: existingCCIds,
+									markCheckpoint: false,
+								});
+								putCCs(
+									channelId,
+									controlType,
+									normalizedPoints.map(({ tick, value }) => ({
+										id: CC.generateId(),
+										tick,
+										value,
+									})),
+									true,
+								);
+								parameterEditor.setToolMode("select");
+							},
+							ctx,
+						);
+						break;
+					}
+				}
+			})
+			.onGestureStart((ctx) => {
+				scrollBySwipe(editor, ctx);
+			});
 	});
+
+	const drawingLinePath = computePath(
+		points,
+		widthPerTick(editor.state.zoom),
+		height,
+	);
 
 	return (
 		// biome-ignore lint/a11y/noSvgWithoutTitle: Not needed
@@ -89,6 +251,7 @@ export function CCEditorView({
 					parameterEditor={parameterEditor}
 					controlType={controlType}
 				/>
+				<path d={drawingLinePath} stroke="#fff" strokeWidth={2} fill="none" />
 				<MarqueeArea />
 			</g>
 		</svg>
@@ -121,10 +284,8 @@ const CCListView = memo(function CCListView({
 	const ccMap = list?.ccs ?? EmptyMap;
 	const color = activeChannel?.metadata?.color.cssString ?? "#fff";
 
-	const INITIAL_VALUE = 64;
-
 	let prevX = 0;
-	let prevY = height * (1 - INITIAL_VALUE / 127);
+	let prevY = height * (1 - ControlTypeInitialValues[controlType] / 127);
 	const path: string[] = [`M${prevX} ${prevY}`];
 	for (const ccId of ccIds) {
 		const cc = getNonNull(ccMap.get(ccId));
@@ -193,17 +354,25 @@ const CCView = memo(function CCView({
 	const isSelected = selectedIds.has(cc.id);
 
 	const ref = usePointerEvents<SVGCircleElement>((manager) => {
-		selectByClick(manager, editor, controlType, cc.id);
 		manager.onMouseDown((ctx) => {
-			updateCC(
-				editor,
-				fileStore,
-				parameterEditor,
-				history,
-				controlType,
-				putCCs,
-				ctx,
-			);
+			switch (parameterEditor.state.toolMode) {
+				case "select": {
+					selectByClick(editor, controlType, cc.id, ctx);
+					updateCC(
+						editor,
+						fileStore,
+						parameterEditor,
+						history,
+						controlType,
+						putCCs,
+						ctx,
+					);
+					break;
+				}
+				case "draw": {
+					// TODO;
+				}
+			}
 		});
 	});
 	return (
@@ -362,31 +531,29 @@ function scrollBySwipe(editor: Editor, ctx: GestureSessionContext<SVGElement>) {
 }
 
 function selectByClick(
-	manager: PointerEventsManager<SVGCircleElement>,
 	editor: Editor,
 	controlType: ControlType,
 	ccId: CCId,
+	ctx: DragSessionContext<SVGCircleElement>,
 ) {
-	manager.onMouseDown((ctx) => {
-		ctx.stopPropagation();
-		const selectedIds = getSelectedCCIds(editor.state, controlType);
+	ctx.stopPropagation();
+	const selectedIds = getSelectedCCIds(editor.state, controlType);
 
-		if (ctx.metaKey || ctx.ctrlKey) {
-			if (selectedIds.has(ccId)) {
-				ctx.onTap(() => {
-					const newSelectedCCs = toMutableSet(selectedIds);
-					newSelectedCCs.delete(ccId);
-					editor.setSelectedCCs(controlType, newSelectedCCs);
-				});
-			} else {
-				editor.setSelectedCCs(controlType, [...selectedIds, ccId]);
-			}
+	if (ctx.metaKey || ctx.ctrlKey) {
+		if (selectedIds.has(ccId)) {
+			ctx.onTap(() => {
+				const newSelectedCCs = toMutableSet(selectedIds);
+				newSelectedCCs.delete(ccId);
+				editor.setSelectedCCs(controlType, newSelectedCCs);
+			});
 		} else {
-			if (!selectedIds.has(ccId)) {
-				editor.setSelectedCCs(controlType, [ccId]);
-			}
+			editor.setSelectedCCs(controlType, [...selectedIds, ccId]);
 		}
-	});
+	} else {
+		if (!selectedIds.has(ccId)) {
+			editor.setSelectedCCs(controlType, [ccId]);
+		}
+	}
 }
 
 function updateCC(
@@ -449,6 +616,52 @@ function updateCC(
 		})
 		.onDragEnd(() => {
 			history.markCheckpoint();
+		});
+}
+
+function drawLine(
+	editor: Editor,
+	parameterEditor: ParameterEditor,
+	onStart: (tick: number, value: number) => void,
+	onMove: (tick: number, value: number) => void,
+	onEnd: () => void,
+	ctx: DragSessionContext<SVGElement>,
+) {
+	const svg = ctx.element;
+	if (svg === null) return;
+
+	ctx.stopPropagation();
+	ctx
+		.onDragStart(() => {
+			const bcr = svg.getBoundingClientRect();
+			const x = ctx.currentPosition.x - bcr.left + editor.state.scrollLeft;
+			const y = ctx.currentPosition.y - bcr.top;
+
+			const tick = x / widthPerTick(editor.state.zoom);
+			const vallue = minmax(
+				0,
+				127,
+				127 * (1 - y / parameterEditor.state.height),
+			);
+
+			onStart(tick, vallue);
+		})
+		.onDragMove(() => {
+			const bcr = svg.getBoundingClientRect();
+			const x = ctx.currentPosition.x - bcr.left + editor.state.scrollLeft;
+			const y = ctx.currentPosition.y - bcr.top;
+
+			const tick = x / widthPerTick(editor.state.zoom);
+			const vallue = minmax(
+				0,
+				127,
+				127 * (1 - y / parameterEditor.state.height),
+			);
+
+			onMove(tick, vallue);
+		})
+		.onDragEnd(() => {
+			onEnd();
 		});
 }
 

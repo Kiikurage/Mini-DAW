@@ -1,6 +1,6 @@
 import { ComponentKey } from "../Dependency/DIContainer.ts";
 import type { GoogleAPIClient } from "../GoogleDriveAPI/GoogleAPIClient.ts";
-import { neverReachable } from "../lib.ts";
+import { unreachable } from "../lib.ts";
 import type { FileLocation } from "../models/FileLocation.ts";
 import type { MDFile } from "../models/MDFile.ts";
 import { type SerializedSong, Song } from "../models/Song.ts";
@@ -41,7 +41,7 @@ export function OpenFile({
 				};
 			}
 			default: {
-				neverReachable(location.type);
+				unreachable(location.type);
 			}
 		}
 	};
